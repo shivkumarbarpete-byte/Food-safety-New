@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 // 1. Verify categoryProxyConfig
-const { categoryProxyConfig, computeProxyRiskScore, daysUntil } = require('../frontend/categoryProxyConfig.js');
+const { categoryProxyConfig, computeProxyRiskScore, daysUntil } = require('./frontend/categoryProxyConfig.js');
 
 const categories = [
   "Dairy", "Meat & Poultry", "Seafood", "Fresh Produce", "Beverage",
@@ -41,8 +41,8 @@ categories.forEach(cat => {
   const safeRes = computeProxyRiskScore(cat, safeAnswers);
   const riskyRes = computeProxyRiskScore(cat, riskyAnswers);
   console.log(`✓ ${cat} -> Safe score: ${safeRes.score} (${safeRes.verdict}), Risky score: ${riskyRes.score} (${riskyRes.verdict})`);
-  if (safeRes.verdict !== 'Safe') throw new Error(`${cat} safe answers gave ${safeRes.verdict}`);
-  if (riskyRes.verdict !== 'Unsafe') throw new Error(`${cat} risky answers gave ${riskyRes.verdict}`);
+  if (safeRes.verdict !== 'Low Risk Based on Available Information') throw new Error(`${cat} safe answers gave ${safeRes.verdict}`);
+  if (riskyRes.verdict !== 'Higher Risk Based on Available Information') throw new Error(`${cat} risky answers gave ${riskyRes.verdict}`);
 });
 
 console.log('\n=== TEST 3: Nutrition scoring test with realistic values ===');
@@ -84,8 +84,8 @@ console.log('Resulting score:', nutScore, nutScore <= 30 ? '(Safe)' : '(Not safe
 if (nutScore > 30) throw new Error('Realistic nutrition produced non-safe verdict!');
 
 console.log('\n=== TEST 4: ID References check between script.js and index.html ===');
-const htmlContent = fs.readFileSync(path.join(__dirname, '../frontend/index.html'), 'utf8');
-const jsContent = fs.readFileSync(path.join(__dirname, '../frontend/script.js'), 'utf8');
+const htmlContent = fs.readFileSync(path.join(__dirname, './frontend/index.html'), 'utf8');
+const jsContent = fs.readFileSync(path.join(__dirname, './frontend/script.js'), 'utf8');
 
 // Extract el('id') and getElementById('id') calls
 const elMatches = new Set();

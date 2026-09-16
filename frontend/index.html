@@ -76,11 +76,11 @@
         <div class="kpi-value" id="dash_total" style="color:#16a34a;">0</div>
       </div>
       <div class="kpi-card" style="background: #dcfce7; border-left: 5px solid #059669;">
-        <div class="kpi-title">Safe Products</div>
+        <div class="kpi-title">Low Risk Products</div>
         <div class="kpi-value" id="dash_safe" style="color:#059669;">0</div>
       </div>
       <div class="kpi-card" style="background: #fef2f2; border-left: 5px solid #dc2626;">
-        <div class="kpi-title">Unsafe Products</div>
+        <div class="kpi-title">Higher Risk Products</div>
         <div class="kpi-value" id="dash_unsafe" style="color:#dc2626;">0</div>
       </div>
       <div class="kpi-card" style="background: #fef3c7; border-left: 5px solid #d97706;">
@@ -239,7 +239,7 @@
        <!-- ========== BARCODE SCANNER SECTION ========== -->
 <div class="card" style="margin-bottom: 20px;">
     <h3><i class="fas fa-barcode"></i> Barcode Scanner</h3>
-    <p style="font-size:0.85rem; color:#6b7280; margin-bottom:15px;">Scan barcode from camera or upload image. Fetches REAL product data from Open Food Facts database.</p>
+    <p style="font-size:0.85rem; color:#6b7280; margin-bottom:15px;">Scan barcode from camera or upload image. Fetches product details from Open Food Facts database.<br><small style="color:#4b5563; display:block; margin-top:4px;">📌 <strong>Note:</strong> Barcode scanning identifies the product and retrieves available product information. It does not verify laboratory safety.</small></p>
     
     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
         <!-- Camera Scan Button -->
@@ -349,10 +349,11 @@
                     class="btn btn-secondary" 
                     id="verifyFssai" 
                     style="white-space: nowrap; padding: 12px 16px;">
-                    Verify
+                    Validate Format
                   </button>
                 </div>
                 <small id="fssaiStatus" style="margin-top: 5px; display: block;"></small>
+                <small style="color:#6b7280; font-size:0.75rem; display:block; margin-top:4px;">Format validation checks that the input contains 14 numeric digits. It is not official FSSAI regulatory verification.</small>
               </div>
             </div>
           </div>
@@ -480,6 +481,9 @@
           <div class="lab-disclaimer" id="labModeDisclaimer">
             <strong><i class="fas fa-flask"></i> Lab / Inspector Mode</strong> — Enter values measured with appropriate instruments (pH meter, moisture analyzer, thermometer). ML predictions are supplementary decision-support tools and do not replace official food-safety standards or laboratory certification.
           </div>
+          <div style="margin-bottom:12px; padding:10px 14px; background:#f0f9ff; border-left:4px solid #0284c7; border-radius:6px; font-size:0.85rem; color:#0369a1;">
+            <i class="fas fa-brain"></i> <strong>Experimental ML Estimate:</strong> ML predictions (k-NN, Regression) are experimental statistical estimates based on stored feature vectors (pH, Moisture, Temperature). They are not a substitute for laboratory testing or regulatory certification.
+          </div>
           <div id="mlSampleDisclaimer" style="display:none; margin-bottom:12px; padding:10px 14px; background:#fef3c7; border-radius:8px; font-size:0.85rem; color:#92400e; border-left:3px solid #d97706;">
             <i class="fas fa-exclamation-triangle"></i> <strong>Experimental:</strong> k-NN result is based on a small number of stored laboratory samples. Reliability improves as more measured reviews are saved.
           </div>
@@ -559,13 +563,21 @@
           </div>
         </div>
         
+        <div id="dataSourceBadge" style="margin-bottom: 12px; font-size: 0.88rem; font-weight: 600; color: #4b5563;"></div>
+        <div id="inputWarningBanner" style="display:none; margin-bottom: 15px; padding: 12px; background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 6px; font-size: 0.88rem; color: #92400e;"></div>
+
         <div>
-          <p><strong>Safety Verdict:</strong> <span id="verdict" class="badge">—</span></p>
+          <p><strong>Risk Assessment Verdict:</strong> <span id="verdict" class="badge">—</span></p>
           <div id="fopWarnings" style="margin:15px 0; font-weight:600; color:#b91c1c;"></div>
-          <p><strong>k-NN Prediction:</strong> <span id="knn_out">—</span></p>
+          <p><strong>ML-Based Preliminary Estimate (Experimental):</strong> <span id="knn_out">—</span></p>
         </div>
         
         <ul class="results-list" id="bullets"></ul>
+
+        <div id="generalDisclaimer" style="margin: 15px 0; padding: 12px 16px; background: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 6px; font-size: 0.85rem; color: #1e40af;">
+          <i class="fas fa-info-circle"></i> <strong>Preliminary Screening Assessment:</strong> This is a preliminary screening assessment based on available product information. It is not a laboratory test or regulatory certification.
+          <br><small style="color:#3b82f6; font-size:0.8rem; display:block; margin-top:4px;">📌 Assessment accuracy depends on the quality and completeness of the input data.</small>
+        </div>
         
         <div class="chart-container">
           <canvas id="riskChart"></canvas>
@@ -595,59 +607,81 @@
           <div class="row">
             <div class="col">
               <div class="form-group">
+                <label class="form-label">Parameter Name</label>
+                <input type="text" class="form-control" id="lab_param" placeholder="e.g., Sodium, Aflatoxin, Lead, Moisture">
+                <small>Identify the chemical or physical parameter measured</small>
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label class="form-label">Measurement Unit</label>
+                <input type="text" class="form-control" id="lab_unit" placeholder="e.g., mg/kg, ppm, µg/kg, %">
+                <small>Unit of measurement (e.g. mg/kg, ppm)</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
                 <label class="form-label">Lab Measurements (comma separated)</label>
                 <input type="text" class="form-control" id="lab_data" placeholder="e.g., 480,510,495,505">
                 <small>Enter at least 2 measurements for accurate analysis</small>
               </div>
-              
-              <div class="row">
-                <div class="col">
-                  <div class="form-group">
-                    <label class="form-label">Maximum Safe Limit</label>
-                    <input type="number" class="form-control" id="lab_limit" placeholder="e.g., 600">
-                  </div>
-                </div>
-                <div class="col">
-                  <div class="form-group">
-                    <label class="form-label">Known Standard Deviation (optional)</label>
-                    <input type="number" class="form-control" id="lab_sigma" placeholder="e.g., 20">
-                    <small>If provided, uses Z-test; otherwise T-test</small>
-                  </div>
-                </div>
-                <div class="col">
-                  <div class="form-group">
-                    <label class="form-label">Confidence Level</label>
-                    <select class="form-select" id="lab_alpha">
-                      <option value="0.05">Standard (95%)</option>
-                      <option value="0.01">Strict (99%)</option>
-                      <option value="0.10">Lenient (90%)</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="btn-group">
-                <button type="button" class="btn btn-primary" id="labRun"><i class="fas fa-play"></i> Run Safety Test</button>
-                <button type="button" class="btn btn-secondary" id="labDemo"><i class="fas fa-flask"></i> Load Demo</button>
-              </div>
             </div>
-            
+          </div>
+              
+          <div class="row">
             <div class="col">
-              <div class="kpi-grid">
-                <div class="kpi-card">
-                  <div class="kpi-title">Samples</div>
-                  <div class="kpi-value" id="lab_n">—</div>
-                </div>
-                <div class="kpi-card">
-                  <div class="kpi-title">Average</div>
-                  <div class="kpi-value" id="lab_mean">—</div>
-                </div>
-                <div class="kpi-card">
-                  <div class="kpi-title">Standard Deviation</div>
-                  <div class="kpi-value" id="lab_sd">—</div>
-                </div>
+              <div class="form-group">
+                <label class="form-label">Reference Limit Value</label>
+                <input type="number" class="form-control" id="lab_limit" placeholder="e.g., 600">
+                <small>Threshold limit for comparison</small>
               </div>
             </div>
+            <div class="col">
+              <div class="form-group">
+                <label class="form-label">Reference Value Source Type</label>
+                <select class="form-select" id="lab_limit_source_type">
+                  <option value="User-provided">User-provided</option>
+                  <option value="Laboratory SOP">Laboratory SOP</option>
+                  <option value="Regulatory/reference standard">Regulatory / Reference Standard</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label class="form-label">Source Reference Citation</label>
+                <input type="text" class="form-control" id="lab_limit_source_desc" placeholder="e.g., FSSAI Manual 2023 or Lab SOP-102">
+                <small>Specify document, SOP, or standard source</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+                <label class="form-label">Known Standard Deviation (optional)</label>
+                <input type="number" class="form-control" id="lab_sigma" placeholder="e.g., 20">
+                <small>If provided, uses Z-test; otherwise T-test</small>
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label class="form-label">Significance / Alpha Level</label>
+                <select class="form-select" id="lab_alpha">
+                  <option value="0.05">Standard (α = 0.05, 95% Confidence)</option>
+                  <option value="0.01">Strict (α = 0.01, 99% Confidence)</option>
+                  <option value="0.10">Lenient (α = 0.10, 90% Confidence)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+              
+          <div class="btn-group">
+            <button type="button" class="btn btn-primary" id="labRun"><i class="fas fa-play"></i> Run Statistical Test</button>
+            <button type="button" class="btn btn-secondary" id="labDemo"><i class="fas fa-flask"></i> Load Demo</button>
           </div>
         </form>
         
@@ -655,12 +689,16 @@
         
         <div class="card-header">
           <i class="fas fa-clipboard-check"></i>
-          <h3>Test Results</h3>
+          <h3>Statistical Assessment Results</h3>
         </div>
         
-        <p><strong>Safety Conclusion:</strong> <span id="lab_summary" class="badge">—</span></p>
+        <p><strong>Statistical Assessment Outcome:</strong> <span id="lab_summary" class="badge">—</span></p>
         
         <ul class="results-list" id="lab_out"></ul>
+        
+        <div style="margin-top:15px; padding:12px 16px; background:#eff6ff; border-left:4px solid #3b82f6; border-radius:6px; font-size:0.85rem; color:#1e40af;">
+          <i class="fas fa-info-circle"></i> <strong>Statistical Assessment Notice:</strong> Statistical analysis evaluates the provided sample measurements against the specified reference limit. It does not by itself constitute complete food-safety certification.
+        </div>
         
         <div class="chart-container">
           <canvas id="labChart"></canvas>

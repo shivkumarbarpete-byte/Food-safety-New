@@ -11,10 +11,11 @@ exports.predict = async (req, res) => {
     const result = await trainAndPredict([pH, moisture, temperature, catCode || 0], req.userId);
 
     res.status(200).json({
-      prediction: result.prediction === 1 ? 'Safe' : 'Unsafe',
+      prediction: result.prediction === 1 ? 'Low Risk Estimate' : 'Higher Risk Estimate',
       rawLabel: result.prediction,
       trainedOnSamples: result.trainedOn,
-      k: result.k
+      k: result.k,
+      featuresUsed: ['pH', 'moisture', 'temperature', 'catCode']
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

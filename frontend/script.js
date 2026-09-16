@@ -213,6 +213,9 @@ document.addEventListener('DOMContentLoaded', function () {
         var origin = el('p_origin') ? el('p_origin').value : '';
         var fssai = el('fssai') ? el('fssai').value.trim() : '';
 
+        var dataOrigin = window.lastDataOrigin || 'Manually Entered by User';
+        var missingFields = [];
+
         var isConsumer = (window.currentMode === 'consumer');
         var pH = null, moisture = null, temperature = null;
         var tmin = null, tmax = null;
@@ -225,16 +228,38 @@ document.addEventListener('DOMContentLoaded', function () {
             tmin = numVal('t_min');
             tmax = numVal('t_max');
             if (temperature === null && tmax !== null) temperature = tmax;
+
+            if (pH !== null && (pH < 0 || pH > 14)) missingFields.push('Invalid pH (0-14)');
+            if (moisture !== null && (moisture < 0 || moisture > 100)) missingFields.push('Invalid Moisture (0-100%)');
+            if (temperature !== null && (temperature < -50 || temperature > 150)) missingFields.push('Invalid Temp (-50 to 150°C)');
         }
 
         var sugar = numVal('n_sugar'), sodium = numVal('n_sodium'), sat = numVal('n_sat'), trans = numVal('n_trans'), kcal = numVal('n_kcal');
+        [sugar, sodium, sat, trans, kcal].forEach(function(val) {
+            if (val !== null && val < 0) missingFields.push('Negative nutrition value');
+        });
+
         var notes = [], score = baseRiskByCategory(cat);
 
-        if (!name || !validFoodKeywords.some(function (k) { return name.toLowerCase().includes(k); })) { notes.push('Invalid product name.'); score += 5; }
+        if (!name || !validFoodKeywords.some(function (k) { return name.toLowerCase().includes(k); })) { notes.push('Unverified product name format.'); score += 5; }
 
-        var expStatus = 'Not set';
-        if (exp) { var d = new Date(exp), now = new Date(), days = Math.floor((d - now) / (1000 * 3600 * 24)); if (days < 0) { expStatus = 'Expired (' + Math.abs(days) + ' days ago)'; score += 40; } else if (days <= 3) { expStatus = 'Near expiry (' + days + ' days)'; score += 15; } else expStatus = 'OK (' + days + ' days left)'; }
-        else { notes.push('Expiry not provided; risk +5'); score += 5; }
+        var expStatus = 'Data unavailable';
+        if (exp) { 
+            var d = new Date(exp), now = new Date(), days = Math.floor((d - now) / (1000 * 3600 * 24)); 
+            if (days < 0) { expStatus = 'Expired (' + Math.abs(days) + ' days ago)'; score += 40; } 
+            else if (days <= 3) { expStatus = 'Near expiry (' + days + ' days)'; score += 15; } 
+            else expStatus = 'OK (' + days + ' days left)'; 
+        }
+        else { 
+            notes.push('Expiry date not provided (marked Data unavailable; risk +5)'); 
+            missingFields.push('Expiry Date');
+            score += 5; 
+        }
+
+        if (!ing) {
+            missingFields.push('Ingredients List');
+            notes.push('Ingredients list not provided.');
+        }
 
         var allergenCount = 0, additiveCount = 0, addFlags = [];
         if (ing) {
@@ -246,30 +271,34 @@ document.addEventListener('DOMContentLoaded', function () {
         if (additiveCount > 0) { score += additiveCount * 4; notes.push('Additives: ' + addFlags.join('; ')); }
         harmfulWords.forEach(function (w) { if (ing.includes(w)) { notes.push('Contains ' + w); score += 5; } });
 
-        if (!fssai) { notes.push("No FSSAI"); score += 5; } else if (!/^\d{14}$/.test(fssai)) { notes.push("Invalid FSSAI"); score += 10; } else notes.push("FSSAI valid");
+        if (!fssai) { 
+            notes.push("FSSAI License: Data unavailable"); 
+            score += 5; 
+        } else if (!/^\d{14}$/.test(fssai)) { 
+            notes.push("Invalid FSSAI format (14 digits required)"); 
+            score += 10; 
+        } else {
+            notes.push("FSSAI number format valid (Format check only)");
+        }
 
         var originStatus = 'Not set';
         if (origin === 'India') { originStatus = 'India'; } else if (origin === 'Imported') { score += 5; originStatus = 'Imported'; } else { score += 3; originStatus = 'Other'; }
 
         var nut = nutritionTraffic({ sugar: sugar, sodium: sodium, sat: sat, trans: trans });
         var nutNotes = [];
-        // nutritionTraffic levels are for DISPLAY only — do NOT add to score here.
         for (var k in nut) { if (nut[k].level !== 'NA') nutNotes.push(k.toUpperCase() + '=' + nut[k].level.toUpperCase()); }
         if (nutNotes.length) notes.push('Nutrition levels: ' + nutNotes.join(' | '));
 
-        // Score deductions from nutrition use energy-relative FOP formula (one scoring path).
         var fopW = generateFOPWarnings(sugar, sodium, sat, kcal);
         var nutScorePenalty = 0;
         if (fopW.length) {
             notes.push('FOP: ' + fopW.join(' | '));
-            // One deduction per FOP flag: high=8, medium=3
             fopW.forEach(function(w) {
                 var pen = w.includes('⚠️') ? 8 : 3;
                 score += pen;
                 nutScorePenalty += pen;
             });
         }
-        // Trans fat: always a concern regardless of kcal (WHO: 0 safe level)
         if (trans !== null && trans > 0.5) {
             score += 6;
             nutScorePenalty += 6;
@@ -288,8 +317,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         score = clamp(Math.round(score), 0, 100);
-        var verdict = 'Moderate', badge = 'badge-warn';
-        if (score <= 30) { verdict = 'Safe'; badge = 'badge-safe'; } else if (score >= 70) { verdict = 'Unsafe'; badge = 'badge-risk'; }
+        var verdict = 'Moderate Risk Based on Available Information', badge = 'badge-warn';
+        if (score <= 30) { verdict = 'Low Risk Based on Available Information'; badge = 'badge-safe'; } 
+        else if (score >= 70) { verdict = 'Higher Risk Based on Available Information'; badge = 'badge-risk'; }
 
         var breakdown = {
             Nutrition: nutScorePenalty,
@@ -299,14 +329,16 @@ document.addEventListener('DOMContentLoaded', function () {
             Origin: origin === 'India' ? 0 : 5
         };
 
-        if (score > 70) notes.push("⚠️ Avoid consumption"); else if (score > 40) notes.push("⚠️ Consume with caution"); else notes.push("✅ Safe to consume");
+        if (score > 70) notes.push("⚠️ Higher risk based on available information"); 
+        else if (score > 40) notes.push("⚠️ Moderate risk based on available information"); 
+        else notes.push("✅ Low risk based on available information");
 
         return {
             name: name, cat: cat, expStatus: expStatus, allergenCount: allergenCount,
             additiveCount: additiveCount, notes: notes, score: score, badge: badge,
             verdict: verdict, breakdown: breakdown, originStatus: originStatus,
             tempStatus: tempStatus, fopWarnings: fopW, pH: pH, moisture: moisture,
-            temperature: temperature
+            temperature: temperature, dataOrigin: dataOrigin, missingFields: missingFields
         };
     }
 
@@ -340,6 +372,20 @@ document.addEventListener('DOMContentLoaded', function () {
         if (el('k_add')) el('k_add').textContent = r.additiveCount;
         if (el('k_all')) el('k_all').textContent = r.allergenCount;
         if (el('k_origin')) el('k_origin').textContent = r.originStatus;
+
+        if (el('dataSourceBadge')) {
+            el('dataSourceBadge').innerHTML = '<strong>Data Origin:</strong> <span class="badge" style="background:#e0f2fe; color:#0369a1;">' + escapeHtml(r.dataOrigin) + '</span>';
+        }
+
+        if (el('inputWarningBanner')) {
+            if (r.missingFields && r.missingFields.length > 0) {
+                el('inputWarningBanner').style.display = 'block';
+                el('inputWarningBanner').innerHTML = '⚠️ <strong>Input Data Warning:</strong> Data unavailable or out of range for [' + escapeHtml(r.missingFields.join(', ')) + ']. Assessment accuracy depends on the quality and completeness of the input data.';
+            } else {
+                el('inputWarningBanner').style.display = 'none';
+            }
+        }
+
         var ul = el('bullets'); if (ul) { ul.innerHTML = ''; r.notes.forEach(function (n) { var li = document.createElement('li'); li.innerHTML = '<i class="fas fa-info-circle"></i> ' + n; ul.appendChild(li); }); }
         var v = el('verdict'); if (v) { v.textContent = r.verdict + ' (' + r.score + ')'; v.className = 'badge ' + r.badge; }
         var fd = el('fopWarnings'); if (fd) { if (r.fopWarnings.length) { fd.innerHTML = '🚨 ' + r.fopWarnings.join(' • '); fd.style.display = 'block'; } else fd.style.display = 'none'; }
@@ -386,11 +432,54 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 }
 
-    function downloadHTML() { var r = analyze(); var h = '<html><head><meta charset="utf-8"><title>' + escapeHtml(r.name) + '</title></head><body><h1>Food Review</h1><p>Product: ' + escapeHtml(r.name) + '<br>Category: ' + r.cat + '<br>Verdict: ' + r.verdict + ' — ' + r.score + '/100</p><ul>' + r.notes.map(function (n) { return '<li>' + escapeHtml(n) + '</li>'; }).join('') + '</ul></body></html>'; var b = new Blob([h], { type: 'text/html' }); var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'review.html'; document.body.appendChild(a); a.click(); a.remove(); }
+    function downloadHTML() { 
+        var r = analyze(); 
+        var h = '<html><head><meta charset="utf-8"><title>' + escapeHtml(r.name) + '</title></head><body style="font-family:sans-serif; padding:20px; line-height:1.5;">' +
+            '<h1>Preliminary Risk Assessment Report</h1>' +
+            '<p><strong>Product:</strong> ' + escapeHtml(r.name) + '<br><strong>Category:</strong> ' + escapeHtml(r.cat) + '<br><strong>Data Origin:</strong> ' + escapeHtml(r.dataOrigin) + '<br><strong>Verdict:</strong> ' + escapeHtml(r.verdict) + ' (' + r.score + '/100)</p>' +
+            '<h3>Analysis Findings:</h3><ul>' + r.notes.map(function (n) { return '<li>' + escapeHtml(n) + '</li>'; }).join('') + '</ul>' +
+            '<hr style="margin-top:20px;">' +
+            '<p style="font-size:0.85rem; color:#4b5563;"><strong>Disclaimer:</strong> This is a preliminary screening assessment based on available product information. It is not a laboratory test or regulatory certification.<br>Assessment accuracy depends on the quality and completeness of the input data.</p>' +
+            '</body></html>'; 
+        var b = new Blob([h], { type: 'text/html' }); 
+        var a = document.createElement('a'); 
+        a.href = URL.createObjectURL(b); 
+        a.download = 'preliminary_risk_report.html'; 
+        document.body.appendChild(a); 
+        a.click(); 
+        a.remove(); 
+    }
 
-    function downloadPDF() { if (!window.jspdf) { showToast('jsPDF library not loaded', 'error'); return; } var r = analyze(); var doc = new window.jspdf.jsPDF(); doc.setFontSize(14); doc.text('Food Safety Review', 40, 48); doc.setFontSize(11); doc.text('Product: ' + (r.name || '?'), 40, 72); doc.text('Verdict: ' + r.verdict + ' — ' + r.score + '/100', 40, 90); var y = 110; r.notes.forEach(function (n) { doc.text('- ' + n, 48, y); y += 16; }); doc.save('review.pdf'); }
-
-
+    function downloadPDF() { 
+        if (!window.jspdf) { showToast('jsPDF library not loaded', 'error'); return; } 
+        var r = analyze(); 
+        var doc = new window.jspdf.jsPDF(); 
+        doc.setFontSize(14); 
+        doc.text('Preliminary Risk Assessment Report', 14, 20); 
+        doc.setFontSize(10); 
+        doc.text('Product: ' + (r.name || '?'), 14, 30); 
+        doc.text('Category: ' + (r.cat || '?'), 14, 37); 
+        doc.text('Data Origin: ' + (r.dataOrigin || 'User Input'), 14, 44); 
+        doc.text('Verdict: ' + r.verdict + ' (' + r.score + '/100)', 14, 51); 
+        
+        doc.text('Analysis Findings:', 14, 62); 
+        var y = 70; 
+        r.notes.forEach(function (n) { 
+            if (y > 260) { doc.addPage(); y = 20; } 
+            doc.text('- ' + n, 18, y); 
+            y += 7; 
+        }); 
+        
+        y += 10; 
+        if (y > 250) { doc.addPage(); y = 20; } 
+        doc.setFontSize(8); 
+        doc.setTextColor(100); 
+        doc.text('DISCLAIMER: This is a preliminary screening assessment based on available product information.', 14, y); 
+        doc.text('It is not a laboratory test or regulatory certification.', 14, y + 5); 
+        doc.text('Assessment accuracy depends on the quality and completeness of the input data.', 14, y + 10); 
+        
+        doc.save('preliminary_risk_report.pdf'); 
+    }
 
     function stdNormCDF(x) { var t = 1 / (1 + 0.2316419 * Math.abs(x)); var d = 0.3989423 * Math.exp(-x * x / 2); var p = 1 - d * t * (1.330274429 + t * (-1.821255978 + t * (1.781477937 + t * (-0.356563782 + t * 0.319381530)))); return x >= 0 ? p : 1 - p; }
 
@@ -402,24 +491,64 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function runLabTest() {
+        var param = el('lab_param') ? el('lab_param').value.trim() : '';
+        var unit = el('lab_unit') ? el('lab_unit').value.trim() : '';
+        param = param || 'Measured Parameter';
+        unit = unit || 'units';
+
         var data = parseCSVNums(el('lab_data') ? el('lab_data').value : '');
         var L = parseFloat(el('lab_limit') ? el('lab_limit').value : '');
+        var sourceType = el('lab_limit_source_type') ? el('lab_limit_source_type').value : 'User-provided';
+        var sourceDesc = el('lab_limit_source_desc') ? el('lab_limit_source_desc').value.trim() : '';
+
         var sigma = parseFloat(el('lab_sigma') ? el('lab_sigma').value : '');
         var alpha = parseFloat(el('lab_alpha') ? el('lab_alpha').value : '0.05');
         var out = el('lab_out'), summary = el('lab_summary');
         if (!out) return; out.innerHTML = '';
-        if (!data.length || isNaN(L)) { out.innerHTML = '<li>Enter valid data and limit.</li>'; if (summary) { summary.textContent = 'Invalid'; summary.className = 'badge badge-risk'; } return; }
-        if (data.length < 2) { out.innerHTML = '<li>Need at least 2 values.</li>'; return; }
+        if (!data.length || isNaN(L)) { 
+            out.innerHTML = '<li>Enter valid numeric measurements and reference limit.</li>'; 
+            if (summary) { summary.textContent = 'Invalid Data'; summary.className = 'badge badge-risk'; } 
+            return; 
+        }
+        if (data.length < 2) { out.innerHTML = '<li>Need at least 2 numeric measurements for statistical analysis.</li>'; return; }
+
         var n = data.length, mean = data.reduce(function (a, b) { return a + b; }, 0) / n;
         var sd = isNaN(sigma) ? Math.sqrt(data.reduce(function (a, x) { return a + (x - mean) * (x - mean); }, 0) / (n - 1)) : sigma;
-        var se = sd / Math.sqrt(n), z = (mean - L) / se, useZ = !isNaN(sigma);
+        var se = sd / Math.sqrt(n);
+        var z = (mean - L) / se;
+        var useZ = !isNaN(sigma);
         var p = useZ ? (1 - stdNormCDF(z)) : (1 - studentTCDF(z, n - 1));
+
         if (el('lab_n')) el('lab_n').textContent = n;
-        if (el('lab_mean')) el('lab_mean').textContent = mean.toFixed(2);
-        if (el('lab_sd')) el('lab_sd').textContent = sd.toFixed(2);
-        var dec = p < alpha ? 'Exceeds safe limit — Not Safe.' : 'Within safe limit — Safe.';
-        if (summary) { summary.textContent = dec; summary.className = 'badge ' + (p < alpha ? 'badge-risk' : 'badge-safe'); }
-        ['Test: ' + (useZ ? 'Z-Test' : 'T-Test'), 'Average: ' + mean.toFixed(2) + ' (Limit: ' + L + ')', 'p-value: ' + p.toFixed(4)].forEach(function (s) { var li = document.createElement('li'); li.innerHTML = s; out.appendChild(li); });
+        if (el('lab_mean')) el('lab_mean').textContent = mean.toFixed(2) + ' ' + unit;
+        if (el('lab_sd')) el('lab_sd').textContent = sd.toFixed(2) + ' ' + unit;
+
+        var dec = p < alpha ? 'Exceeds Reference Limit (p < α)' : 'Within Reference Limit (p ≥ α)';
+        if (summary) { 
+            summary.textContent = dec; 
+            summary.className = 'badge ' + (p < alpha ? 'badge-risk' : 'badge-safe'); 
+        }
+
+        var sourceText = sourceType + (sourceDesc ? ' (' + escapeHtml(sourceDesc) + ')' : '');
+        var interpretation = p < alpha ? 
+            'Statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' > ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' < α = ' + alpha + ').' :
+            'No statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' ≤ ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' ≥ α = ' + alpha + ').';
+
+        [
+            '<strong>Parameter Name:</strong> ' + escapeHtml(param) + ' (' + escapeHtml(unit) + ')',
+            '<strong>Sample Measurements:</strong> ' + data.join(', ') + ' ' + escapeHtml(unit),
+            '<strong>Sample Size (n):</strong> ' + n + ' | <strong>Sample Mean (x̄):</strong> ' + mean.toFixed(2) + ' ' + escapeHtml(unit),
+            '<strong>Reference Limit (L):</strong> ' + L + ' ' + escapeHtml(unit) + ' <small style="color:#6b7280;">[' + escapeHtml(sourceText) + ']</small>',
+            '<strong>Statistical Test:</strong> ' + (useZ ? 'Z-Test (known σ = ' + sigma + ')' : 'T-Test (sample s = ' + sd.toFixed(2) + ')'),
+            '<strong>Standard Error (SE):</strong> ' + se.toFixed(2) + ' | <strong>Test Statistic (' + (useZ ? 'z' : 't') + '):</strong> ' + z.toFixed(2),
+            '<strong>p-value:</strong> ' + p.toFixed(4) + ' (Alpha level α = ' + alpha + ', Confidence Level = ' + Math.round((1 - alpha) * 100) + '%)',
+            '<strong>Statistical Interpretation:</strong> ' + interpretation
+        ].forEach(function (s) { 
+            var li = document.createElement('li'); 
+            li.innerHTML = s; 
+            out.appendChild(li); 
+        });
+
         initLabChart(mean, L);
     }
 async function renderHistory() {
@@ -1135,16 +1264,11 @@ function fetchProductFromAPI(barcode) {
                 fssai = '';
             }
             
-            // Expiry - not usually in API, set 6 months ahead
-            var expDate = new Date();
+            // Expiry - check if available in API
+            var expDateFormatted = 'Data unavailable';
             if (p.expiration_date) {
-                var parts = p.expiration_date.split('-');
-                if (parts.length === 3) expDate = new Date(parts[0], parts[1] - 1, parts[2]);
-                else expDate.setMonth(expDate.getMonth() + 6);
-            } else {
-                expDate.setMonth(expDate.getMonth() + 6);
+                expDateFormatted = p.expiration_date;
             }
-            
             
             // ===== BUILD RESULT DISPLAY =====
             var html = '';
@@ -1162,6 +1286,8 @@ function fetchProductFromAPI(barcode) {
             html += '<div style="font-size:0.9rem; color:#374151; margin-top:4px;">Brand: ' + escapeHtml(brand) + '</div>';
             html += '<div style="font-size:0.85rem; color:#6b7280; margin-top:2px;">Category: ' + escapeHtml(ourCategory) + '</div>';
             html += '<div style="font-size:0.85rem; color:#6b7280;">Barcode: ' + barcode + '</div>';
+            html += '<div style="font-size:0.85rem; color:#6b7280;">Expiry Date: ' + (expDateFormatted !== 'Data unavailable' ? escapeHtml(expDateFormatted) : '<span style="color:#dc2626;">Data unavailable</span>') + '</div>';
+            html += '<div style="font-size:0.85rem; color:#6b7280;">FSSAI License: <span style="color:#dc2626;">Data unavailable (Not in Open Food Facts)</span></div>';
             html += '</div>';
             html += '</div>';
             
@@ -1170,24 +1296,22 @@ function fetchProductFromAPI(barcode) {
             html += '<div style="font-weight:600; color:#374151; margin-bottom:8px;">📊 Nutrition (per 100g):</div>';
             html += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px; font-size:0.85rem;">';
             
-            if (kcal) html += '<div>🔥 Energy: <strong>' + kcal + ' kcal</strong></div>';
-            if (fat) html += '<div>🧈 Fat: <strong>' + fat + ' g</strong></div>';
-            if (sat) html += '<div>⛔ Sat Fat: <strong>' + sat + ' g</strong></div>';
-            if (trans) html += '<div>⚠️ Trans Fat: <strong>' + trans + ' g</strong></div>';
-            if (carbs) html += '<div>🍞 Carbs: <strong>' + carbs + ' g</strong></div>';
-            if (sugar) html += '<div>🍬 Sugar: <strong>' + sugar + ' g</strong></div>';
-            if (protein) html += '<div>💪 Protein: <strong>' + protein + ' g</strong></div>';
-            if (sodium) html += '<div>🧂 Sodium: <strong>' + sodium + ' g</strong></div>';
+            html += '<div>🔥 Energy: <strong>' + (kcal ? kcal + ' kcal' : 'Data unavailable') + '</strong></div>';
+            html += '<div>🧈 Fat: <strong>' + (fat ? fat + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>⛔ Sat Fat: <strong>' + (sat ? sat + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>⚠️ Trans Fat: <strong>' + (trans ? trans + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>🍞 Carbs: <strong>' + (carbs ? carbs + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>🍬 Sugar: <strong>' + (sugar ? sugar + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>💪 Protein: <strong>' + (protein ? protein + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>🧂 Sodium: <strong>' + (sodium ? sodium + ' g' : 'Data unavailable') + '</strong></div>';
             
             html += '</div></div>';
             
             // Ingredients & Allergens
-            if (ingredients) {
-                html += '<div style="margin-top:10px; background:white; border-radius:8px; padding:12px; border:1px solid #e5e7eb;">';
-                html += '<div style="font-weight:600; color:#374151; margin-bottom:4px;">📝 Ingredients:</div>';
-                html += '<div style="font-size:0.8rem; color:#4b5563; max-height:60px; overflow-y:auto;">' + escapeHtml(ingredients) + '</div>';
-                html += '</div>';
-            }
+            html += '<div style="margin-top:10px; background:white; border-radius:8px; padding:12px; border:1px solid #e5e7eb;">';
+            html += '<div style="font-weight:600; color:#374151; margin-bottom:4px;">📝 Ingredients:</div>';
+            html += '<div style="font-size:0.8rem; color:#4b5563; max-height:60px; overflow-y:auto;">' + (ingredients ? escapeHtml(ingredients) : '<span style="color:#dc2626;">Data unavailable</span>') + '</div>';
+            html += '</div>';
             
             if (allergens) {
                 html += '<div style="margin-top:8px; padding:8px 12px; background:#fef2f2; border-radius:6px; font-size:0.85rem; color:#b91c1c;">';
@@ -1201,14 +1325,19 @@ function fetchProductFromAPI(barcode) {
                 html += '</div>';
             }
             
+            // Barcode safety notice
+            html += '<div style="margin-top:12px; padding:10px 14px; background:#eff6ff; border-radius:6px; font-size:0.8rem; color:#1e40af; border-left:3px solid #3b82f6;">';
+            html += '<i class="fas fa-info-circle"></i> <strong>Note:</strong> Barcode scanning identifies the product and retrieves available product information. It does not verify laboratory safety.';
+            html += '</div>';
+
             // Auto-fill button
             html += '<div style="margin-top:15px; text-align:center;">';
-            html += '<button onclick="autoFillFromBarcode(\'' + escapeHtml(name).replace(/'/g, "\\'") + '\',\'' + ourCategory + '\',\'' + escapeHtml(ingredients).replace(/'/g, "\\'") + '\',\'' + origin + '\',' + (kcal || 0) + ',' + (sugar || 0) + ',' + (sodium ? sodium * 1000 : 0) + ',' + (sat || 0) + ',' + (trans || 0) + ')" class="btn" style="background:#16a34a; color:white; padding:12px 30px; font-size:1rem; border-radius:8px; border:none; cursor:pointer;">';
+            html += '<button onclick="autoFillFromBarcode(\'' + escapeHtml(name).replace(/'/g, "\\'") + '\',\'' + ourCategory + '\',\'' + escapeHtml(ingredients).replace(/'/g, "\\'") + '\',\'' + origin + '\',' + (kcal || 0) + ',' + (sugar || 0) + ',' + (sodium ? sodium * 1000 : 0) + ',' + (sat || 0) + ',' + (trans || 0) + ',\'' + (expDateFormatted !== 'Data unavailable' ? expDateFormatted : '') + '\')" class="btn" style="background:#16a34a; color:white; padding:12px 30px; font-size:1rem; border-radius:8px; border:none; cursor:pointer;">';
             html += '<i class="fas fa-magic"></i> Auto-Fill Form with This Data</button>';
             html += '</div>';
             
             // Data source
-            html += '<div style="margin-top:10px; text-align:center; font-size:0.72rem; color:#9ca3af;">';
+            html += '<div style="margin-top:10px; text-align:center; font-size:0.75rem; color:#6b7280; font-weight:600;">';
             html += 'Data Source: Open Food Facts (openfoodfacts.org) — Open Database';
             html += '</div>';
             
@@ -1226,11 +1355,13 @@ function fetchProductFromAPI(barcode) {
 
 // --- Auto-fill form from barcode data ---
 // This function needs to be global for onclick to work
-window.autoFillFromBarcode = function(name, category, ingredients, origin, kcal, sugar, sodium, sat, trans) {
+window.autoFillFromBarcode = function(name, category, ingredients, origin, kcal, sugar, sodium, sat, trans, expDate) {
+    window.lastDataOrigin = 'Retrieved from Open Food Facts API';
     if (el('p_name')) el('p_name').value = name;
     if (el('p_cat')) el('p_cat').value = category;
     if (el('p_ing')) el('p_ing').value = ingredients;
     if (el('p_origin')) el('p_origin').value = origin;
+    if (el('p_exp')) el('p_exp').value = expDate || '';
     
     if (kcal && el('n_kcal')) el('n_kcal').value = Math.round(kcal);
     if (sugar && el('n_sugar')) el('n_sugar').value = parseFloat(sugar).toFixed(1);
@@ -1245,9 +1376,6 @@ window.autoFillFromBarcode = function(name, category, ingredients, origin, kcal,
         if (el('t_max')) el('t_max').value = range[1];
     }
     
-  
-    
-    // FSSAI - leave empty for user to enter
     if (el('fssai')) el('fssai').value = '';
     
     // Scroll to form top
@@ -1835,7 +1963,18 @@ async function executeKnnPrediction(triggerBtn) {
 if (el('runKnBtn')) el('runKnBtn').onclick = function() { executeKnnPrediction(el('runKnBtn')); };
 if (el('runKnBtnLab')) el('runKnBtnLab').onclick = function() { executeKnnPrediction(el('runKnBtnLab')); };
 
-if (el('labDemo')) el('labDemo').addEventListener('click', function () { if (el('lab_data')) el('lab_data').value = '580,590,585,600'; if (el('lab_limit')) el('lab_limit').value = 600; if (el('lab_sigma')) el('lab_sigma').value = ''; if (el('lab_alpha')) el('lab_alpha').value = '0.05'; validateInputs(); runLabTest(); });
+if (el('labDemo')) el('labDemo').addEventListener('click', function () { 
+    if (el('lab_param')) el('lab_param').value = 'Sodium';
+    if (el('lab_unit')) el('lab_unit').value = 'mg/kg';
+    if (el('lab_data')) el('lab_data').value = '480,510,495,505'; 
+    if (el('lab_limit')) el('lab_limit').value = 600; 
+    if (el('lab_limit_source_type')) el('lab_limit_source_type').value = 'Regulatory/reference standard';
+    if (el('lab_limit_source_desc')) el('lab_limit_source_desc').value = 'FSSAI Reference Standard 2023';
+    if (el('lab_sigma')) el('lab_sigma').value = ''; 
+    if (el('lab_alpha')) el('lab_alpha').value = '0.05'; 
+    validateInputs(); 
+    runLabTest(); 
+});
 if (el('processCsvBtn')) el('processCsvBtn').addEventListener('click', function () {
     var f = el('csvFile') ? el('csvFile').files[0] : null;
     if (f) {
@@ -1860,13 +1999,16 @@ if (el('processCsvBtn')) el('processCsvBtn').addEventListener('click', function 
 
     if (el('verifyFssai')) el('verifyFssai').addEventListener('click', function () {
         var n = el('fssai') ? el('fssai').value.trim() : '', s = el('fssaiStatus'); if (!s) return;
-        if (!n) s.innerHTML = '<span style="color:#dc2626;">❌ Enter number</span>';
-        else if (!/^\d{14}$/.test(n)) s.innerHTML = '<span style="color:#dc2626;">❌ 14 digits required</span>';
-        else s.innerHTML = '<span style="color:#16a34a;">✅ Verified</span>';
+        if (!n) s.innerHTML = '<span style="color:#dc2626;">❌ Enter FSSAI number</span>';
+        else if (!/^\d{14}$/.test(n)) s.innerHTML = '<span style="color:#dc2626;">❌ 14 numeric digits required</span>';
+        else s.innerHTML = '<span style="color:#16a34a;">✅ Valid 14-digit format (Format check only — not official FSSAI registry verification)</span>';
     });
 
     document.querySelectorAll('a[href^="#"]').forEach(function (a) { a.addEventListener('click', function (e) { e.preventDefault(); var t = document.querySelector(this.getAttribute('href')); if (t) t.scrollIntoView({ behavior: 'smooth' }); }); });
     ['p_name', 'p_exp', 'fssai', 'lab_data', 'lab_limit'].forEach(function (id) { if (el(id)) el(id).addEventListener('input', validateInputs); });
+    ['p_name', 'p_exp', 'p_ing', 'p_cat', 'n_kcal', 'n_sugar', 'n_sodium', 'n_sat', 'n_trans'].forEach(function (id) {
+        if (el(id)) el(id).addEventListener('input', function() { window.lastDataOrigin = 'Manually Entered by User'; });
+    });
     var mm = document.querySelector('.mobile-menu'); if (mm) mm.addEventListener('click', function () { var u = document.querySelector('nav ul'); if (u) u.classList.toggle('show'); });
     // ========== NEW SCROLL & UI FEATURES ==========
     
