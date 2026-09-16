@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FoodSafetyHub - Advanced Food Safety Analyzer | MCA Project</title>
+  <meta name="description" content="Advanced food safety testing tool with FSSAI-compliant analysis, lab statistics, and ML predictions">
+  <meta name="keywords" content="food safety, FSSAI, lab testing, MCA project, food analyzer, machine learning">
+  <meta name="author" content="Shivkumar Barpete,Parag Admache,Nilesh Dhakad">
+    <!-- CSS FILE -->
+  <link rel="stylesheet" href="style.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- jsPDF -->
+   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Barcode Scanner Library -->
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
+  
+  
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">
+          <i class="fas fa-utensils"></i>
+          <h1>FoodSafetyHub</h1>
+        </div>
+        <nav>
+          <ul>
+            <li><a href="#home" class="active">Home</a></li>
+            <li><a href="#analyzer">Analyzer</a></li>
+            <li><a href="#lab">Lab Test</a></li>
+            <li><a href="#history">History</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#technologies">Technologies</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </nav>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <button class="dark-toggle" id="darkToggle" title="Toggle Dark Mode" aria-label="Toggle dark mode">
+            <i class="fas fa-moon"></i>
+          </button>
+          <button class="btn" id="loginBtn" style="margin-left: 0; background: rgba(255,255,255,0.2); color: white; border: 2px solid white;">
+            <i class="fas fa-user"></i> Login
+          </button>
+        </div>
+        <div class="mobile-menu">
+          <i class="fas fa-bars"></i>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div id="progressBar" style="position: fixed; top: 70px; left: 0; width: 0%; height: 4px; background: #facc15; z-index: 999; transition: width 0.1s;"></div>
+
+  <!-- Hero Section -->
+  <section id="home" class="hero fade-in">
+    <div class="container">
+      <h2>Advanced Food Safety Analysis</h2>
+      <p>FSSAI-compliant food safety testing with machine learning predictions and statistical analysis. MCA 1st Year Project by Shivkumar Barpete,Parag Admache,Nilesh Dhakad.</p>
+      <div class="btn-group" style="justify-content: center;">
+        <a href="#analyzer" class="btn btn-primary"><i class="fas fa-play-circle"></i> Start Analysis</a>
+        <a href="#about" class="btn btn-outline"><i class="fas fa-info-circle"></i> Learn More</a>
+      </div>
+    </div>
+  </section>
+<section class="section" style="padding: 40px 0; background: var(--bg-white);">
+  <div class="container">
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="kpi-card" style="background: #f0fdf4; border-left: 5px solid #16a34a;">
+        <div class="kpi-title">Total Scans</div>
+        <div class="kpi-value" id="dash_total" style="color:#16a34a;">0</div>
+      </div>
+      <div class="kpi-card" style="background: #dcfce7; border-left: 5px solid #059669;">
+        <div class="kpi-title">Safe Products</div>
+        <div class="kpi-value" id="dash_safe" style="color:#059669;">0</div>
+      </div>
+      <div class="kpi-card" style="background: #fef2f2; border-left: 5px solid #dc2626;">
+        <div class="kpi-title">Unsafe Products</div>
+        <div class="kpi-value" id="dash_unsafe" style="color:#dc2626;">0</div>
+      </div>
+      <div class="kpi-card" style="background: #fef3c7; border-left: 5px solid #d97706;">
+        <div class="kpi-title">Avg Risk Score</div>
+        <div class="kpi-value" id="dash_avg" style="color:#d97706;">0%</div>
+      </div>
+    </div>
+  </div>
+</section>
+  <!-- About Section -->
+  <section id="about" class="section">
+    <div class="container reveal">
+      <div class="section-title">
+        <h2>About FoodSafetyHub</h2>
+        <p>An innovative MCA 1st year project developed at IIIT Bhopal to revolutionize food safety testing</p>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="card text-center">
+            <div class="card-header">
+              <i class="fas fa-flask"></i>
+              <h3>Heuristic Analysis</h3>
+            </div>
+            <p>Comprehensive evaluation of food products based on multiple safety parameters including ingredients, expiry, storage conditions, and FSSAI compliance.</p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card text-center">
+            <div class="card-header">
+              <i class="fas fa-brain"></i>
+              <h3>ML Predictions</h3>
+            </div>
+            <p>Advanced k-NN machine learning algorithm to predict food safety based on pH, moisture, and temperature parameters.</p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card text-center">
+            <div class="card-header">
+              <i class="fas fa-chart-bar"></i>
+              <h3>Statistical Testing</h3>
+            </div>
+            <p>Z-test and T-test implementations for laboratory data analysis with configurable confidence levels.</p>
+          </div>
+        </div>
+      </div>
+      <div class="card mt-20">
+        <div class="card-header">
+          <i class="fas fa-user-graduate"></i>
+          <h3>Project Details</h3>
+        </div>
+        <p><strong>Developers:</strong> Shivkumar Barpete and group</p>
+        <p><strong>Institution:</strong> Indian Institute of Information Technology, Bhopal</p>
+        <p><strong>Course:</strong> Master of Computer Applications (MCA)</p>
+        <p><strong>Contact:</strong> shivkirar78@gmail.com</p>
+      </div>
+    </div>
+  </section>
+
+  <!--Technologies Section -->
+  <section id="technologies" class="section" style="background: var(--bg-light);">
+    <div class="container">
+      <div class="section-title">
+        <h2>Technologies Used</h2>
+        <p>Full-stack platform built with modern web technologies, real ML models, and secure backend services</p>
+      </div>
+      <div class="tech-icons">
+        <div class="tech-item">
+          <i class="fab fa-html5"></i>
+          <h4>HTML5</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fab fa-css3-alt"></i>
+          <h4>CSS3</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fab fa-js-square"></i>
+          <h4>JavaScript</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fab fa-node-js"></i>
+          <h4>Node.js</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fas fa-server"></i>
+          <h4>Express.js</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fas fa-database"></i>
+          <h4>MongoDB</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fas fa-shield-alt"></i>
+          <h4>JWT Auth</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fas fa-brain"></i>
+          <h4>ml-knn</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fas fa-project-diagram"></i>
+          <h4>TensorFlow.js</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fas fa-chart-line"></i>
+          <h4>Chart.js</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fas fa-file-pdf"></i>
+          <h4>jsPDF</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fas fa-calculator"></i>
+          <h4>Stats (Z/T-test)</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fas fa-leaf"></i>
+          <h4>Mongoose</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fas fa-lock"></i>
+          <h4>bcryptjs</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fas fa-barcode"></i>
+          <h4>Quagga2</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fas fa-globe"></i>
+          <h4>Open Food Facts</h4>
+        </div>
+      </div>
+    </div>
+  </section>
+
+ 
+
+  <!-- Analyzer Section -->
+  <section id="analyzer" class="section" style="background: var(--bg-light);">
+    <div class="container reveal">
+
+      <!-- ========== MODE TOGGLE ========== -->
+      <div style="display:flex; justify-content:center; margin-bottom: 10px;">
+        <div class="mode-toggle-bar">
+          <button class="mode-btn active" id="consumerModeBtn">
+            <i class="fas fa-shopping-basket"></i> Consumer Mode
+          </button>
+          <button class="mode-btn" id="labModeBtn">
+            <i class="fas fa-microscope"></i> Lab / Inspector Mode
+          </button>
+        </div>
+      </div>
+      <div id="modeDescription" style="text-align:center; font-size:0.88rem; color:var(--text-light); margin-bottom:28px;">
+        <span id="modeDesc">Consumer Mode — Barcode scanning, nutrition analysis &amp; observable safety questionnaire. No lab instruments required.</span>
+      </div>
+
+       <!-- ========== BARCODE SCANNER SECTION ========== -->
+<div class="card" style="margin-bottom: 20px;">
+    <h3><i class="fas fa-barcode"></i> Barcode Scanner</h3>
+    <p style="font-size:0.85rem; color:#6b7280; margin-bottom:15px;">Scan barcode from camera or upload image. Fetches REAL product data from Open Food Facts database.</p>
+    
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
+        <!-- Camera Scan Button -->
+        <button id="startCameraBtn" class="btn" style="background:#16a34a; color:white;">
+            <i class="fas fa-camera"></i> Camera Scan
+        </button>
+        
+        <!-- Upload Image Button -->
+        <label class="btn" style="background:#2563eb; color:white; cursor:pointer;">
+            <i class="fas fa-upload"></i> Upload Barcode Image
+            <input type="file" id="barcodeFileInput" accept="image/*" style="display:none;">
+        </label>
+        
+        <!-- Manual Enter -->
+        <input type="text" id="manualBarcode" placeholder="Or type barcode number (EAN-13)" 
+               style="flex:1; min-width:200px; padding:10px 15px; border:2px solid #e5e7eb; border-radius:8px; font-size:0.95rem;">
+        <button id="lookupBarcodeBtn" class="btn" style="background:#f59e0b; color:white;">
+            <i class="fas fa-search"></i> Lookup
+        </button>
+    </div>
+    
+    <!-- Camera View (hidden by default) -->
+    <div id="cameraContainer" style="display:none; position:relative; margin-bottom:15px;">
+        <div id="cameraView" style="width:100%; height:350px; border:3px solid #16a34a; border-radius:10px; overflow:hidden; position:relative; background:#000;">
+            <!-- Quagga will render here -->
+        </div>
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none;">
+            <div style="width:250px; height:80px; border:3px solid #16a34a; border-radius:8px; box-shadow:0 0 0 9999px rgba(0,0,0,0.4);"></div>
+        </div>
+        <div style="text-align:center; margin-top:8px;">
+            <button id="stopCameraBtn" class="btn" style="background:#dc2626; color:white;">
+                <i class="fas fa-stop"></i> Stop Camera
+            </button>
+        </div>
+        <p style="text-align:center; font-size:0.8rem; color:#16a34a; margin-top:5px;">
+            📷 Point barcode inside the green frame
+        </p>
+    </div>
+    
+    <!-- Result Area -->
+    <div id="barcodeResult" style="display:none;"></div>
+
+    <!-- ========== CONSUMER PROXY QUESTIONNAIRE ========== -->
+    <div id="proxyQuestionnaireSection" style="display:none;"></div>
+
+    <!-- ========== CONSUMER SAFETY RESULT CARD ========== -->
+    <div id="consumerResultCard" style="display:none;"></div>
+</div>
+      <div class="section-title">
+        <h2>Product Safety Analyzer</h2>
+        <p>Comprehensive food product analysis with FSSAI compliance checking and risk assessment</p>
+      </div>
+ 
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-search"></i>
+          <h3>Product Information</h3>
+        </div>
+        <form id="analyzerForm">
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+                <label class="form-label">Product Name</label>
+                <input type="text" class="form-control" id="p_name" placeholder="e.g., Classic Salted Chips">
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label class="form-label">Category</label>
+              
+                <div id="catWarning" style="margin-top:-10px; margin-bottom:15px; font-size:0.85rem; color:#dc2626; display:none; padding:8px; background:#fef2f2; border-radius:5px;"></div>
+                  <select class="form-select" id="p_cat">
+                  <option>Packaged Snack</option> 
+                  <option>Dairy</option>
+                  <option>Meat & Poultry</option>
+                  <option>Seafood</option>
+                  <option>Fresh Produce</option>
+                  <option>Beverage</option>
+                  <option>Bakery</option>
+                  <option>Frozen Food</option>
+                  <option>Baby Food</option>
+                  <option>Street Food</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+                <label class="form-label">Expiry Date</label>
+                <input type="date" class="form-control" id="p_exp">
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label class="form-label">FSSAI License (14 digits)</label>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="fssai" 
+                    placeholder="12345678901234" 
+                    maxlength="14">
+                  <button 
+                    type="button" 
+                    class="btn btn-secondary" 
+                    id="verifyFssai" 
+                    style="white-space: nowrap; padding: 12px 16px;">
+                    Verify
+                  </button>
+                </div>
+                <small id="fssaiStatus" style="margin-top: 5px; display: block;"></small>
+              </div>
+            </div>
+          </div>
+
+          <div id="p_dynamic"></div>
+          
+          <div class="form-group">
+            <label class="form-label">Ingredients (comma separated)</label>
+            <textarea class="form-control" id="p_ing" placeholder="Potatoes, Edible Vegetable Oil, Salt" rows="3"></textarea>
+            <div id="liveIngredientAlert" style="margin-top:8px; min-height:20px; font-size:0.9rem;"></div>
+          </div>
+          
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+                <label class="form-label">Country of Origin</label>
+                <select class="form-select" id="p_origin">
+                  <option>India</option>
+                  <option>Imported</option>
+                  <option>Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <details>
+            <summary style="cursor: pointer; font-weight: 600; margin-bottom: 15px;">Nutrition Information per 100g (optional)</summary>
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label class="form-label">Energy (kcal)</label>
+                  <input type="number" class="form-control" id="n_kcal" placeholder="540">
+                </div>
+              </div>
+              <div class="col">
+                <div class="form-group">
+                  <label class="form-label">Sugar (g)</label>
+                  <input type="number" class="form-control" id="n_sugar" placeholder="1.2">
+                </div>
+              </div>
+              <div class="col">
+                <div class="form-group">
+                  <label class="form-label">Sodium (mg)</label>
+                  <input type="number" class="form-control" id="n_sodium" placeholder="580">
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label class="form-label">Saturated Fat (g)</label>
+                  <input type="number" class="form-control" id="n_sat">
+                </div>
+              </div>
+              <div class="col">
+                <div class="form-group">
+                  <label class="form-label">Trans Fat (g)</label>
+                  <input type="number" class="form-control" id="n_trans">
+                </div>
+              </div>
+            </div>
+          </details>
+          
+          <div class="form-group">
+            <label class="form-label">CSV Upload (Batch Analysis)</label>
+            <input type="file" class="form-control" id="csvFile" accept=".csv">
+            <!-- HTML mein ye div add karein csvFile input ke niche -->
+<div id="csv-batch-results" style="margin-top: 20px;">
+    <!-- Yahan CSV ka analysis aayega -->
+</div>
+          </div>
+          <div class="form-group">
+  <label class="form-label">Upload Product Label / Photo (for OCR & Visual Check)</label>
+  <input type="file" class="form-control" id="labelImage" accept="image/*">
+  <div id="imagePreview" style="margin-top:10px; max-width:300px;"></div>
+
+  
+  <!-- IMAGE RESULT Box -->
+  <div id="imageResult"></div>
+</div>
+          
+          <div class="btn-group">
+            <button type="button" class="btn btn-primary" id="runBtn"><i class="fas fa-play"></i> Run Safety Checks</button>
+            <button type="button" class="btn btn-secondary" id="demoBtn"><i class="fas fa-magic"></i> Load Demo</button>
+            <button type="button" class="btn btn-outline" id="clearBtn"><i class="fas fa-eraser"></i> Clear Form</button>
+            <button type="button" class="btn btn-outline" id="runKnBtn" style="display:none;"><i class="fas fa-brain"></i> k-NN Prediction</button>
+            <button type="button" class="btn btn-outline" id="processCsvBtn"><i class="fas fa-file-csv"></i> Process CSV</button>
+          </div>
+          
+          <div class="btn-group">
+            <button type="button" class="btn btn-outline" id="saveReview"><i class="fas fa-save"></i> Save Review</button>
+            <button type="button" class="btn btn-outline" id="downloadPdf"><i class="fas fa-file-pdf"></i> Export PDF</button>
+            <button type="button" class="btn btn-outline" id="downloadHtml"><i class="fas fa-download"></i> HTML Report</button>
+            <button type="button" class="btn btn-outline" id="printReport"><i class="fas fa-print"></i> Print Report</button>
+          </div>
+        </form>
+
+        <!-- ADULTERATION test-->
+        <div class="card mt-30">
+            <div class="card-header">
+                <i class="fas fa-vial"></i>
+                <h3>Quick Adulteration Test (Home Methods)</h3>
+            </div>
+            <div class="form-group">
+                <select class="form-select" id="adulterant_test">
+                    <option value="">-- Select Food Item --</option>
+                    <option value="milk_water">Milk (Water Adulteration Test)</option>
+                    <option value="milk_starch">Milk (Starch Adulteration Test)</option>
+                    <option value="oil_argemone">Cooking Oil (Argemone Oil Test)</option>
+                    <option value="honey_water">Honey (Water/M sugar Test)</option>
+                    <option value="spice_wood">Spices (Wood Dust/Dye Test)</option>
+                </select>
+            </div>
+            <div id="adulterant_result" style="display:none;"></div>
+        </div>
+        
+        <!-- Lab-mode-only extras: kNN controls + ML Analysis -->
+        <div id="lab-mode-extras" style="display:none;">
+        <div class="card mt-30" id="ml-section">
+          <div class="card-header">
+            <i class="fas fa-brain"></i>
+            <h3>Advanced ML Analysis (pH, Moisture, Temp)</h3>
+          </div>
+          <!-- Lab Mode Disclaimer -->
+          <div class="lab-disclaimer" id="labModeDisclaimer">
+            <strong><i class="fas fa-flask"></i> Lab / Inspector Mode</strong> — Enter values measured with appropriate instruments (pH meter, moisture analyzer, thermometer). ML predictions are supplementary decision-support tools and do not replace official food-safety standards or laboratory certification.
+          </div>
+          <div id="mlSampleDisclaimer" style="display:none; margin-bottom:12px; padding:10px 14px; background:#fef3c7; border-radius:8px; font-size:0.85rem; color:#92400e; border-left:3px solid #d97706;">
+            <i class="fas fa-exclamation-triangle"></i> <strong>Experimental:</strong> k-NN result is based on a small number of stored laboratory samples. Reliability improves as more measured reviews are saved.
+          </div>
+          <!-- Measured Instrument Values (Lab Mode Only) -->
+          <div class="row" style="margin: 15px 0;" id="labMeasurementsGroup">
+            <div class="col">
+              <div class="form-group">
+                <label class="form-label"><i class="fas fa-vial"></i> Measured pH</label>
+                <input type="number" step="0.01" min="0" max="14" class="form-control" id="p_ph" placeholder="e.g. 6.5">
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label class="form-label"><i class="fas fa-tint"></i> Measured Moisture (%)</label>
+                <input type="number" step="0.1" min="0" max="100" class="form-control" id="p_moisture" placeholder="e.g. 14.5">
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label class="form-label"><i class="fas fa-thermometer-half"></i> Measured Temp (°C)</label>
+                <input type="number" step="0.1" min="-50" max="150" class="form-control" id="p_temp" placeholder="e.g. 4.0">
+              </div>
+            </div>
+          </div>
+         <div class="btn-group" style="margin-top:10px; flex-wrap:wrap;">
+  <button type="button" class="btn btn-outline" id="runKnBtnLab"><i class="fas fa-brain"></i> k-NN Prediction</button>
+  <button type="button" class="btn btn-outline" id="runEDA">📊 Run EDA</button>
+  <button type="button" class="btn btn-outline" id="runLinear">📈 Linear Regression</button>
+  <button type="button" class="btn btn-outline" id="runLogistic">🧠 Logistic Regression</button>
+  <button type="button" class="btn btn-outline" id="runRidge">🛡️ Ridge (L2)</button>
+  <button type="button" class="btn btn-outline" id="runLasso">📏 Lasso (L1)</button>
+  <button type="button" class="btn btn-outline" id="runHist">📊 Histograms</button>
+</div>
+<!-- New: Simple Explanations -->
+<div id="ml-explain" style="margin-top:15px; font-size:0.95rem; background:#f0fdf4; padding:12px; border-radius:8px; border-left:4px solid #16a34a;">
+  <strong>What is happening?</strong> 
+  <span id="currentExplain" style="color:#15803d;"></span>
+</div>
+
+          <div id="ml-results" class="mt-20" style="display:none;">
+            <hr style="margin: 20px 0;">
+            <h4>Results</h4>
+            <pre id="ml-output" style="background:#f8f9fa; padding:15px; border-radius:8px; max-height:300px; overflow:auto;"></pre>
+            <div class="chart-container">
+              <canvas id="mlChart"></canvas>
+            </div>
+          </div>
+        </div>
+        </div><!-- end lab-mode-extras -->
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid var(--border);">
+        
+        <div class="card-header">
+          <i class="fas fa-chart-line"></i>
+          <h3>Analysis Results</h3>
+        </div>
+        
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-title">Overall Risk Score</div>
+            <div class="kpi-value" id="k_overall">—</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Expiry Status</div>
+            <div class="kpi-value" id="k_exp">—</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Additives Flagged</div>
+            <div class="kpi-value" id="k_add">—</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Allergens Detected</div>
+            <div class="kpi-value" id="k_all">—</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Origin Status</div>
+            <div class="kpi-value" id="k_origin">—</div>
+          </div>
+        </div>
+        
+        <div>
+          <p><strong>Safety Verdict:</strong> <span id="verdict" class="badge">—</span></p>
+          <div id="fopWarnings" style="margin:15px 0; font-weight:600; color:#b91c1c;"></div>
+          <p><strong>k-NN Prediction:</strong> <span id="knn_out">—</span></p>
+        </div>
+        
+        <ul class="results-list" id="bullets"></ul>
+        
+        <div class="chart-container">
+          <canvas id="riskChart"></canvas>
+        </div>
+        
+        <div id="csvPreview" class="hidden">
+          <h4>CSV Preview</h4>
+          <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lab Test Section -->
+  <section id="lab" class="section">
+    <div class="container reveal">
+      <div class="section-title">
+        <h2>Laboratory Testing</h2>
+        <p>Statistical analysis of laboratory measurements with Z-test and T-test implementations</p>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-microscope"></i>
+          <h3>Lab Data Analysis</h3>
+        </div>
+        <form id="labForm">
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+                <label class="form-label">Lab Measurements (comma separated)</label>
+                <input type="text" class="form-control" id="lab_data" placeholder="e.g., 480,510,495,505">
+                <small>Enter at least 2 measurements for accurate analysis</small>
+              </div>
+              
+              <div class="row">
+                <div class="col">
+                  <div class="form-group">
+                    <label class="form-label">Maximum Safe Limit</label>
+                    <input type="number" class="form-control" id="lab_limit" placeholder="e.g., 600">
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="form-group">
+                    <label class="form-label">Known Standard Deviation (optional)</label>
+                    <input type="number" class="form-control" id="lab_sigma" placeholder="e.g., 20">
+                    <small>If provided, uses Z-test; otherwise T-test</small>
+                  </div>
+                </div>
+                <div class="col">
+                  <div class="form-group">
+                    <label class="form-label">Confidence Level</label>
+                    <select class="form-select" id="lab_alpha">
+                      <option value="0.05">Standard (95%)</option>
+                      <option value="0.01">Strict (99%)</option>
+                      <option value="0.10">Lenient (90%)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="btn-group">
+                <button type="button" class="btn btn-primary" id="labRun"><i class="fas fa-play"></i> Run Safety Test</button>
+                <button type="button" class="btn btn-secondary" id="labDemo"><i class="fas fa-flask"></i> Load Demo</button>
+              </div>
+            </div>
+            
+            <div class="col">
+              <div class="kpi-grid">
+                <div class="kpi-card">
+                  <div class="kpi-title">Samples</div>
+                  <div class="kpi-value" id="lab_n">—</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-title">Average</div>
+                  <div class="kpi-value" id="lab_mean">—</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-title">Standard Deviation</div>
+                  <div class="kpi-value" id="lab_sd">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+        
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid var(--border);">
+        
+        <div class="card-header">
+          <i class="fas fa-clipboard-check"></i>
+          <h3>Test Results</h3>
+        </div>
+        
+        <p><strong>Safety Conclusion:</strong> <span id="lab_summary" class="badge">—</span></p>
+        
+        <ul class="results-list" id="lab_out"></ul>
+        
+        <div class="chart-container">
+          <canvas id="labChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- History Section -->
+  <section id="history" class="section" style="background: var(--bg-light);">
+    <div class="container">
+      <div class="section-title">
+        <h2>Analysis History</h2>
+        <p>Review past food safety analyses and export results for reporting</p>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-history"></i>
+          <h3>Previous Reviews</h3>
+        </div>
+        
+        <div class="btn-group">
+          <button class="btn btn-primary" id="exportCSV"><i class="fas fa-file-csv"></i> Export to CSV</button>
+          <button class="btn btn-danger" id="clearHistory"><i class="fas fa-trash"></i> Clear History</button>
+        </div>
+        
+        <div class="table-responsive">
+          <table class="table" id="history_table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Verdict</th>
+                <th>Risk Score</th>
+                <th>Origin</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- New: Contact Section -->
+  <section id="contact" class="section">
+    <div class="container">
+      <div class="section-title">
+        <h2>Get in Touch</h2>
+        <p>Have questions about the project? We'd love to hear from you!</p>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-envelope"></i>
+          <h3>Contact Form</h3>
+        </div>
+        <form class="contact-form" id="contactForm">
+          <div class="row">
+            <div class="col">
+              <div class="form-group">
+                <label class="form-label">Your Name</label>
+                <input type="text" class="form-control" id="contact_name" placeholder="Your Name" required>
+              </div>
+            </div>
+            <div class="col">
+              <div class="form-group">
+                <label class="form-label">Your Email</label>
+                <input type="email" class="form-control" id="contact_email" placeholder="your@email.com" required>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Message</label>
+            <textarea class="form-control" id="contact_message" placeholder="Tell us about your query..." rows="5" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Send Message</button>
+        </form>
+      </div>
+    </div>
+  </section>
+  
+
+  <!-- BACK TO TOP -->
+  <button id="backToTop" title="Go to top">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+<!-- Auth Modal -->
+<div id="authModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center;">
+  <div class="card" style="max-width:400px; width:90%; position:relative;">
+    <button id="closeAuthModal" style="position:absolute; top:10px; right:15px; background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+    
+    <!-- Tabs -->
+    <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:2px solid var(--border);">
+      <button id="tabLogin" class="btn" style="background:none; color:var(--primary); border-bottom:3px solid var(--primary); border-radius:0;">Login</button>
+      <button id="tabSignup" class="btn" style="background:none; color:var(--text-light); border-radius:0;">Sign Up</button>
+    </div>
+
+    <!-- Login Form -->
+    <form id="loginForm">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" id="login_email" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-control" id="login_password" required>
+      </div>
+      <div id="loginError" style="color:var(--danger); font-size:0.85rem; margin-bottom:10px;"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Login</button>
+    </form>
+
+    <!-- Signup Form (hidden by default) -->
+    <form id="signupForm" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" class="form-control" id="signup_username" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" id="signup_email" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-control" id="signup_password" required>
+      </div>
+      <div id="signupError" style="color:var(--danger); font-size:0.85rem; margin-bottom:10px;"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Sign Up</button>
+    </form>
+  </div>
+</div>
+  <!-- Footer -->
+  <footer>
+  
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>FoodSafetyHub</h3>
+          <p>Advanced food safety testing platform developed as an MCA 1st year project at IIIT Bhopal.</p>
+          <p>Incorporating heuristic analysis, machine learning, and statistical testing for comprehensive food safety evaluation.</p>
+        </div>
+        
+        <div class="footer-section">
+          <h3>Quick Links</h3>
+          <ul class="footer-links">
+            <li><a href="#home">Home</a></li>
+            <li><a href="#analyzer">Product Analyzer</a></li>
+            <li><a href="#lab">Lab Testing</a></li>
+            <li><a href="#history">Analysis History</a></li>
+            <li><a href="#about">About Project</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-section">
+          <h3>Contact</h3>
+          <ul class="footer-links">
+            <li><i class="fas fa-user"></i> Shivkumar Barpete</li>
+            <li><i class="fas fa-envelope"></i> shivkirar78@gmail.com</li>
+            <li><i class="fas fa-university"></i> IIIT Bhopal</li>
+            <li><i class="fas fa-graduation-cap"></i> MCA </li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <p>&copy; 2025 FoodSafetyHub. Developed by Shivkumar Barpete and Group IIIT Bhopal.</p>
+      </div>
+    </div>
+  </footer>
+ 
+
+ 
+  <script src="categoryProxyConfig.js" defer></script>
+  <script src="script.js" defer></script>
+</body>
+</html>
