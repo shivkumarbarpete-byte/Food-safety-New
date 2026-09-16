@@ -36,6 +36,7 @@
             <li><a href="#analyzer">Analyzer</a></li>
             <li><a href="#lab">Lab Test</a></li>
             <li><a href="#history">History</a></li>
+            <li><a href="#scope">Scope &amp; Limitations</a></li>
             <li><a href="#about">About</a></li>
             <li><a href="#technologies">Technologies</a></li>
             <li><a href="#contact">Contact</a></li>
@@ -455,16 +456,17 @@
         <div class="card mt-30">
             <div class="card-header">
                 <i class="fas fa-vial"></i>
-                <h3>Quick Adulteration Test (Home Methods)</h3>
+                <h3>Preliminary Home Screening (Adulteration Checks)</h3>
             </div>
+            <p style="font-size:0.85rem; color:#4b5563; margin-bottom:12px;">📌 <strong>Disclaimer:</strong> Home methods are preliminary screening methods and should not be treated as laboratory confirmation. Suspicious observations should be confirmed through appropriate accredited laboratory testing.</p>
             <div class="form-group">
                 <select class="form-select" id="adulterant_test">
                     <option value="">-- Select Food Item --</option>
-                    <option value="milk_water">Milk (Water Adulteration Test)</option>
-                    <option value="milk_starch">Milk (Starch Adulteration Test)</option>
-                    <option value="oil_argemone">Cooking Oil (Argemone Oil Test)</option>
-                    <option value="honey_water">Honey (Water/M sugar Test)</option>
-                    <option value="spice_wood">Spices (Wood Dust/Dye Test)</option>
+                    <option value="milk_water">Milk (Water Adulteration Check)</option>
+                    <option value="milk_starch">Milk (Starch Adulteration Check)</option>
+                    <option value="oil_argemone">Cooking Oil (Argemone Oil Check)</option>
+                    <option value="honey_water">Honey (Water/Sugar Check)</option>
+                    <option value="spice_wood">Spices (Wood Dust/Dye Check)</option>
                 </select>
             </div>
             <div id="adulterant_result" style="display:none;"></div>
@@ -595,15 +597,96 @@
   <section id="lab" class="section">
     <div class="container reveal">
       <div class="section-title">
-        <h2>Laboratory Testing</h2>
-        <p>Statistical analysis of laboratory measurements with Z-test and T-test implementations</p>
+        <h2>Laboratory Testing &amp; Traceability</h2>
+        <p>Statistical analysis of laboratory measurements with full sample traceability and structured assessment reports</p>
       </div>
       <div class="card">
         <div class="card-header">
           <i class="fas fa-microscope"></i>
-          <h3>Lab Data Analysis</h3>
+          <h3>Lab Data Analysis &amp; Traceability</h3>
         </div>
         <form id="labForm">
+          <div class="form-group" style="margin-bottom:20px; background:#f8fafc; padding:12px 16px; border-radius:8px; border:1px solid #e2e8f0;">
+            <label class="form-label"><i class="fas fa-folder-open"></i> Restore Saved Lab Assessment</label>
+            <select class="form-select" id="labSavedSelect">
+              <option value="">-- Select Saved Assessment --</option>
+            </select>
+          </div>
+
+          <details open style="margin-bottom:20px; padding:12px; background:#fafafa; border:1px solid #e5e7eb; border-radius:8px;">
+            <summary style="cursor:pointer; font-weight:600; font-size:0.95rem; color:var(--primary); margin-bottom:10px;"><i class="fas fa-id-card"></i> Sample Traceability &amp; Metadata</summary>
+            
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label class="form-label">Report Tracking ID</label>
+                  <input type="text" class="form-control" id="lab_report_id" placeholder="Auto-generated ID" readonly style="background:#f1f5f9;">
+                  <small style="color:#6b7280; font-size:0.72rem;">Internal application tracking ID; not official laboratory accreditation</small>
+                </div>
+              </div>
+              <div class="col">
+                <div class="form-group">
+                  <label class="form-label">Sample ID / Code</label>
+                  <input type="text" class="form-control" id="lab_sample_id" placeholder="e.g., SMP-2026-0841">
+                </div>
+              </div>
+              <div class="col">
+                <div class="form-group">
+                  <label class="form-label">Product / Sample Name</label>
+                  <input type="text" class="form-control" id="lab_sample_name" placeholder="e.g., Skimmed Milk Powder">
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label class="form-label">Batch / Lot Number</label>
+                  <input type="text" class="form-control" id="lab_batch_no" placeholder="e.g., BATCH-9021">
+                </div>
+              </div>
+              <div class="col">
+                <div class="form-group">
+                  <label class="form-label">Collection Date</label>
+                  <input type="date" class="form-control" id="lab_collection_date">
+                </div>
+              </div>
+              <div class="col">
+                <div class="form-group">
+                  <label class="form-label">Received Date</label>
+                  <input type="date" class="form-control" id="lab_received_date">
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label class="form-label">Testing Date</label>
+                  <input type="date" class="form-control" id="lab_testing_date">
+                </div>
+              </div>
+              <div class="col">
+                <div class="form-group">
+                  <label class="form-label">Test Standard / Method</label>
+                  <input type="text" class="form-control" id="lab_test_method" placeholder="e.g., AOAC 971.21 / Titrimetric">
+                </div>
+              </div>
+              <div class="col">
+                <div class="form-group">
+                  <label class="form-label">Analyst Name (optional)</label>
+                  <input type="text" class="form-control" id="lab_analyst" placeholder="e.g., Analyst A">
+                </div>
+              </div>
+              <div class="col">
+                <div class="form-group">
+                  <label class="form-label">Reviewer Name (optional)</label>
+                  <input type="text" class="form-control" id="lab_reviewer" placeholder="e.g., Quality Manager B">
+                </div>
+              </div>
+            </div>
+          </details>
+
           <div class="row">
             <div class="col">
               <div class="form-group">
@@ -679,9 +762,11 @@
             </div>
           </div>
               
-          <div class="btn-group">
+          <div class="btn-group" style="flex-wrap:wrap; gap:10px; margin-top:10px;">
             <button type="button" class="btn btn-primary" id="labRun"><i class="fas fa-play"></i> Run Statistical Test</button>
             <button type="button" class="btn btn-secondary" id="labDemo"><i class="fas fa-flask"></i> Load Demo</button>
+            <button type="button" class="btn btn-outline" id="labSave"><i class="fas fa-save"></i> Save Lab Assessment</button>
+            <button type="button" class="btn btn-outline" id="labExportPdf"><i class="fas fa-file-pdf"></i> Export Structured PDF Report</button>
           </div>
         </form>
         
@@ -693,6 +778,11 @@
         </div>
         
         <p><strong>Statistical Assessment Outcome:</strong> <span id="lab_summary" class="badge">—</span></p>
+        <div id="lab_stats_indicators" style="display:flex; gap:15px; margin: 10px 0; font-size: 0.88rem; color: #475569;">
+          <span><strong>n:</strong> <span id="lab_n">—</span></span>
+          <span><strong>Mean:</strong> <span id="lab_mean">—</span></span>
+          <span><strong>Std Dev:</strong> <span id="lab_sd">—</span></span>
+        </div>
         
         <ul class="results-list" id="lab_out"></ul>
         
@@ -741,6 +831,76 @@
             <tbody></tbody>
           </table>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scope & Limitations Section -->
+  <section id="scope" class="section">
+    <div class="container reveal">
+      <div class="section-title">
+        <h2>Scope &amp; Technical Limitations</h2>
+        <p>Transparent operational boundaries, data boundaries, and application scope</p>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="card" style="height:100%;">
+            <div class="card-header" style="color:var(--primary);">
+              <i class="fas fa-search-location"></i>
+              <h3>Preliminary Screening Scope</h3>
+            </div>
+            <p style="font-size:0.9rem; color:#4b5563; line-height:1.6;">
+              FoodSafetyHub provides preliminary risk assessments based on user-supplied information, observable storage conditions, and open barcode databases. It serves as an informative decision-support tool.
+            </p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card" style="height:100%;">
+            <div class="card-header" style="color:#0284c7;">
+              <i class="fas fa-barcode"></i>
+              <h3>Product Data Origins</h3>
+            </div>
+            <p style="font-size:0.9rem; color:#4b5563; line-height:1.6;">
+              Barcode scanners fetch available product metadata from open repositories (Open Food Facts). Data retrieved reflects database entries and does not constitute laboratory safety verification.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mt-20">
+        <div class="col">
+          <div class="card" style="height:100%;">
+            <div class="card-header" style="color:#7c3aed;">
+              <i class="fas fa-brain"></i>
+              <h3>Experimental ML Estimates</h3>
+            </div>
+            <p style="font-size:0.9rem; color:#4b5563; line-height:1.6;">
+              Machine learning models (k-NN) generate preliminary estimations based on training feature vectors (pH, moisture, temperature). ML outputs are supplementary estimates and cannot replace official food testing.
+            </p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card" style="height:100%;">
+            <div class="card-header" style="color:#d97706;">
+              <i class="fas fa-calculator"></i>
+              <h3>Laboratory Statistical Tools</h3>
+            </div>
+            <p style="font-size:0.9rem; color:#4b5563; line-height:1.6;">
+              Laboratory statistical modules perform standard statistical computations (Z-test/T-test) on user-entered measurements. Statistical significance confirms measurement properties against specified reference limits, but does not equal complete microbial or chemical safety certification.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-20" style="background:#f8fafc; border-left:5px solid #2563eb;">
+        <div class="card-header">
+          <i class="fas fa-shield-alt"></i>
+          <h3>Official Regulatory &amp; Certification Boundaries</h3>
+        </div>
+        <ul style="font-size:0.88rem; color:#334155; line-height:1.7; margin-left:20px;">
+          <li><strong>Authoritative Standards:</strong> Reference limits and safety parameters must come from official regulatory standards (e.g. FSSAI manuals) provided by the user.</li>
+          <li><strong>Certification Scope:</strong> Official food safety certification, regulatory compliance enforcement, and legal accreditation are outside the technical scope of this academic application.</li>
+        </ul>
       </div>
     </div>
   </section>

@@ -451,34 +451,132 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function downloadPDF() { 
-        if (!window.jspdf) { showToast('jsPDF library not loaded', 'error'); return; } 
+        var jsPDF = window.jspdf ? window.jspdf.jsPDF : (window.jsPDF || null);
+        if (!jsPDF) { showToast('jsPDF library not loaded', 'error'); return; } 
         var r = analyze(); 
-        var doc = new window.jspdf.jsPDF(); 
-        doc.setFontSize(14); 
-        doc.text('Preliminary Risk Assessment Report', 14, 20); 
-        doc.setFontSize(10); 
-        doc.text('Product: ' + (r.name || '?'), 14, 30); 
-        doc.text('Category: ' + (r.cat || '?'), 14, 37); 
-        doc.text('Data Origin: ' + (r.dataOrigin || 'User Input'), 14, 44); 
-        doc.text('Verdict: ' + r.verdict + ' (' + r.score + '/100)', 14, 51); 
-        
-        doc.text('Analysis Findings:', 14, 62); 
-        var y = 70; 
+        var doc = new jsPDF(); 
+        var y = 15;
+
+        // Title Header
+        doc.setFillColor(30, 41, 59);
+        doc.rect(0, 0, 210, 25, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(15);
+        doc.setFont('helvetica', 'bold');
+        doc.text('PRELIMINARY RISK ASSESSMENT REPORT', 14, 16);
+
+        y = 35;
+        doc.setTextColor(0, 0, 0);
+
+        // Section A: PRODUCT & TRACEABILITY INFORMATION
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setFillColor(241, 245, 249);
+        doc.rect(14, y - 5, 182, 8, 'F');
+        doc.text('1. PRODUCT IDENTIFICATION & DATA ORIGIN', 16, y);
+        y += 8;
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Product Name: ' + (r.name || 'Unspecified'), 16, y);
+        doc.text('Category: ' + (r.cat || 'Unspecified'), 110, y);
+        y += 6;
+        doc.text('Data Source / Origin: ' + (r.dataOrigin || 'User Input'), 16, y);
+        doc.text('Expiry Status: ' + (r.expStatus || 'N/A'), 110, y);
+        y += 6;
+        doc.text('FSSAI License Format: ' + (r.fssaiStatus || 'Format Checked'), 16, y);
+        y += 10;
+
+        // Section B: USER-PROVIDED & RETRIEVED PRODUCT DATA
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setFillColor(241, 245, 249);
+        doc.rect(14, y - 5, 182, 8, 'F');
+        doc.text('2. USER-PROVIDED DATA & INGREDIENT ANALYSIS', 16, y);
+        y += 8;
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        var ingStr = el('p_ing') ? el('p_ing').value.trim() : 'Not provided';
+        var ingSplit = doc.splitTextToSize('Ingredients: ' + ingStr, 178);
+        doc.text(ingSplit, 16, y);
+        y += (ingSplit.length * 5) + 4;
+
+        if (r.fopWarnings && r.fopWarnings.length > 0) {
+            doc.text('Front-of-Pack Nutrition Warnings: ' + r.fopWarnings.join(' | '), 16, y);
+            y += 6;
+        }
+
+        // Section C: PRELIMINARY RISK SCREENING & VERDICT
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setFillColor(241, 245, 249);
+        doc.rect(14, y - 5, 182, 8, 'F');
+        doc.text('3. PRELIMINARY SCREENING VERDICT', 16, y);
+        y += 8;
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Assessment Outcome: ' + r.verdict + ' (Risk Score: ' + r.score + ' / 100)', 16, y);
+        y += 6;
+
+        doc.setFont('helvetica', 'normal');
+        doc.text('Assessment Findings:', 16, y);
+        y += 6;
         r.notes.forEach(function (n) { 
             if (y > 260) { doc.addPage(); y = 20; } 
-            doc.text('- ' + n, 18, y); 
-            y += 7; 
+            var lines = doc.splitTextToSize('• ' + n, 174);
+            doc.text(lines, 18, y); 
+            y += (lines.length * 4) + 2; 
         }); 
-        
-        y += 10; 
-        if (y > 250) { doc.addPage(); y = 20; } 
-        doc.setFontSize(8); 
-        doc.setTextColor(100); 
-        doc.text('DISCLAIMER: This is a preliminary screening assessment based on available product information.', 14, y); 
-        doc.text('It is not a laboratory test or regulatory certification.', 14, y + 5); 
-        doc.text('Assessment accuracy depends on the quality and completeness of the input data.', 14, y + 10); 
-        
+        y += 6;
+
+        // Section D: EXPERIMENTAL ML ESTIMATE (IF RUN)
+        var knnOut = el('knn_out') ? el('knn_out').innerText.trim() : '';
+        if (knnOut) {
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setFillColor(241, 245, 249);
+            doc.rect(14, y - 5, 182, 8, 'F');
+            doc.text('4. EXPERIMENTAL MACHINE LEARNING (k-NN) ESTIMATE', 16, y);
+            y += 8;
+
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            var mlSplit = doc.splitTextToSize('ML Prediction: ' + knnOut + ' (Preliminary Estimate Only)', 178);
+            doc.text(mlSplit, 16, y);
+            y += (mlSplit.length * 5) + 6;
+        }
+
+        // Section E: LIMITATIONS & DISCLAIMERS
+        if (y > 230) { doc.addPage(); y = 20; }
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setFillColor(254, 226, 226);
+        doc.rect(14, y - 5, 182, 8, 'F');
+        doc.setTextColor(185, 28, 28);
+        doc.text('5. SCOPE & LIMITATIONS DISCLAIMER', 16, y);
+        y += 8;
+
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(50, 50, 50);
+
+        var disclaimers = [
+            '1. Preliminary Screening: This software provides a preliminary risk assessment based on available product information only.',
+            '2. Not a Laboratory Certification: This report does NOT certify a product as officially safe or unsafe, nor does it replace laboratory testing.',
+            '3. Data Dependence: Evaluation accuracy depends strictly on the quality and accuracy of user-supplied data and database entries.',
+            '4. Regulatory Scope: Format validation verifies barcode / FSSAI number length but does not perform official regulatory registry verification.'
+        ];
+
+        disclaimers.forEach(function(d) {
+            var lines = doc.splitTextToSize(d, 178);
+            doc.text(lines, 16, y);
+            y += (lines.length * 4) + 2;
+        });
+
         doc.save('preliminary_risk_report.pdf'); 
+        showToast('Exported Preliminary Risk Report PDF', 'success');
     }
 
     function stdNormCDF(x) { var t = 1 / (1 + 0.2316419 * Math.abs(x)); var d = 0.3989423 * Math.exp(-x * x / 2); var p = 1 - d * t * (1.330274429 + t * (-1.821255978 + t * (1.781477937 + t * (-0.356563782 + t * 0.319381530)))); return x >= 0 ? p : 1 - p; }
@@ -490,7 +588,32 @@ document.addEventListener('DOMContentLoaded', function () {
         return 0.5 * betai(v / (v + x * x), v / 2, 0.5);
     }
 
+    function generateLabReportId() {
+        var now = new Date();
+        var yyyy = now.getFullYear();
+        var mm = String(now.getMonth() + 1).padStart(2, '0');
+        var dd = String(now.getDate()).padStart(2, '0');
+        var rnd = String(Math.floor(1000 + Math.random() * 9000));
+        return 'REPORT-LAB-' + yyyy + mm + dd + '-' + rnd;
+    }
+
     function runLabTest() {
+        var reportId = el('lab_report_id') ? el('lab_report_id').value.trim() : '';
+        if (!reportId) {
+            reportId = generateLabReportId();
+            if (el('lab_report_id')) el('lab_report_id').value = reportId;
+        }
+
+        var sampleId = el('lab_sample_id') ? el('lab_sample_id').value.trim() : '';
+        var sampleName = el('lab_sample_name') ? el('lab_sample_name').value.trim() : '';
+        var batchNo = el('lab_batch_no') ? el('lab_batch_no').value.trim() : '';
+        var collectionDate = el('lab_collection_date') ? el('lab_collection_date').value : '';
+        var receivedDate = el('lab_received_date') ? el('lab_received_date').value : '';
+        var testingDate = el('lab_testing_date') ? el('lab_testing_date').value : '';
+        var testMethod = el('lab_test_method') ? el('lab_test_method').value.trim() : '';
+        var analyst = el('lab_analyst') ? el('lab_analyst').value.trim() : '';
+        var reviewer = el('lab_reviewer') ? el('lab_reviewer').value.trim() : '';
+
         var param = el('lab_param') ? el('lab_param').value.trim() : '';
         var unit = el('lab_unit') ? el('lab_unit').value.trim() : '';
         param = param || 'Measured Parameter';
@@ -534,7 +657,10 @@ document.addEventListener('DOMContentLoaded', function () {
             'Statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' > ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' < α = ' + alpha + ').' :
             'No statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' ≤ ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' ≥ α = ' + alpha + ').';
 
-        [
+        var listItems = [
+            '<strong>Report ID:</strong> <span class="text-primary font-bold">' + escapeHtml(reportId) + '</span> ' + (sampleId ? '| <strong>Sample ID:</strong> ' + escapeHtml(sampleId) : '') + (batchNo ? ' | <strong>Batch/Lot:</strong> ' + escapeHtml(batchNo) : ''),
+            (sampleName ? '<strong>Product / Sample Name:</strong> ' + escapeHtml(sampleName) : null),
+            (testMethod ? '<strong>Test Method:</strong> ' + escapeHtml(testMethod) : null),
             '<strong>Parameter Name:</strong> ' + escapeHtml(param) + ' (' + escapeHtml(unit) + ')',
             '<strong>Sample Measurements:</strong> ' + data.join(', ') + ' ' + escapeHtml(unit),
             '<strong>Sample Size (n):</strong> ' + n + ' | <strong>Sample Mean (x̄):</strong> ' + mean.toFixed(2) + ' ' + escapeHtml(unit),
@@ -542,14 +668,275 @@ document.addEventListener('DOMContentLoaded', function () {
             '<strong>Statistical Test:</strong> ' + (useZ ? 'Z-Test (known σ = ' + sigma + ')' : 'T-Test (sample s = ' + sd.toFixed(2) + ')'),
             '<strong>Standard Error (SE):</strong> ' + se.toFixed(2) + ' | <strong>Test Statistic (' + (useZ ? 'z' : 't') + '):</strong> ' + z.toFixed(2),
             '<strong>p-value:</strong> ' + p.toFixed(4) + ' (Alpha level α = ' + alpha + ', Confidence Level = ' + Math.round((1 - alpha) * 100) + '%)',
-            '<strong>Statistical Interpretation:</strong> ' + interpretation
-        ].forEach(function (s) { 
+            '<strong>Statistical Interpretation:</strong> ' + interpretation,
+            (analyst || reviewer ? '<strong>Personnel:</strong> Analyst: ' + escapeHtml(analyst || 'N/A') + ' | Reviewer: ' + escapeHtml(reviewer || 'N/A') : null)
+        ];
+
+        listItems.forEach(function (s) { 
+            if (!s) return;
             var li = document.createElement('li'); 
             li.innerHTML = s; 
             out.appendChild(li); 
         });
 
         initLabChart(mean, L);
+
+        // Store active lab calculation output on window for PDF generation & saving
+        window.lastLabResult = {
+            reportId: reportId,
+            sampleId: sampleId,
+            sampleName: sampleName,
+            batchNo: batchNo,
+            collectionDate: collectionDate,
+            receivedDate: receivedDate,
+            testingDate: testingDate,
+            testMethod: testMethod,
+            analyst: analyst,
+            reviewer: reviewer,
+            param: param,
+            unit: unit,
+            data: data,
+            limit: L,
+            sourceType: sourceType,
+            sourceDesc: sourceDesc,
+            sigma: isNaN(sigma) ? null : sigma,
+            alpha: alpha,
+            n: n,
+            mean: mean,
+            sd: sd,
+            se: se,
+            z: z,
+            useZ: useZ,
+            p: p,
+            decision: dec,
+            interpretation: interpretation,
+            timestamp: new Date().toISOString()
+        };
+    }
+
+    function getSavedLabAssessments() {
+        try {
+            var raw = localStorage.getItem('fs_lab_history');
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function renderLabSavedSelect() {
+        var select = el('labSavedSelect');
+        if (!select) return;
+        var arr = getSavedLabAssessments();
+        select.innerHTML = '<option value="">-- Load Saved Test --</option>';
+        arr.forEach(function(item) {
+            var opt = document.createElement('option');
+            opt.value = item.reportId;
+            var label = (item.reportId || 'ID-N/A') + ' - ' + (item.sampleName || item.param || 'Test') + ' (' + (item.timestamp ? item.timestamp.slice(0, 10) : '') + ')';
+            opt.textContent = label;
+            select.appendChild(opt);
+        });
+    }
+
+    function saveLabAssessment() {
+        runLabTest();
+        if (!window.lastLabResult) {
+            showToast('No valid lab result to save.', 'error');
+            return;
+        }
+        var arr = getSavedLabAssessments();
+        var idx = arr.findIndex(function(x) { return x.reportId === window.lastLabResult.reportId; });
+        if (idx >= 0) {
+            arr[idx] = window.lastLabResult;
+        } else {
+            arr.unshift(window.lastLabResult);
+        }
+        localStorage.setItem('fs_lab_history', JSON.stringify(arr));
+        renderLabSavedSelect();
+        showToast('Lab assessment saved with ID: ' + window.lastLabResult.reportId, 'success');
+    }
+
+    function loadSavedLabAssessment(reportId) {
+        if (!reportId) return;
+        var arr = getSavedLabAssessments();
+        var item = arr.find(function(x) { return x.reportId === reportId; });
+        if (!item) {
+            showToast('Saved test not found.', 'error');
+            return;
+        }
+
+        if (el('lab_report_id')) el('lab_report_id').value = item.reportId || '';
+        if (el('lab_sample_id')) el('lab_sample_id').value = item.sampleId || '';
+        if (el('lab_sample_name')) el('lab_sample_name').value = item.sampleName || '';
+        if (el('lab_batch_no')) el('lab_batch_no').value = item.batchNo || '';
+        if (el('lab_collection_date')) el('lab_collection_date').value = item.collectionDate || '';
+        if (el('lab_received_date')) el('lab_received_date').value = item.receivedDate || '';
+        if (el('lab_testing_date')) el('lab_testing_date').value = item.testingDate || '';
+        if (el('lab_test_method')) el('lab_test_method').value = item.testMethod || '';
+        if (el('lab_analyst')) el('lab_analyst').value = item.analyst || '';
+        if (el('lab_reviewer')) el('lab_reviewer').value = item.reviewer || '';
+
+        if (el('lab_param')) el('lab_param').value = item.param || '';
+        if (el('lab_unit')) el('lab_unit').value = item.unit || '';
+        if (el('lab_data')) el('lab_data').value = item.data ? item.data.join(', ') : '';
+        if (el('lab_limit')) el('lab_limit').value = item.limit !== undefined ? item.limit : '';
+        if (el('lab_limit_source_type')) el('lab_limit_source_type').value = item.sourceType || 'User-provided';
+        if (el('lab_limit_source_desc')) el('lab_limit_source_desc').value = item.sourceDesc || '';
+        if (el('lab_sigma')) el('lab_sigma').value = item.sigma !== null && item.sigma !== undefined ? item.sigma : '';
+        if (el('lab_alpha')) el('lab_alpha').value = item.alpha || '0.05';
+
+        runLabTest();
+        showToast('Restored lab test assessment: ' + item.reportId, 'info');
+    }
+
+    function downloadLabPDF() {
+        runLabTest();
+        var res = window.lastLabResult;
+        if (!res) {
+            showToast('No valid laboratory test data available to export.', 'warning');
+            return;
+        }
+
+        var jsPDF = window.jspdf ? window.jspdf.jsPDF : (window.jsPDF || null);
+        if (!jsPDF) {
+            showToast('jsPDF library not loaded.', 'error');
+            return;
+        }
+
+        var doc = new jsPDF();
+        var y = 15;
+
+        // Title Header
+        doc.setFillColor(30, 41, 59);
+        doc.rect(0, 0, 210, 25, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text('LABORATORY STATISTICAL ASSESSMENT REPORT', 14, 16);
+
+        y = 35;
+        doc.setTextColor(0, 0, 0);
+
+        // Section A: SAMPLE INFORMATION & TRACEABILITY
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setFillColor(241, 245, 249);
+        doc.rect(14, y - 5, 182, 8, 'F');
+        doc.text('A. SAMPLE INFORMATION & TRACEABILITY', 16, y);
+        y += 8;
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Report ID: ' + (res.reportId || 'N/A'), 16, y);
+        doc.text('Sample ID: ' + (res.sampleId || 'Not Specified'), 110, y);
+        y += 6;
+        doc.text('Product / Sample Name: ' + (res.sampleName || 'Not Specified'), 16, y);
+        doc.text('Batch / Lot #: ' + (res.batchNo || 'Not Specified'), 110, y);
+        y += 6;
+        doc.text('Collection Date: ' + (res.collectionDate || 'N/A'), 16, y);
+        doc.text('Received Date: ' + (res.receivedDate || 'N/A'), 80, y);
+        doc.text('Testing Date: ' + (res.testingDate || 'N/A'), 140, y);
+        y += 6;
+        doc.text('Test Method: ' + (res.testMethod || 'Standard Laboratory Measurement'), 16, y);
+        y += 6;
+        doc.text('Personnel: Analyst: ' + (res.analyst || 'Unspecified') + ' | Reviewer: ' + (res.reviewer || 'Unspecified'), 16, y);
+        y += 10;
+
+        // Section B: INPUT DATA
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setFillColor(241, 245, 249);
+        doc.rect(14, y - 5, 182, 8, 'F');
+        doc.text('B. INPUT MEASUREMENT DATA', 16, y);
+        y += 8;
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Parameter Name: ' + res.param + ' (' + res.unit + ')', 16, y);
+        y += 6;
+        doc.text('Reference Limit (L): ' + res.limit + ' ' + res.unit + ' [' + res.sourceType + (res.sourceDesc ? ': ' + res.sourceDesc : '') + ']', 16, y);
+        y += 6;
+
+        var rawDataStr = res.data ? res.data.join(', ') : 'N/A';
+        var splitData = doc.splitTextToSize('Raw Measurements: ' + rawDataStr + ' ' + res.unit, 178);
+        doc.text(splitData, 16, y);
+        y += (splitData.length * 5) + 4;
+
+        // Section C: STATISTICAL ANALYSIS
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setFillColor(241, 245, 249);
+        doc.rect(14, y - 5, 182, 8, 'F');
+        doc.text('C. STATISTICAL ANALYSIS', 16, y);
+        y += 8;
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Statistical Method: ' + (res.useZ ? 'Z-Test (known σ)' : 'One-Sample T-Test (sample s)'), 16, y);
+        doc.text('Sample Size (n): ' + res.n, 120, y);
+        y += 6;
+        doc.text('Sample Mean (x̄): ' + res.mean.toFixed(2) + ' ' + res.unit, 16, y);
+        doc.text('Std Dev (s/σ): ' + res.sd.toFixed(2) + ' ' + res.unit, 80, y);
+        doc.text('Std Error (SE): ' + res.se.toFixed(2), 140, y);
+        y += 6;
+        doc.text('Test Statistic (' + (res.useZ ? 'z' : 't') + '): ' + res.z.toFixed(2), 16, y);
+        doc.text('p-value: ' + res.p.toFixed(4) + ' (α = ' + res.alpha + ')', 80, y);
+        y += 6;
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('Statistical Decision: ' + res.decision, 16, y);
+        y += 6;
+        doc.setFont('helvetica', 'normal');
+        var interpSplit = doc.splitTextToSize('Interpretation: ' + res.interpretation, 178);
+        doc.text(interpSplit, 16, y);
+        y += (interpSplit.length * 5) + 6;
+
+        // Section D: ML / PRELIMINARY SCREENING RESULT (IF APPLICABLE)
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setFillColor(241, 245, 249);
+        doc.rect(14, y - 5, 182, 8, 'F');
+        doc.text('D. PRELIMINARY ML / SCREENING ESTIMATES (IF APPLICABLE)', 16, y);
+        y += 8;
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        var knnElem = el('knn_out');
+        var knnText = (knnElem && knnElem.innerText) ? knnElem.innerText.trim() : 'No separate ML model prediction run for this sample.';
+        doc.text('Model / Method: k-Nearest Neighbors (k-NN) / Decision Tree Screening', 16, y);
+        y += 6;
+        var knnSplit = doc.splitTextToSize('Screening Output: ' + knnText + ' (Labeled as Preliminary / Experimental)', 178);
+        doc.text(knnSplit, 16, y);
+        y += (knnSplit.length * 5) + 6;
+
+        // Section E: LIMITATIONS & DISCLAIMERS
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setFillColor(254, 226, 226);
+        doc.rect(14, y - 5, 182, 8, 'F');
+        doc.setTextColor(185, 28, 28);
+        doc.text('E. LIMITATIONS & DISCLAIMERS', 16, y);
+        y += 8;
+
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(50, 50, 50);
+
+        var disclaimers = [
+            '1. Preliminary Assessment: This software does NOT provide official laboratory accreditation or safety certification.',
+            '2. Statistical Boundaries: Statistical calculations confirm sample sample mean properties but do not replace complete microbial/chemical regulatory testing.',
+            '3. Data Dependence: Analysis validity strictly depends on the accuracy and completeness of user-supplied data and measurements.',
+            '4. ML Estimates: Machine learning predictions are experimental preliminary estimates and cannot be used for legal or compliance disputes.',
+            '5. Regulatory Notice: No official government approval, accreditation ID, or FSSAI certificate is generated by this report.'
+        ];
+
+        disclaimers.forEach(function(d) {
+            var lines = doc.splitTextToSize(d, 178);
+            doc.text(lines, 16, y);
+            y += (lines.length * 4) + 2;
+        });
+
+        doc.save('laboratory_report_' + res.reportId + '.pdf');
+        showToast('Generated 5-Section Laboratory Report: ' + res.reportId, 'success');
     }
 async function renderHistory() {
     var token = localStorage.getItem('fs_token');
@@ -1964,6 +2351,17 @@ if (el('runKnBtn')) el('runKnBtn').onclick = function() { executeKnnPrediction(e
 if (el('runKnBtnLab')) el('runKnBtnLab').onclick = function() { executeKnnPrediction(el('runKnBtnLab')); };
 
 if (el('labDemo')) el('labDemo').addEventListener('click', function () { 
+    if (el('lab_report_id')) el('lab_report_id').value = generateLabReportId();
+    if (el('lab_sample_id')) el('lab_sample_id').value = 'SMP-2026-0841';
+    if (el('lab_sample_name')) el('lab_sample_name').value = 'Skimmed Milk Powder';
+    if (el('lab_batch_no')) el('lab_batch_no').value = 'BATCH-9021';
+    if (el('lab_collection_date')) el('lab_collection_date').value = '2026-09-10';
+    if (el('lab_received_date')) el('lab_received_date').value = '2026-09-11';
+    if (el('lab_testing_date')) el('lab_testing_date').value = todayISO();
+    if (el('lab_test_method')) el('lab_test_method').value = 'ISO / FSSAI Titrimetric Method';
+    if (el('lab_analyst')) el('lab_analyst').value = 'Lead Chemist';
+    if (el('lab_reviewer')) el('lab_reviewer').value = 'QA Supervisor';
+
     if (el('lab_param')) el('lab_param').value = 'Sodium';
     if (el('lab_unit')) el('lab_unit').value = 'mg/kg';
     if (el('lab_data')) el('lab_data').value = '480,510,495,505'; 
@@ -1975,6 +2373,17 @@ if (el('labDemo')) el('labDemo').addEventListener('click', function () {
     validateInputs(); 
     runLabTest(); 
 });
+
+if (el('labRun')) el('labRun').addEventListener('click', runLabTest);
+if (el('labSave')) el('labSave').addEventListener('click', saveLabAssessment);
+if (el('labExportPdf')) el('labExportPdf').addEventListener('click', downloadLabPDF);
+
+if (el('labSavedSelect')) {
+    renderLabSavedSelect();
+    el('labSavedSelect').addEventListener('change', function() {
+        loadSavedLabAssessment(this.value);
+    });
+}
 if (el('processCsvBtn')) el('processCsvBtn').addEventListener('click', function () {
     var f = el('csvFile') ? el('csvFile').files[0] : null;
     if (f) {
