@@ -1,37 +1,62 @@
 const knn = require('ml-knn');
-const Review = require('../models/Review');
+const { loadCategoryDataset, CATEGORY_FEATURES, CATEGORY_MAP } = require('./datasetLoader');
 
-// Train a fresh k-NN model using all stored reviews that have pH/moisture/temperature/safe
-async function trainAndPredict(inputFeatures, userId) {
-  // Fetch only this user's reviews that have the required ML fields filled in
-  const reviews = await Review.find({
-    userId: userId,
-    pH: { $exists: true, $ne: null },
-    moisture: { $exists: true, $ne: null },
-    temperature: { $exists: true, $ne: null },
-    safe: { $exists: true, $ne: null }
-  });
-
-  if (reviews.length < 5) {
-    throw new Error('Not enough training data yet. Need at least 5 saved reviews with pH/moisture/temperature. Currently have: ' + reviews.length);
+async function trainAndPredictCategory(category, inputFeatureMap) {
+  const normCat = CATEGORY_MAP[category] || category || 'Dairy';
+  const dataset = loadCategoryDataset(normCat);
+  if (dataset.length < 3) {
+    throw new Error(`Not enough training data for category ${category}. Found ${dataset.length} samples.`);
   }
 
-  // Build training dataset
-  const trainingSet = reviews.map(r => [r.pH, r.moisture, r.temperature, r.catCode || 0]);
-  const labels = reviews.map(r => r.safe);
+  const featureKeys = CATEGORY_FEATURES[normCat] || ['Temperature_C', 'Moisture_percent', 'Storage_Days'];
 
-  // Train k-NN model (k=3, or fewer if dataset is small)
-  const k = Math.min(3, reviews.length);
+  // Map input feature vector
+  const inputVector = featureKeys.map(k => {
+    const val = inputFeatureMap[k];
+    if (val === undefined || val === null || isNaN(val)) {
+      throw new Error(`Missing parameter '${k}' for category '${category}'`);
+    }
+    return parseFloat(val);
+  });
+
+  const trainingSet = dataset.map(row => featureKeys.map(k => row.features[k]));
+  const labels = dataset.map(row => row.Safety_Label);
+
+  const k = Math.min(5, dataset.length);
   const model = new knn(trainingSet, labels, { k });
+  const prediction = model.predict([inputVector]);
 
-  // Predict on the new input
-  const prediction = model.predict([inputFeatures]);
+  const predictedLabel = prediction[0]; // 0 = Safe, 1 = Unsafe
 
   return {
-    prediction: prediction[0], // 0 or 1
-    trainedOn: reviews.length,
+    prediction: predictedLabel,
+    verdict: predictedLabel === 0 ? 'Low Risk / Safe' : 'Higher Risk / Unsafe',
+    trainedOn: dataset.length,
+    k: k,
+    category: normCat,
+    featuresUsed: featureKeys
+  };
+}
+
+// Backwards compatibility function for [pH, moisture, temperature, catCode]
+async function trainAndPredict(inputArray, userId) {
+  const pH = inputArray[0];
+  const moisture = inputArray[1];
+  const temp = inputArray[2];
+
+  const dataset = loadCategoryDataset('All');
+  const trainingSet = dataset.map(r => [r.pH || 7.0, r.moisture || 50, r.temperature || 25]);
+  const labels = dataset.map(r => r.Safety_Label);
+
+  const k = Math.min(5, dataset.length);
+  const model = new knn(trainingSet, labels, { k });
+  const prediction = model.predict([[pH, moisture, temp]]);
+
+  return {
+    prediction: prediction[0],
+    trainedOn: dataset.length,
     k: k
   };
 }
 
-module.exports = { trainAndPredict };
+module.exports = { trainAndPredictCategory, trainAndPredict };

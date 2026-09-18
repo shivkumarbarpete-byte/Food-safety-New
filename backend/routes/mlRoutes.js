@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { predict } = require('../controllers/mlController');
-const protect = require('../middleware/authMiddleware');
+const { predict, getDataset } = require('../controllers/mlController');
 
-router.post('/predict', protect, predict);
+router.get('/dataset', getDataset);
+router.post('/predict', predict);
 
 module.exports = router;

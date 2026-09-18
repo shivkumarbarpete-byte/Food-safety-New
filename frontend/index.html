@@ -509,8 +509,28 @@
                 <input type="number" step="0.1" min="-50" max="150" class="form-control" id="p_temp" placeholder="e.g. 4.0">
               </div>
             </div>
+          <!-- Category Filter for ML, EDA & Histograms -->
+          <div style="margin: 15px 0 10px 0; background: #f8fafc; padding: 12px 16px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <label for="mlCategorySelect" style="font-weight: 600; font-size: 0.9rem; color: #1e293b; white-space: nowrap;">
+              <i class="fas fa-filter" style="color: #0284c7;"></i> Category Filter (Dataset & ML):
+            </label>
+            <select id="mlCategorySelect" class="form-select" style="max-width: 280px; font-weight: 500;">
+              <option value="All">All Categories (Combined Dataset)</option>
+              <option value="Dairy">Dairy</option>
+              <option value="Meat & Poultry">Meat & Poultry</option>
+              <option value="Seafood">Seafood</option>
+              <option value="Fresh Produce">Fresh Produce</option>
+              <option value="Beverage">Beverage</option>
+              <option value="Bakery">Bakery</option>
+              <option value="Frozen Food">Frozen Food</option>
+              <option value="Baby Food">Baby Food</option>
+              <option value="Packaged Snack">Packaged Snack</option>
+              <option value="Street Food">Street Food</option>
+            </select>
+            <small style="color: #64748b; font-size: 0.8rem;">Filters 800-sample dataset, updates parameters & trains models specifically for the selected category.</small>
           </div>
-         <div class="btn-group" style="margin-top:10px; flex-wrap:wrap;">
+
+          <div class="btn-group" style="margin-top:10px; flex-wrap:wrap;">
   <button type="button" class="btn btn-outline" id="runKnBtnLab"><i class="fas fa-brain"></i> k-NN Prediction</button>
   <button type="button" class="btn btn-outline" id="runEDA">📊 Run EDA</button>
   <button type="button" class="btn btn-outline" id="runLinear">📈 Linear Regression</button>

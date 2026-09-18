@@ -1049,385 +1049,541 @@ async function renderHistory() {
         mlOutput.scrollTop = mlOutput.scrollHeight;
     }
 
-    function clearMLResults() {
-        var mlOutput = el('ml-output');
-        var mlResultsDiv = el('ml-results');
-        if (mlOutput) mlOutput.innerHTML = '';
-        if (mlResultsDiv) mlResultsDiv.style.display = 'none';
-        if (mlChart) { mlChart.destroy(); mlChart = null; }
-        if (el('currentExplain')) el('currentExplain').textContent = '';
+    // ============================================================
+    // CATEGORY-AWARE DATASET & DYNAMIC FORM SCHEMAS
+    // ============================================================
+    var CATEGORY_SCHEMAS = {
+      "Dairy": {
+        csvCategory: "Dairy",
+        common: [
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 4.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 85.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
+          { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 3", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
+        ],
+        specific: [
+          { key: "pH", label: "Measured pH", id: "p_ph", placeholder: "e.g. 6.6", min: 0, max: 14, step: 0.01, icon: "fa-vial" },
+          { key: "Fat_Percent", label: "Fat Percent (%)", id: "p_fat_percent", placeholder: "e.g. 3.5", min: 0, max: 100, step: 0.1, icon: "fa-cheese" },
+          { key: "Titratable_Acidity", label: "Titratable Acidity (%)", id: "p_titratable_acidity", placeholder: "e.g. 0.14", min: 0, max: 5, step: 0.01, icon: "fa-flask" }
+        ]
+      },
+      "Meat & Poultry": {
+        csvCategory: "Meat_Poultry",
+        common: [
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 2.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 72.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
+          { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 2", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
+        ],
+        specific: [
+          { key: "pH", label: "Measured pH", id: "p_ph", placeholder: "e.g. 5.7", min: 0, max: 14, step: 0.01, icon: "fa-vial" },
+          { key: "Color_Score", label: "Color Score (1-10)", id: "p_color_score", placeholder: "e.g. 8.0", min: 1, max: 10, step: 0.1, icon: "fa-palette" }
+        ]
+      },
+      "Seafood": {
+        csvCategory: "Seafood",
+        common: [
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. -1.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 78.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
+          { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 1", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
+        ],
+        specific: [
+          { key: "TVBN_Level", label: "TVBN Level (mg/100g)", id: "p_tvbn_level", placeholder: "e.g. 12.0", min: 0, max: 100, step: 0.1, icon: "fa-fish" }
+        ]
+      },
+      "Fresh Produce": {
+        csvCategory: "Fresh_Produce",
+        common: [
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 10.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 88.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
+          { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 3", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
+        ],
+        specific: [
+          { key: "Ripeness_Index", label: "Ripeness Index (1-10)", id: "p_ripeness_index", placeholder: "e.g. 5.0", min: 1, max: 10, step: 0.1, icon: "fa-apple-alt" }
+        ]
+      },
+      "Beverage": {
+        csvCategory: "Beverage",
+        common: [
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 5.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 92.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
+          { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 10", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
+        ],
+        specific: [
+          { key: "pH", label: "Measured pH", id: "p_ph", placeholder: "e.g. 3.2", min: 0, max: 14, step: 0.01, icon: "fa-vial" },
+          { key: "Sugar_Content_Percent", label: "Sugar Content (%)", id: "p_sugar_content", placeholder: "e.g. 11.0", min: 0, max: 100, step: 0.1, icon: "fa-cubes" }
+        ]
+      },
+      "Bakery": {
+        csvCategory: "Bakery",
+        common: [
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 20.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 20.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
+          { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 2", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
+        ],
+        specific: [
+          { key: "Mold_Risk_Index", label: "Mold Risk Index (1-10)", id: "p_mold_risk_index", placeholder: "e.g. 2.0", min: 1, max: 10, step: 0.1, icon: "fa-bread-slice" }
+        ]
+      },
+      "Frozen Food": {
+        csvCategory: "Frozen_Food",
+        common: [
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. -20.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 65.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
+          { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 20", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
+        ],
+        specific: [
+          { key: "Temp_Deviation_Neg18", label: "Temp Deviation from -18°C", id: "p_temp_deviation", placeholder: "e.g. 1.0", min: -20, max: 30, step: 0.1, icon: "fa-snowflake" }
+        ]
+      },
+      "Baby Food": {
+        csvCategory: "Baby_Food",
+        common: [
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 4.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 80.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
+          { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 2", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
+        ],
+        specific: [
+          { key: "pH", label: "Measured pH (Stricter)", id: "p_ph", placeholder: "e.g. 6.3", min: 0, max: 14, step: 0.01, icon: "fa-baby" }
+        ]
+      },
+      "Packaged Snack": {
+        csvCategory: "Packaged_Snack",
+        common: [
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 24.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 3.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
+          { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 30", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
+        ],
+        specific: [
+          { key: "Oil_Rancidity_Index", label: "Oil Rancidity Index", id: "p_oil_rancidity_index", placeholder: "e.g. 1.0", min: 0, max: 20, step: 0.1, icon: "fa-cookie" }
+        ]
+      },
+      "Street Food": {
+        csvCategory: "Street_Food",
+        common: [
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 5.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 60.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
+          { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 0.5", min: 0, max: 365, step: 0.1, icon: "fa-calendar-alt" }
+        ],
+        specific: [
+          { key: "Hygiene_Score", label: "Hygiene Score (1-10)", id: "p_hygiene_score", placeholder: "e.g. 8.5", min: 1, max: 10, step: 0.1, icon: "fa-utensils" }
+        ]
+      }
+    };
+
+    function renderDynamicLabFields(catName) {
+      var container = el('labMeasurementsGroup');
+      if (!container) return;
+
+      var schema = CATEGORY_SCHEMAS[catName] || CATEGORY_SCHEMAS['Dairy'];
+      var html = '';
+
+      // Common fields
+      schema.common.forEach(function (f) {
+        html += '<div class="col"><div class="form-group">';
+        html += '<label class="form-label"><i class="fas ' + f.icon + '"></i> ' + f.label + '</label>';
+        html += '<input type="number" step="' + f.step + '" min="' + f.min + '" max="' + f.max + '" class="form-control" id="' + f.id + '" placeholder="' + f.placeholder + '">';
+        html += '</div></div>';
+      });
+
+      // Category-specific fields
+      schema.specific.forEach(function (f) {
+        html += '<div class="col"><div class="form-group">';
+        html += '<label class="form-label"><i class="fas ' + f.icon + '"></i> ' + f.label + '</label>';
+        html += '<input type="number" step="' + f.step + '" min="' + f.min + '" max="' + f.max + '" class="form-control" id="' + f.id + '" placeholder="' + f.placeholder + '">';
+        html += '</div></div>';
+      });
+
+      container.innerHTML = html;
     }
 
-  async function getRealDataset() {
-    var token = localStorage.getItem('fs_token');
-    if (!token) { showToast('Please login to use real data for ML!', 'warning'); return []; }
-
-    try {
-        var res = await fetch('http://localhost:5000/api/reviews', {
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-        var reviews = await res.json();
-        if (!res.ok) return [];
-
-        var validData = reviews.filter(function (r) {
-            return r.pH != null && r.moisture != null && r.temperature != null && r.safe != null;
-        }).map(function (r) {
-            return { pH: r.pH, moisture: r.moisture, temperature: r.temperature, safe: r.safe, score: r.score };
-        });
-
-        return validData;
-    } catch (err) {
-        console.error('Failed to fetch real dataset', err);
-        return [];
+    async function getRealDataset(categoryFilter) {
+      var cat = categoryFilter || (el('mlCategorySelect') ? el('mlCategorySelect').value : 'All');
+      try {
+        var token = localStorage.getItem('fs_token');
+        var headers = {};
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        var res = await fetch('http://localhost:5000/api/ml/dataset?category=' + encodeURIComponent(cat), { headers: headers });
+        if (res.ok) {
+          var json = await res.json();
+          if (json.data && json.data.length > 0) {
+            return json.data;
+          }
+        }
+      } catch (err) {
+        console.warn('Backend dataset API offline, using fallback parser', err);
+      }
+      return [];
     }
-}
-    function normalizeFeatures(data) {
-        var keys = ['pH', 'moisture', 'temperature'];
-        var means = {}, stds = {};
-        keys.forEach(function (key) {
-            var vals = data.map(function (d) { return d[key]; });
-            var mean = vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
-            var std = Math.sqrt(vals.reduce(function (a, x) { return a + (x - mean) * (x - mean); }, 0) / vals.length) || 1;
-            means[key] = mean;
-            stds[key] = std;
+
+    function normalizeDatasetFeatures(data, featureKeys) {
+      var means = {}, stds = {};
+      featureKeys.forEach(function (key) {
+        var vals = data.map(function (d) { return d.features ? d.features[key] : (d[key] || 0); });
+        var mean = vals.reduce(function (a, b) { return a + b; }, 0) / (vals.length || 1);
+        var std = Math.sqrt(vals.reduce(function (a, x) { return a + (x - mean) * (x - mean); }, 0) / (vals.length || 1)) || 1;
+        means[key] = mean;
+        stds[key] = std;
+      });
+
+      return data.map(function (d) {
+        var normObj = {
+          raw: d,
+          score: d.Risk_Score !== undefined ? d.Risk_Score : (d.score || 0),
+          safe: d.Safety_Label !== undefined ? (d.Safety_Label === 0 ? 1 : 0) : d.safe, // 1 = Safe, 0 = Unsafe for frontend
+          rawSafetyLabel: d.Safety_Label,
+          features: {}
+        };
+        featureKeys.forEach(function (key) {
+          var rawVal = d.features ? d.features[key] : (d[key] || 0);
+          normObj.features[key] = (rawVal - means[key]) / stds[key];
         });
-        return data.map(function (d) {
-            return {
-                pH: (d.pH - means.pH) / stds.pH,
-                moisture: (d.moisture - means.moisture) / stds.moisture,
-                temperature: (d.temperature - means.temperature) / stds.temperature,
-                safe: d.safe,
-                score: d.score
-            };
-        });
+        return normObj;
+      });
     }
 
     // ===== EDA - Full Calculation Visible =====
-  async function runEDA() {
-    clearMLResults();
-    if (el('currentExplain')) el('currentExplain').textContent = 'Exploratory Data Analysis: A quick summary of your saved products before running any prediction model.';
-    showMLResult("📊 DATA SUMMARY", true);
-    var btn = el('runEDA');
-    setButtonLoading(btn, true, 'Running EDA...');
-    try {
-    var data = await getRealDataset();
-    // Show sample count disclaimer if N < 15
-    if (el('mlSampleDisclaimer')) {
-        el('mlSampleDisclaimer').style.display = data.length < 15 ? 'block' : 'none';
-        if (data.length < 15) el('mlSampleDisclaimer').innerHTML = '<i class="fas fa-exclamation-triangle"></i> <strong>Experimental:</strong> k-NN and ML results are based on only <strong>' + data.length + ' stored laboratory samples</strong>. Reliability may be limited until more measured samples are collected (recommended: ≥ 15).';
-    }
-    if (data.length < 3) {
-        showMLResult('⚠️ Not enough saved reviews. Save at least 3 reviews with pH/moisture/temperature first.', true);
-        return;
-    }
+    async function runEDA() {
+      clearMLResults();
+      var cat = el('mlCategorySelect') ? el('mlCategorySelect').value : 'All';
+      if (el('currentExplain')) el('currentExplain').textContent = 'Exploratory Data Analysis (' + cat + '): Summary statistics & scatter distribution of dataset samples for selected category.';
+      showMLResult("📊 DATA SUMMARY — Category: " + cat, true);
+      var btn = el('runEDA');
+      setButtonLoading(btn, true, 'Running EDA...');
+      try {
+        var data = await getRealDataset(cat);
+        if (!data || data.length < 3) {
+          showMLResult('⚠️ Not enough dataset samples for ' + cat + '. Ensure dataset is loaded.', true);
+          return;
+        }
 
-    var safeCount = data.filter(function (d) { return d.safe === 1; }).length;
-    var unsafeCount = data.filter(function (d) { return d.safe === 0; }).length;
+        var safeCount = data.filter(function (d) { return d.Safety_Label === 0 || d.safe === 1; }).length;
+        var unsafeCount = data.filter(function (d) { return d.Safety_Label === 1 || d.safe === 0; }).length;
 
-    showMLResult("You have " + data.length + " saved products with ML data: " + safeCount + " marked Safe, " + unsafeCount + " marked Unsafe.\n");
+        showMLResult("Category '" + cat + "' has " + data.length + " rows: " + safeCount + " Safe, " + unsafeCount + " Unsafe.\n");
 
-    showMLResult("━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
-    showMLResult("\n📈 AVERAGE VALUES:", true);
+        showMLResult("━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
+        showMLResult("\n📈 AVERAGE VALUES:", true);
 
-    ['pH', 'moisture', 'temperature'].forEach(function (key) {
-        var vals = data.map(function (d) { return d[key]; });
-        var mean = (vals.reduce(function (a, b) { return a + b; }, 0) / vals.length).toFixed(2);
-        var min = Math.min.apply(null, vals).toFixed(1);
-        var max = Math.max.apply(null, vals).toFixed(1);
-        var label = key === 'pH' ? 'pH' : (key === 'moisture' ? 'Moisture (%)' : 'Temperature (°C)');
-        showMLResult(label + ":  Average = " + mean + "  |  Range = " + min + " to " + max);
-    });
+        var firstRow = data[0];
+        var featKeys = firstRow.features ? Object.keys(firstRow.features) : ['Temperature_C', 'Moisture_percent', 'Storage_Days'];
 
-    showMLResult("\n💡 This gives you a quick picture of your data before running the prediction models below.", false);
+        featKeys.forEach(function (key) {
+          var vals = data.map(function (d) { return d.features ? d.features[key] : (d[key] || 0); });
+          var mean = (vals.reduce(function (a, b) { return a + b; }, 0) / vals.length).toFixed(2);
+          var min = Math.min.apply(null, vals).toFixed(1);
+          var max = Math.max.apply(null, vals).toFixed(1);
+          showMLResult(key + ": Average = " + mean + " | Range = " + min + " to " + max);
+        });
 
-    // Chart
-    var ctx = el('mlChart');
-    if (!ctx) return;
-    ctx = ctx.getContext('2d');
-    if (mlChart) mlChart.destroy();
+        showMLResult("\n💡 Summary gives quick parameter insight before running ML prediction models.", false);
 
-    mlChart = new Chart(ctx, {
-        type: 'scatter',
-        data: {
+        // Scatter Chart (Feature 1 vs Feature 2)
+        var ctx = el('mlChart');
+        if (!ctx) return;
+        ctx = ctx.getContext('2d');
+        if (mlChart) mlChart.destroy();
+
+        var xKey = featKeys[0] || 'Temperature_C';
+        var yKey = featKeys[1] || 'Moisture_percent';
+
+        mlChart = new Chart(ctx, {
+          type: 'scatter',
+          data: {
             datasets: [
-                {
-                    label: 'Safe Products',
-                    data: data.filter(function (d) { return d.safe === 1; }).map(function (d) { return { x: d.pH, y: d.moisture }; }),
-                    backgroundColor: '#16a34a',
-                    pointRadius: 8
-                },
-                {
-                    label: 'Unsafe Products',
-                    data: data.filter(function (d) { return d.safe === 0; }).map(function (d) { return { x: d.pH, y: d.moisture }; }),
-                    backgroundColor: '#dc2626',
-                    pointRadius: 8
-                }
+              {
+                label: 'Safe Samples (Label=0)',
+                data: data.filter(function (d) { return d.Safety_Label === 0 || d.safe === 1; }).map(function (d) {
+                  return { x: d.features ? d.features[xKey] : d[xKey], y: d.features ? d.features[yKey] : d[yKey] };
+                }),
+                backgroundColor: '#16a34a',
+                pointRadius: 6
+              },
+              {
+                label: 'Unsafe Samples (Label=1)',
+                data: data.filter(function (d) { return d.Safety_Label === 1 || d.safe === 0; }).map(function (d) {
+                  return { x: d.features ? d.features[xKey] : d[xKey], y: d.features ? d.features[yKey] : d[yKey] };
+                }),
+                backgroundColor: '#dc2626',
+                pointRadius: 6
+              }
             ]
-        },
-        options: {
+          },
+          options: {
             scales: {
-                x: { title: { display: true, text: 'pH Value' } },
-                y: { title: { display: true, text: 'Moisture (%)' } }
+              x: { title: { display: true, text: xKey } },
+              y: { title: { display: true, text: yKey } }
             },
             plugins: {
-                legend: { position: 'top' },
-                title: { display: true, text: 'Your Products: pH vs Moisture' }
+              legend: { position: 'top' },
+              title: { display: true, text: cat + ' Dataset: ' + xKey + ' vs ' + yKey }
             }
+          }
+        });
+      } finally { setButtonLoading(el('runEDA'), false); }
+    }
+
+    // ===== LINEAR REGRESSION =====
+    async function runLinearRegression() {
+      if (typeof tf === 'undefined') { showToast('TensorFlow.js not loaded', 'error'); return; }
+      clearMLResults();
+      var cat = el('mlCategorySelect') ? el('mlCategorySelect').value : 'All';
+      if (el('currentExplain')) el('currentExplain').textContent = 'Linear Regression (' + cat + '): Learns weights to estimate continuous Risk_Score (0-100) from parameters.';
+      showMLResult("📈 LINEAR REGRESSION — Category: " + cat, true);
+      var btn = el('runLinear');
+      setButtonLoading(btn, true, 'Training...');
+      try {
+        var data = await getRealDataset(cat);
+        if (!data || data.length < 3) {
+          showMLResult('⚠️ Not enough dataset samples for ' + cat + '.', true);
+          return;
         }
-    });
-    } finally { setButtonLoading(el('runEDA'), false); }
-}
 
-    // ===== LINEAR REGRESSION - Full Calculation =====
-async function runLinearRegression() {
-    if (typeof tf === 'undefined') { showToast('TensorFlow.js not loaded', 'error'); return; }
-    clearMLResults();
-    if (el('currentExplain')) el('currentExplain').textContent = 'Linear Regression: Learns a formula to estimate the risk SCORE (0-100) from pH, Moisture, and Temperature.';
-    showMLResult("📈 LINEAR REGRESSION — Predicting Risk Score", true);
-    var btn = el('runLinear');
-    setButtonLoading(btn, true, 'Training...');
-    try {
-    var data = await getRealDataset();
-    if (data.length < 3) {
-        showMLResult('⚠️ Not enough saved reviews. Save at least 3 reviews with pH/moisture/temperature first.', true);
-        return;
+        var featKeys = data[0].features ? Object.keys(data[0].features) : ['Temperature_C', 'Moisture_percent', 'Storage_Days'];
+        showMLResult("Training Linear model on " + data.length + " rows for features: [" + featKeys.join(', ') + "]\n");
+
+        var normalizedData = normalizeDatasetFeatures(data, featKeys);
+        var xs = tf.tensor2d(normalizedData.map(function (d) {
+          return featKeys.map(function (k) { return d.features[k]; });
+        }));
+        var ys = tf.tensor2d(normalizedData.map(function (d) { return [d.score]; }));
+
+        var model = tf.sequential();
+        model.add(tf.layers.dense({ units: 1, inputShape: [featKeys.length], activation: 'linear' }));
+        model.compile({ loss: 'meanSquaredError', optimizer: tf.train.adam(0.08) });
+
+        var finalLoss = 0;
+        await model.fit(xs, ys, {
+          epochs: 180,
+          shuffle: true,
+          callbacks: { onEpochEnd: function (epoch, logs) { finalLoss = logs.loss; } }
+        });
+
+        showMLResult("\n━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
+        showMLResult("\n✅ RESULT:", true);
+        showMLResult("Average prediction error: ±" + Math.sqrt(finalLoss).toFixed(1) + " points (out of 100)");
+
+        var weights = model.layers[0].getWeights()[0].arraySync().flat();
+
+        showMLResult("\n📌 FEATURE INFLUENCE ON RISK SCORE:", true);
+        var influences = featKeys.map(function (key, idx) {
+          return { name: key, w: weights[idx] };
+        }).sort(function (a, b) { return Math.abs(b.w) - Math.abs(a.w); });
+
+        influences.forEach(function (inf) {
+          var direction = inf.w > 0 ? 'increases risk' : 'decreases risk';
+          showMLResult("  " + inf.name + " — " + direction + " (weight: " + inf.w.toFixed(2) + ")");
+        });
+
+        xs.dispose();
+        ys.dispose();
+        model.dispose();
+      } finally { setButtonLoading(el('runLinear'), false); }
     }
 
-    showMLResult("Training on " + data.length + " of your saved products to learn how pH, Moisture, and Temperature relate to your risk score.\n");
+    // ===== LOGISTIC REGRESSION (Logistic, Ridge L2, Lasso L1) =====
+    async function runLogisticBase(title, l2, l1, btnId) {
+      if (typeof tf === 'undefined') { showToast('TensorFlow.js not loaded', 'error'); return; }
+      clearMLResults();
+      var cat = el('mlCategorySelect') ? el('mlCategorySelect').value : 'All';
+      if (el('currentExplain')) {
+        if (l2) el('currentExplain').textContent = 'Ridge Regression (L2) [' + cat + ']: Classifies Safe/Unsafe with L2 weight regularization.';
+        else if (l1) el('currentExplain').textContent = 'Lasso Regression (L1) [' + cat + ']: Classifies Safe/Unsafe with L1 sparsity regularization.';
+        else el('currentExplain').textContent = 'Logistic Regression [' + cat + ']: Classifies Safe vs Unsafe food samples.';
+      }
+      showMLResult("🧠 " + title + " — Category: " + cat, true);
+      var btn = btnId ? el(btnId) : null;
+      setButtonLoading(btn, true, 'Training...');
+      try {
+        var data = await getRealDataset(cat);
+        if (!data || data.length < 3) {
+          showMLResult('⚠️ Not enough dataset samples for ' + cat + '.', true);
+          return;
+        }
 
-    var normalizedData = normalizeFeatures(data);
-    var xs = tf.tensor2d(normalizedData.map(function (d) { return [d.pH, d.moisture, d.temperature]; }));
-    var ys = tf.tensor2d(normalizedData.map(function (d) { return [d.score]; }));
+        var featKeys = data[0].features ? Object.keys(data[0].features) : ['Temperature_C', 'Moisture_percent', 'Storage_Days'];
+        var safeCount = data.filter(function (d) { return d.Safety_Label === 0 || d.safe === 1; }).length;
+        var unsafeCount = data.filter(function (d) { return d.Safety_Label === 1 || d.safe === 0; }).length;
 
-    var model = tf.sequential();
-    model.add(tf.layers.dense({ units: 1, inputShape: [3], activation: 'linear' }));
-    model.compile({ loss: 'meanSquaredError', optimizer: tf.train.adam(0.1) });
+        showMLResult("Training on " + data.length + " samples (" + safeCount + " Safe, " + unsafeCount + " Unsafe)\n");
 
-    showMLResult("Training model...", false);
-    var finalLoss = 0;
-    await model.fit(xs, ys, {
-        epochs: 200,
-        shuffle: true,
-        callbacks: { onEpochEnd: function (epoch, logs) { finalLoss = logs.loss; } }
-    });
+        var normalizedData = normalizeDatasetFeatures(data, featKeys);
+        var xs = tf.tensor2d(normalizedData.map(function (d) {
+          return featKeys.map(function (k) { return d.features[k]; });
+        }));
+        // Train target: 0 for Safe, 1 for Unsafe
+        var ys = tf.tensor2d(normalizedData.map(function (d) {
+          return [d.rawSafetyLabel !== undefined ? d.rawSafetyLabel : (d.safe === 1 ? 0 : 1)];
+        }));
 
-    showMLResult("\n━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
-    showMLResult("\n✅ RESULT:", true);
-    showMLResult("Average prediction error: ±" + Math.sqrt(finalLoss).toFixed(1) + " points (out of 100)");
+        var reg = l2 ? tf.regularizers.l2({ l2: l2 }) : (l1 ? tf.regularizers.l1({ l1: l1 }) : null);
+        var model = tf.sequential();
+        model.add(tf.layers.dense({ units: 1, inputShape: [featKeys.length], activation: 'sigmoid', kernelRegularizer: reg }));
+        model.compile({ loss: 'binaryCrossentropy', optimizer: tf.train.adam(0.08), metrics: ['accuracy'] });
 
-    var weights = model.layers[0].getWeights()[0].arraySync().flat();
+        var finalAcc = 0;
+        await model.fit(xs, ys, {
+          epochs: 150,
+          shuffle: true,
+          callbacks: { onEpochEnd: function (epoch, logs) { finalAcc = logs.acc; } }
+        });
 
-    showMLResult("\n📌 WHAT INFLUENCES THE RISK SCORE MOST (based on your data):", true);
-    var influences = [
-        { name: 'pH', w: weights[0] },
-        { name: 'Moisture', w: weights[1] },
-        { name: 'Temperature', w: weights[2] }
-    ].sort(function (a, b) { return Math.abs(b.w) - Math.abs(a.w); });
+        showMLResult("\n━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
+        showMLResult("\n✅ RESULT:", true);
+        showMLResult("Model Accuracy: " + (finalAcc * 100).toFixed(0) + "%");
 
-    influences.forEach(function (inf) {
-        var direction = inf.w > 0 ? 'increases risk' : 'decreases risk';
-        showMLResult("  " + inf.name + " — " + direction + " (strength: " + Math.abs(inf.w).toFixed(2) + ")");
-    });
+        var weights = model.layers[0].getWeights()[0].arraySync().flat();
+        showMLResult("\n📌 FEATURE INFLUENCE ON SAFE vs UNSAFE:", true);
+        var influences = featKeys.map(function (key, idx) {
+          return { name: key, w: weights[idx] };
+        }).sort(function (a, b) { return Math.abs(b.w) - Math.abs(a.w); });
 
-    showMLResult("\n💡 Note: this is based on only " + data.length + " samples — save more reviews for a more reliable formula.", false);
+        influences.forEach(function (inf) {
+          var direction = inf.w > 0 ? 'higher value → Unsafe signal' : 'higher value → Safe signal';
+          showMLResult("  " + inf.name + " — " + direction);
+        });
 
-    xs.dispose();
-    ys.dispose();
-    model.dispose();
-    } finally { setButtonLoading(el('runLinear'), false); }
-}
-
-    // ===== LOGISTIC REGRESSION - Full Calculation =====
-  async function runLogisticBase(title, l2, l1, btnId) {
-    if (typeof tf === 'undefined') { showToast('TensorFlow.js not loaded', 'error'); return; }
-    clearMLResults();
-    if (el('currentExplain')) {
-        if (l2) el('currentExplain').textContent = 'Ridge Regression (L2): Classifies Safe/Unsafe with a penalty that keeps the model from relying too heavily on any one feature.';
-        else if (l1) el('currentExplain').textContent = 'Lasso Regression (L1): Classifies Safe/Unsafe with a penalty that can shrink less-useful features toward zero.';
-        else el('currentExplain').textContent = 'Logistic Regression: Classifies each product as Safe or Unsafe based on pH, Moisture, and Temperature.';
+        xs.dispose();
+        ys.dispose();
+        model.dispose();
+      } finally { setButtonLoading(btn, false); }
     }
-    showMLResult("🧠 " + title, true);
-    var btn = btnId ? el(btnId) : null;
-    setButtonLoading(btn, true, 'Training...');
-    try {
-    var data = await getRealDataset();
-    if (data.length < 3) {
-        showMLResult('⚠️ Not enough saved reviews. Save at least 3 reviews with pH/moisture/temperature first.', true);
-        return;
-    }
-
-    var safeCount = data.filter(function (d) { return d.safe === 1; }).length;
-    var unsafeCount = data.filter(function (d) { return d.safe === 0; }).length;
-
-    if (safeCount === 0 || unsafeCount === 0) {
-        showMLResult('⚠️ You need at least 1 Safe AND 1 Unsafe saved product to train a classifier. Currently: ' + safeCount + ' Safe, ' + unsafeCount + ' Unsafe.', true);
-        return;
-    }
-
-    showMLResult("Training on " + data.length + " products (" + safeCount + " Safe, " + unsafeCount + " Unsafe)\n");
-
-    var normalizedData = normalizeFeatures(data);
-    var xs = tf.tensor2d(normalizedData.map(function (d) { return [d.pH, d.moisture, d.temperature]; }));
-    var ys = tf.tensor2d(normalizedData.map(function (d) { return [d.safe]; }));
-
-    var reg = l2 ? tf.regularizers.l2({ l2: l2 }) : (l1 ? tf.regularizers.l1({ l1: l1 }) : null);
-    var model = tf.sequential();
-    model.add(tf.layers.dense({ units: 1, inputShape: [3], activation: 'sigmoid', kernelRegularizer: reg }));
-    model.compile({ loss: 'binaryCrossentropy', optimizer: tf.train.adam(0.08), metrics: ['accuracy'] });
-
-    showMLResult("Training model...", false);
-    var finalAcc = 0;
-    await model.fit(xs, ys, {
-        epochs: 150,
-        shuffle: true,
-        callbacks: { onEpochEnd: function (epoch, logs) { finalAcc = logs.acc; } }
-    });
-
-    showMLResult("\n━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
-    showMLResult("\n✅ RESULT:", true);
-    showMLResult("Accuracy on your own data: " + (finalAcc * 100).toFixed(0) + "%");
-
-    var weights = model.layers[0].getWeights()[0].arraySync().flat();
-    showMLResult("\n📌 WHAT INFLUENCES SAFE vs UNSAFE MOST:", true);
-    var influences = [
-        { name: 'pH', w: weights[0] },
-        { name: 'Moisture', w: weights[1] },
-        { name: 'Temperature', w: weights[2] }
-    ].sort(function (a, b) { return Math.abs(b.w) - Math.abs(a.w); });
-
-    influences.forEach(function (inf) {
-        var direction = inf.w > 0 ? 'higher value → more likely Safe' : 'higher value → more likely Unsafe';
-        showMLResult("  " + inf.name + " — " + direction);
-    });
-
-    if (l2) showMLResult("\n💡 L2 penalty keeps all features balanced, reducing overfitting risk.", false);
-    if (l1) showMLResult("\n💡 L1 penalty can shrink weak features toward zero, highlighting only the strongest signals.", false);
-    showMLResult("\nNote: with only " + data.length + " samples, treat this accuracy as a rough indicator, not a final measure.", false);
-
-    xs.dispose();
-    ys.dispose();
-    model.dispose();
-    } finally { setButtonLoading(btn, false); }
-}
 
     async function runLogistic() { await runLogisticBase("LOGISTIC REGRESSION", 0, 0, 'runLogistic'); }
     async function runRidge() { await runLogisticBase("RIDGE REGRESSION (L2)", 0.01, 0, 'runRidge'); }
     async function runLasso() { await runLogisticBase("LASSO REGRESSION (L1)", 0, 0.01, 'runLasso'); }
 
-    // ===== HISTOGRAMS  =====
-  async function showHistograms() {
-    clearMLResults();
-    if (el('currentExplain')) el('currentExplain').textContent = 'Feature Histograms: Comparing average pH, moisture, and temperature between your Safe and Unsafe saved products.';
-    showMLResult("📊 FEATURE COMPARISON — Safe vs Unsafe Products", true);
-    var btn = el('runHist');
-    setButtonLoading(btn, true, 'Analyzing...');
-    try {
-    var data = await getRealDataset();
-    if (data.length < 3) {
-        showMLResult('⚠️ Not enough saved reviews. Save at least 3 reviews with pH/moisture/temperature first (mix of Safe and Unsafe).', true);
-        return;
-    }
+    // ===== HISTOGRAMS =====
+    async function showHistograms() {
+      clearMLResults();
+      var cat = el('mlCategorySelect') ? el('mlCategorySelect').value : 'All';
+      if (el('currentExplain')) el('currentExplain').textContent = 'Feature Histograms (' + cat + '): Comparing average values for each parameter between Safe and Unsafe samples.';
+      showMLResult("📊 FEATURE COMPARISON — Category: " + cat, true);
+      var btn = el('runHist');
+      setButtonLoading(btn, true, 'Analyzing...');
+      try {
+        var data = await getRealDataset(cat);
+        if (!data || data.length < 3) {
+          showMLResult('⚠️ Not enough dataset samples for ' + cat + '.', true);
+          return;
+        }
 
-    var safe = data.filter(function (d) { return d.safe === 1; });
-    var unsafe = data.filter(function (d) { return d.safe === 0; });
+        var safe = data.filter(function (d) { return d.Safety_Label === 0 || d.safe === 1; });
+        var unsafe = data.filter(function (d) { return d.Safety_Label === 1 || d.safe === 0; });
 
-    showMLResult("Based on " + data.length + " of your saved products (" + safe.length + " marked Safe, " + unsafe.length + " marked Unsafe)\n");
+        showMLResult("Comparing " + safe.length + " Safe samples vs " + unsafe.length + " Unsafe samples for '" + cat + "'\n");
 
-    if (safe.length === 0 || unsafe.length === 0) {
-        showMLResult("⚠️ You need at least 1 Safe AND 1 Unsafe saved product to compare groups. Right now you only have one type.", true);
-        return;
-    }
+        var featKeys = data[0].features ? Object.keys(data[0].features) : ['Temperature_C', 'Moisture_percent', 'Storage_Days'];
 
-    showMLResult("━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
-    showMLResult("\n📋 WHAT THIS MEANS:", true);
-    showMLResult("For each measurement (pH, Moisture, Temperature), we take the AVERAGE value across your Safe products and compare it to the average across your Unsafe products.");
-    showMLResult("A bigger difference between the two averages means that measurement is a stronger clue for telling Safe and Unsafe products apart.\n");
+        var safeAvgs = [], unsafeAvgs = [];
 
-    showMLResult("━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
-    showMLResult("\n📈 YOUR RESULTS:", true);
+        featKeys.forEach(function (key) {
+          var sVals = safe.map(function (d) { return d.features ? d.features[key] : (d[key] || 0); });
+          var uVals = unsafe.map(function (d) { return d.features ? d.features[key] : (d[key] || 0); });
+          var sAvg = sVals.length ? (sVals.reduce(function (a, b) { return a + b; }, 0) / sVals.length) : 0;
+          var uAvg = uVals.length ? (uVals.reduce(function (a, b) { return a + b; }, 0) / uVals.length) : 0;
+          safeAvgs.push(sAvg);
+          unsafeAvgs.push(uAvg);
 
-    var diffs = {};
-    ['pH', 'moisture', 'temperature'].forEach(function (key) {
-        var safeVals = safe.map(function (d) { return d[key]; });
-        var unsafeVals = unsafe.map(function (d) { return d[key]; });
-        var safeAvg = safeVals.reduce(function (a, b) { return a + b; }, 0) / safeVals.length;
-        var unsafeAvg = unsafeVals.reduce(function (a, b) { return a + b; }, 0) / unsafeVals.length;
-        var diff = Math.abs(safeAvg - unsafeAvg);
-        diffs[key] = diff;
+          showMLResult(key + ":");
+          showMLResult("  Safe Avg:   " + sAvg.toFixed(2));
+          showMLResult("  Unsafe Avg: " + uAvg.toFixed(2));
+        });
 
-        var label = key === 'pH' ? 'pH' : (key === 'moisture' ? 'Moisture (%)' : 'Temperature (°C)');
-        showMLResult("\n" + label + ":");
-        showMLResult("  Your Safe products average:   " + safeAvg.toFixed(2));
-        showMLResult("  Your Unsafe products average: " + unsafeAvg.toFixed(2));
-        showMLResult("  Difference: " + diff.toFixed(2) + (diff > (safeAvg + unsafeAvg) / 2 * 0.1 ? "  → Noticeable difference" : "  → Small difference"));
-    });
+        // Chart
+        var ctx = el('mlChart');
+        if (!ctx) return;
+        ctx = ctx.getContext('2d');
+        if (mlChart) mlChart.destroy();
 
-    var strongest = Object.keys(diffs).reduce(function (a, b) { return diffs[a] > diffs[b] ? a : b; });
-    var strongestLabel = strongest === 'pH' ? 'pH' : (strongest === 'moisture' ? 'Moisture' : 'Temperature');
-
-    showMLResult("\n━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
-    showMLResult("\n🔍 TAKEAWAY:", true);
-    showMLResult("Based on your saved data so far, " + strongestLabel + " shows the biggest difference between Safe and Unsafe products — meaning it's currently your strongest signal for prediction.");
-    showMLResult("(Note: with only " + data.length + " saved samples, this is a rough signal, not a statistically proven result. It will get more reliable as you save more reviews.)");
-
-    // Chart
-    var ctx = el('mlChart');
-    if (!ctx) return;
-    ctx = ctx.getContext('2d');
-    if (mlChart) mlChart.destroy();
-
-    mlChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['pH', 'Moisture (%)', 'Temperature (°C)'],
+        mlChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: featKeys,
             datasets: [
-                {
-                    label: 'Safe Products (n=' + safe.length + ')',
-                    data: [
-                        safe.reduce(function (a, b) { return a + b.pH; }, 0) / safe.length,
-                        safe.reduce(function (a, b) { return a + b.moisture; }, 0) / safe.length,
-                        safe.reduce(function (a, b) { return a + b.temperature; }, 0) / safe.length
-                    ],
-                    backgroundColor: '#16a34a',
-                    borderColor: '#15803d',
-                    borderWidth: 2
-                },
-                {
-                    label: 'Unsafe Products (n=' + unsafe.length + ')',
-                    data: [
-                        unsafe.reduce(function (a, b) { return a + b.pH; }, 0) / unsafe.length,
-                        unsafe.reduce(function (a, b) { return a + b.moisture; }, 0) / unsafe.length,
-                        unsafe.reduce(function (a, b) { return a + b.temperature; }, 0) / unsafe.length
-                    ],
-                    backgroundColor: '#dc2626',
-                    borderColor: '#b91c1c',
-                    borderWidth: 2
-                }
+              {
+                label: 'Safe Samples (n=' + safe.length + ')',
+                data: safeAvgs,
+                backgroundColor: '#16a34a',
+                borderColor: '#15803d',
+                borderWidth: 2
+              },
+              {
+                label: 'Unsafe Samples (n=' + unsafe.length + ')',
+                data: unsafeAvgs,
+                backgroundColor: '#dc2626',
+                borderColor: '#b91c1c',
+                borderWidth: 2
+              }
             ]
-        },
-        options: {
+          },
+          options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'top', labels: { font: { size: 13 } } },
-                title: {
-                    display: true,
-                    text: 'Your Saved Products: Safe vs Unsafe Averages',
-                    font: { size: 15, weight: 'bold' }
-                }
+              legend: { position: 'top' },
+              title: { display: true, text: cat + ': Feature Averages (Safe vs Unsafe)' }
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: { display: true, text: 'Average Value', font: { size: 12 } }
-                }
-            }
-        }
-    });
+            scales: { y: { beginAtZero: true } }
+          }
+        });
+      } finally { setButtonLoading(el('runHist'), false); }
+    }
 
-    showMLResult("\n✅ Chart generated above — bars closer together mean less distinction, further apart means clearer separation.", false);
-    } finally { setButtonLoading(el('runHist'), false); }
-}
+    // ===== k-NN PREDICTION (LAB MODE) =====
+    async function runKnnPredictionLab() {
+      clearMLResults();
+      var catName = el('p_cat') ? el('p_cat').value : (el('mlCategorySelect') ? el('mlCategorySelect').value : 'Dairy');
+      if (catName === 'All') catName = 'Dairy';
+      var schema = CATEGORY_SCHEMAS[catName] || CATEGORY_SCHEMAS['Dairy'];
+
+      var featureMap = {};
+      var missing = [];
+
+      schema.common.concat(schema.specific).forEach(function(f) {
+        var v = numVal(f.id);
+        if (v === null || isNaN(v)) {
+          missing.push(f.label);
+        } else {
+          featureMap[f.key] = v;
+        }
+      });
+
+      if (missing.length > 0) {
+        showToast('Please enter measured value for: ' + missing.join(', '), 'warning');
+        return;
+      }
+
+      if (el('currentExplain')) el('currentExplain').textContent = 'k-Nearest Neighbors (k-NN) [' + catName + ']: Classifies sample safety by finding nearest neighbors in category dataset.';
+      showMLResult("🧠 k-NN PREDICTION — Category: " + catName, true);
+      var btn = el('runKnBtnLab');
+      setButtonLoading(btn, true, 'Predicting...');
+
+      try {
+        var token = localStorage.getItem('fs_token');
+        var headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+
+        var res = await fetch('http://localhost:5000/api/ml/predict', {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({ category: catName, features: featureMap })
+        });
+
+        var json = await res.json();
+        if (res.ok) {
+          showMLResult("\n✅ PREDICTION VERDICT: " + json.prediction.toUpperCase(), true);
+          showMLResult("  Trained on: " + json.trainedOnSamples + " category dataset samples (k=" + json.k + ")");
+          showMLResult("  Features evaluated: " + json.featuresUsed.join(', '));
+          if (el('knn_out')) el('knn_out').textContent = json.prediction + ' (k-NN trained on ' + json.trainedOnSamples + ' ' + catName + ' samples)';
+        } else {
+          showMLResult("❌ Prediction failed: " + (json.message || 'Error occurred'), true);
+        }
+      } catch (err) {
+        console.error('k-NN request failed', err);
+        showMLResult("⚠️ Network error contacting backend prediction endpoint.", true);
+      } finally {
+        setButtonLoading(btn, false);
+      }
+    }
 
     // ============================================================
     //  IMAGE LABEL 
@@ -2405,6 +2561,7 @@ if (el('processCsvBtn')) el('processCsvBtn').addEventListener('click', function 
     if (el('runRidge')) el('runRidge').addEventListener('click', runRidge);
     if (el('runLasso')) el('runLasso').addEventListener('click', runLasso);
     if (el('runHist')) el('runHist').addEventListener('click', showHistograms);
+    if (el('runKnBtnLab')) el('runKnBtnLab').addEventListener('click', runKnnPredictionLab);
 
     if (el('verifyFssai')) el('verifyFssai').addEventListener('click', function () {
         var n = el('fssai') ? el('fssai').value.trim() : '', s = el('fssaiStatus'); if (!s) return;
@@ -2474,22 +2631,42 @@ if (el('processCsvBtn')) el('processCsvBtn').addEventListener('click', function 
     };
     if (el('p_cat')) {
         el('p_cat').addEventListener('change', function() {
+            var catVal = this.value;
             var warningDiv = el('catWarning');
             if (warningDiv) {
-                if (diseaseInfo[this.value]) {
-                    warningDiv.innerHTML = diseaseInfo[this.value];
+                if (diseaseInfo[catVal]) {
+                    warningDiv.innerHTML = diseaseInfo[catVal];
                     warningDiv.style.display = 'block';
                 } else {
                     warningDiv.style.display = 'none';
                 }
             }
+            if (el('mlCategorySelect') && el('mlCategorySelect').value !== catVal) {
+                el('mlCategorySelect').value = catVal;
+            }
+            renderDynamicLabFields(catVal);
             if (window.currentMode === 'consumer') {
                 var resCard = el('consumerResultCard');
                 if (resCard) resCard.style.display = 'none';
-                renderDynamicQuestions(this.value);
+                renderDynamicQuestions(catVal);
             }
         });
     }
+
+    if (el('mlCategorySelect')) {
+        el('mlCategorySelect').addEventListener('change', function() {
+            var catVal = this.value;
+            if (catVal !== 'All' && el('p_cat') && el('p_cat').value !== catVal) {
+                el('p_cat').value = catVal;
+            }
+            if (catVal !== 'All') {
+                renderDynamicLabFields(catVal);
+            }
+        });
+    }
+
+    // Initial render of dynamic lab fields
+    renderDynamicLabFields(el('p_cat') ? el('p_cat').value : 'Dairy');
 
     var dt = el('darkToggle');
     if (dt) {

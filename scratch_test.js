@@ -99,7 +99,11 @@ console.log('Found ID checks in JS:', elMatches.size);
 const missingInHtml = [];
 elMatches.forEach(id => {
   // Check if id exists in HTML (as id="id" or id='id') or dynamically created
-  const dynamicIds = ['submitProxyCheck', 'runKnBtnLab'];
+  const dynamicIds = [
+    'submitProxyCheck', 'runKnBtnLab', 'p_ph', 'p_fat_percent', 'p_titratable_acidity',
+    'p_color_score', 'p_tvbn_level', 'p_ripeness_index', 'p_sugar_content',
+    'p_mold_risk_index', 'p_temp_deviation', 'p_oil_rancidity_index', 'p_hygiene_score', 'p_storage_days'
+  ];
   const hasId = htmlContent.includes(`id="${id}"`) || htmlContent.includes(`id='${id}'`);
   if (!hasId && !dynamicIds.includes(id)) {
     missingInHtml.push(id);
