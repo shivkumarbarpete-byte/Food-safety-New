@@ -417,7 +417,7 @@ document.addEventListener('DOMContentLoaded', function () {
             pH: isConsumer ? null : r.pH,
             moisture: isConsumer ? null : r.moisture,
             temperature: isConsumer ? null : r.temperature,
-            safe: r.verdict === 'Safe' ? 1 : 0,
+            safe: r.verdict.includes('Low Risk') ? 1 : 0,
               catCode: categoryEncode[r.cat] || 0
             })
         });
@@ -958,8 +958,8 @@ async function renderHistory() {
         var arr = await res.json();
         if (!res.ok) return;
 
-        var safe = arr.filter(function (r) { return r.verdict === 'Safe'; }).length;
-        var unsafe = arr.filter(function (r) { return r.verdict === 'Unsafe'; }).length;
+        var safe = arr.filter(function (r) { return r.verdict.includes('Low Risk'); }).length;
+        var unsafe = arr.filter(function (r) { return r.verdict.includes('Higher Risk'); }).length;
         var avgScore = arr.length ? Math.round(arr.reduce(function (s, r) { return s + r.score; }, 0) / arr.length) : 0;
 
         if (el('dash_total')) el('dash_total').textContent = arr.length;
@@ -1035,6 +1035,17 @@ async function renderHistory() {
     // ============================================================
 
     var mlChart = null;
+
+    function clearMLResults() {
+        var mlOutput = el('ml-output');
+        var mlResultsDiv = el('ml-results');
+        if (mlOutput) mlOutput.innerHTML = '';
+        if (mlResultsDiv) mlResultsDiv.style.display = 'block';
+        if (mlChart) {
+            mlChart.destroy();
+            mlChart = null;
+        }
+    }
 
     function showMLResult(text, isHeading) {
         var mlOutput = el('ml-output');
@@ -1217,7 +1228,10 @@ async function renderHistory() {
     function normalizeDatasetFeatures(data, featureKeys) {
       var means = {}, stds = {};
       featureKeys.forEach(function (key) {
-        var vals = data.map(function (d) { return d.features ? d.features[key] : (d[key] || 0); });
+                var vals = data.map(function (d) {
+                    var value = d.features ? d.features[key] : d[key];
+                    return Number.isFinite(value) ? value : 0;
+                });
         var mean = vals.reduce(function (a, b) { return a + b; }, 0) / (vals.length || 1);
         var std = Math.sqrt(vals.reduce(function (a, x) { return a + (x - mean) * (x - mean); }, 0) / (vals.length || 1)) || 1;
         means[key] = mean;
@@ -1233,12 +1247,23 @@ async function renderHistory() {
           features: {}
         };
         featureKeys.forEach(function (key) {
-          var rawVal = d.features ? d.features[key] : (d[key] || 0);
+                    var rawVal = d.features ? d.features[key] : d[key];
+                    if (!Number.isFinite(rawVal)) rawVal = 0;
           normObj.features[key] = (rawVal - means[key]) / stds[key];
         });
         return normObj;
       });
     }
+
+        function getDatasetFeatureKeys(data) {
+            if (!data.length) return [];
+            var firstKeys = Object.keys(data[0].features || {});
+            return firstKeys.filter(function (key) {
+                return data.every(function (row) {
+                    return row.features && Number.isFinite(row.features[key]);
+                });
+            });
+        }
 
     // ===== EDA - Full Calculation Visible =====
     async function runEDA() {
@@ -1263,8 +1288,8 @@ async function renderHistory() {
         showMLResult("━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
         showMLResult("\n📈 AVERAGE VALUES:", true);
 
-        var firstRow = data[0];
-        var featKeys = firstRow.features ? Object.keys(firstRow.features) : ['Temperature_C', 'Moisture_percent', 'Storage_Days'];
+        var featKeys = getDatasetFeatureKeys(data);
+        if (featKeys.length < 2) throw new Error('Dataset has no common numeric features for this selection.');
 
         featKeys.forEach(function (key) {
           var vals = data.map(function (d) { return d.features ? d.features[key] : (d[key] || 0); });
@@ -1318,7 +1343,10 @@ async function renderHistory() {
             }
           }
         });
-      } finally { setButtonLoading(el('runEDA'), false); }
+            } catch (err) {
+                showMLResult('❌ EDA failed: ' + (err.message || err), true);
+                showToast('EDA failed. Check that the backend is running.', 'error');
+            } finally { setButtonLoading(el('runEDA'), false); }
     }
 
     // ===== LINEAR REGRESSION =====
@@ -1337,7 +1365,8 @@ async function renderHistory() {
           return;
         }
 
-        var featKeys = data[0].features ? Object.keys(data[0].features) : ['Temperature_C', 'Moisture_percent', 'Storage_Days'];
+        var featKeys = getDatasetFeatureKeys(data);
+        if (featKeys.length < 2) throw new Error('Dataset has no common numeric features for this selection.');
         showMLResult("Training Linear model on " + data.length + " rows for features: [" + featKeys.join(', ') + "]\n");
 
         var normalizedData = normalizeDatasetFeatures(data, featKeys);
@@ -1361,6 +1390,12 @@ async function renderHistory() {
         showMLResult("\n✅ RESULT:", true);
         showMLResult("Average prediction error: ±" + Math.sqrt(finalLoss).toFixed(1) + " points (out of 100)");
 
+        var linearPredictionTensor = model.predict(xs);
+        var linearPredictions = linearPredictionTensor.dataSync();
+        var firstRisk = Math.max(0, Math.min(100, linearPredictions[0]));
+        showMLResult("Dataset sample 1 predicted Risk Score: " + firstRisk.toFixed(1) + "/100 (" + (firstRisk >= 60 ? 'Higher Risk' : (firstRisk >= 30 ? 'Moderate Risk' : 'Low Risk')) + ")", true);
+        linearPredictionTensor.dispose();
+
         var weights = model.layers[0].getWeights()[0].arraySync().flat();
 
         showMLResult("\n📌 FEATURE INFLUENCE ON RISK SCORE:", true);
@@ -1376,7 +1411,10 @@ async function renderHistory() {
         xs.dispose();
         ys.dispose();
         model.dispose();
-      } finally { setButtonLoading(el('runLinear'), false); }
+            } catch (err) {
+                showMLResult('❌ Linear Regression failed: ' + (err.message || err), true);
+                showToast('Linear Regression failed.', 'error');
+            } finally { setButtonLoading(el('runLinear'), false); }
     }
 
     // ===== LOGISTIC REGRESSION (Logistic, Ridge L2, Lasso L1) =====
@@ -1399,7 +1437,8 @@ async function renderHistory() {
           return;
         }
 
-        var featKeys = data[0].features ? Object.keys(data[0].features) : ['Temperature_C', 'Moisture_percent', 'Storage_Days'];
+        var featKeys = getDatasetFeatureKeys(data);
+        if (featKeys.length < 2) throw new Error('Dataset has no common numeric features for this selection.');
         var safeCount = data.filter(function (d) { return d.Safety_Label === 0 || d.safe === 1; }).length;
         var unsafeCount = data.filter(function (d) { return d.Safety_Label === 1 || d.safe === 0; }).length;
 
@@ -1423,12 +1462,18 @@ async function renderHistory() {
         await model.fit(xs, ys, {
           epochs: 150,
           shuffle: true,
-          callbacks: { onEpochEnd: function (epoch, logs) { finalAcc = logs.acc; } }
+          callbacks: { onEpochEnd: function (epoch, logs) { finalAcc = logs.acc !== undefined ? logs.acc : logs.accuracy; } }
         });
 
         showMLResult("\n━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
         showMLResult("\n✅ RESULT:", true);
-        showMLResult("Model Accuracy: " + (finalAcc * 100).toFixed(0) + "%");
+        showMLResult("Model Accuracy: " + (Number(finalAcc) * 100).toFixed(0) + "%");
+
+        var logisticPredictionTensor = model.predict(xs);
+        var logisticProbabilities = logisticPredictionTensor.dataSync();
+        var firstProbability = logisticProbabilities[0];
+        showMLResult("Dataset sample 1 prediction: " + (firstProbability >= 0.5 ? 'UNSAFE' : 'SAFE') + " (Unsafe probability: " + (firstProbability * 100).toFixed(1) + "%)", true);
+        logisticPredictionTensor.dispose();
 
         var weights = model.layers[0].getWeights()[0].arraySync().flat();
         showMLResult("\n📌 FEATURE INFLUENCE ON SAFE vs UNSAFE:", true);
@@ -1444,7 +1489,10 @@ async function renderHistory() {
         xs.dispose();
         ys.dispose();
         model.dispose();
-      } finally { setButtonLoading(btn, false); }
+            } catch (err) {
+                showMLResult('❌ ' + title + ' failed: ' + (err.message || err), true);
+                showToast(title + ' failed.', 'error');
+            } finally { setButtonLoading(btn, false); }
     }
 
     async function runLogistic() { await runLogisticBase("LOGISTIC REGRESSION", 0, 0, 'runLogistic'); }
@@ -1471,7 +1519,8 @@ async function renderHistory() {
 
         showMLResult("Comparing " + safe.length + " Safe samples vs " + unsafe.length + " Unsafe samples for '" + cat + "'\n");
 
-        var featKeys = data[0].features ? Object.keys(data[0].features) : ['Temperature_C', 'Moisture_percent', 'Storage_Days'];
+        var featKeys = getDatasetFeatureKeys(data);
+        if (featKeys.length < 2) throw new Error('Dataset has no common numeric features for this selection.');
 
         var safeAvgs = [], unsafeAvgs = [];
 
@@ -1660,6 +1709,61 @@ async function renderHistory() {
         });
     }
 
+    async function analyzeLabelWithOCR(imageDataUrl) {
+        if (typeof Tesseract === 'undefined') {
+            return { text: '', topCat: 'Packaged Snack', confidence: 0, checks: ['OCR library unavailable'] };
+        }
+
+        var result = await Tesseract.recognize(imageDataUrl, 'eng');
+        var text = (result.data && result.data.text ? result.data.text : '').replace(/\s+/g, ' ').trim();
+        var lowerText = text.toLowerCase();
+        var categoryRules = [
+            { name: 'Dairy', words: ['milk', 'cheese', 'yogurt', 'curd', 'paneer', 'butter', 'ghee', 'dairy'] },
+            { name: 'Meat & Poultry', words: ['chicken', 'mutton', 'beef', 'pork', 'meat', 'poultry'] },
+            { name: 'Seafood', words: ['fish', 'seafood', 'salmon', 'tuna', 'prawn', 'shrimp'] },
+            { name: 'Fresh Produce', words: ['fruit', 'vegetable', 'fresh produce', 'apple', 'mango', 'tomato'] },
+            { name: 'Beverage', words: ['juice', 'drink', 'beverage', 'tea', 'coffee', 'cola', 'soda', 'water'] },
+            { name: 'Bakery', words: ['bread', 'biscuit', 'cookie', 'cake', 'bakery', 'pastry'] },
+            { name: 'Frozen Food', words: ['frozen', 'ice cream', 'pizza'] },
+            { name: 'Baby Food', words: ['baby', 'infant', 'formula'] },
+            { name: 'Street Food', words: ['street food', 'chaat', 'stall'] },
+            { name: 'Packaged Snack', words: ['chips', 'snack', 'namkeen', 'noodles', 'cracker', 'popcorn'] }
+        ];
+
+        var matches = categoryRules.map(function (rule) {
+            return { name: rule.name, score: rule.words.reduce(function (count, word) {
+                return count + (lowerText.indexOf(word) !== -1 ? 1 : 0);
+            }, 0) };
+        }).sort(function (a, b) { return b.score - a.score; });
+
+        var topCat = matches[0].score ? matches[0].name : 'Packaged Snack';
+        var confidence = Math.min(95, Math.max(35, Math.round((result.data && result.data.confidence) || (text ? 55 : 0))));
+        var likelyFood = !!text && (matches[0].score > 0 || /ingredients|nutrition|calories|net weight|manufactured|expiry|best before|food/i.test(text));
+        var checks = [];
+        checks.push(text ? 'OCR text extracted' : 'No readable text found');
+        checks.push(likelyFood ? 'Food-label terms detected' : 'Food terms not confirmed');
+
+        return { text: text, topCat: topCat, confidence: confidence, likelyFood: likelyFood, checks: checks };
+    }
+
+    async function enrichLabelFromOpenFoodFacts(ocrText) {
+        var query = ocrText.split(/\s+/).filter(function (word) {
+            return word.length > 2 && !/^(ingredients|nutrition|calories|manufactured|expiry|product|food|best|before)$/i.test(word);
+        }).slice(0, 5).join(' ');
+        if (!query) return null;
+        try {
+            var response = await fetch('https://world.openfoodfacts.org/cgi/search.pl?search_terms=' + encodeURIComponent(query) + '&search_simple=1&action=process&json=1&page_size=1');
+            if (!response.ok) return null;
+            var data = await response.json();
+            var product = data.products && data.products[0];
+            if (!product || !product.product_name) return null;
+            return product;
+        } catch (err) {
+            console.warn('Open Food Facts label enrichment unavailable', err);
+            return null;
+        }
+    }
+
 
     // ========== IMAGE UPLOAD - EK ALERT, NO HTML ==========
     var labelInput = el('labelImage');
@@ -1677,37 +1781,46 @@ async function renderHistory() {
 
                 
                 previewDiv.innerHTML = '<img src="' + imageDataUrl + '" style="max-width:100%; max-height:250px; border-radius:8px; border:2px solid #e5e7eb;">';
+                var loadingResult = el('imageResult');
+                if (loadingResult) {
+                    loadingResult.style.display = 'block';
+                    loadingResult.style.background = '#eff6ff';
+                    loadingResult.style.border = '2px solid #3b82f6';
+                    loadingResult.innerHTML = '<span class="loader"></span> Reading label text and checking Open Food Facts...';
+                }
 
-                                realImageAnalysis(imageDataUrl).then(function (r) {
+                                analyzeLabelWithOCR(imageDataUrl).then(async function (r) {
                     var imgRes = el('imageResult');
+                    var product = r.likelyFood ? await enrichLabelFromOpenFoodFacts(r.text) : null;
+                    var category = product ? (product.categories || '').toLowerCase() : '';
+                    var productName = product && product.product_name ? product.product_name : '';
+                    var detectedCategory = r.topCat;
+                    if (category.indexOf('dairy') !== -1 || category.indexOf('milk') !== -1) detectedCategory = 'Dairy';
+                    if (category.indexOf('beverage') !== -1 || category.indexOf('drink') !== -1) detectedCategory = 'Beverage';
 
-                    if (!r.isFood) {
-                    
-                        if(imgRes) {
-                            imgRes.style.display = 'block';
-                            imgRes.style.background = '#fef2f2';
-                            imgRes.style.borderColor = '#dc2626';
-                            imgRes.innerHTML = '<strong style="color:#dc2626;">❌ Not a Food Label</strong><br><small>' + r.checks.join(' | ') + '</small><br><small>💡 Upload front of food package with clear label</small>';
-                        }
-                        previewDiv.innerHTML = '<div style="padding:20px; background:#fef2f2; border:2px solid #dc2626; border-radius:8px; color:#b91c1c; text-align:center;">❌ Not a food label. Try again.</div>';
-                        return;
-                    }
-
-                
                     if(imgRes) {
                         imgRes.style.display = 'block';
-                        imgRes.style.background = '#f0fdf4';
-                        imgRes.style.borderColor = '#16a34a';
-                        imgRes.innerHTML = '<strong style="color:#16a34a;">✅ Food Label Detected</strong><br>🏷️ Category: <strong>'+r.topCat+'</strong> (2nd: '+r.secondCat+')<br>📊 Confidence: '+r.confidence+'% | 🌿 '+r.veg+'<br>🔍 ' + r.checks.join(' | ') + '<br><br><em style="color:#6b7280;">✏️ Form auto-filled below! (Enter Product Name manually)</em>';
+                        imgRes.style.background = r.likelyFood ? '#f0fdf4' : '#fffbeb';
+                        imgRes.style.border = '2px solid ' + (r.likelyFood ? '#16a34a' : '#d97706');
+                        imgRes.innerHTML = '<strong style="color:' + (r.likelyFood ? '#16a34a' : '#b45309') + ';">' + (r.likelyFood ? '✅ Label Text Detected' : '⚠️ Image Uploaded, Food Label Not Confirmed') + '</strong><br>🏷️ Category: <strong>' + escapeHtml(detectedCategory) + '</strong><br>📊 OCR Confidence: ' + r.confidence + '%<br>🔍 ' + r.checks.join(' | ') + (productName ? '<br>🌐 Open Food Facts match: <strong>' + escapeHtml(productName) + '</strong>' : '<br><small>OCR/API could not identify a catalog product. You can still complete the form manually.</small>');
                     }
 
-                
-                    if (el('p_cat')) el('p_cat').value = r.topCat;
-                    var range = tempRanges[r.topCat];
+                    if (el('p_cat')) el('p_cat').value = detectedCategory;
+                    if (productName && el('p_name')) el('p_name').value = productName;
+                    if (product && product.ingredients_text && el('p_ing')) el('p_ing').value = product.ingredients_text;
+                    var range = tempRanges[detectedCategory];
                     if (range) { if (el('t_min')) el('t_min').value = range[0]; if (el('t_max')) el('t_max').value = range[1]; }
                     if (el('p_origin')) el('p_origin').value = 'India';
-                    if (el('p_name')) { el('p_name').value = ''; el('p_name').focus(); }
+                    if (el('p_name') && !productName) el('p_name').focus();
 
+                }).catch(function (err) {
+                    console.error('Label OCR failed', err);
+                    var imgRes = el('imageResult');
+                    if (imgRes) {
+                        imgRes.style.display = 'block';
+                        imgRes.style.background = '#fffbeb';
+                        imgRes.innerHTML = '<strong style="color:#b45309;">⚠️ Image uploaded, but OCR could not read it</strong><br><small>You can still enter the product details manually. Try a brighter, front-facing label image.</small>';
+                    }
                 });
             };
             reader.readAsDataURL(file);
@@ -2504,7 +2617,6 @@ async function executeKnnPrediction(triggerBtn) {
 }
 
 if (el('runKnBtn')) el('runKnBtn').onclick = function() { executeKnnPrediction(el('runKnBtn')); };
-if (el('runKnBtnLab')) el('runKnBtnLab').onclick = function() { executeKnnPrediction(el('runKnBtnLab')); };
 
 if (el('labDemo')) el('labDemo').addEventListener('click', function () { 
     if (el('lab_report_id')) el('lab_report_id').value = generateLabReportId();
