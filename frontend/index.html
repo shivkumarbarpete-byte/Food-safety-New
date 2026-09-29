@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FoodSafetyHub - Advanced Food Safety Analyzer | MCA Project</title>
-  <meta name="description" content="Advanced food safety testing tool with FSSAI-compliant analysis, lab statistics, and ML predictions">
-  <meta name="keywords" content="food safety, FSSAI, lab testing, MCA project, food analyzer, machine learning">
+  <title>FoodSafetyHub - Food Safety Screening & Information Platform</title>
+  <meta name="description" content="Food safety screening and information platform with label analysis, laboratory parameter guidance, and statistical testing">
+  <meta name="keywords" content="food safety screening, label check, FSSAI, lab testing, food safety platform, machine learning">
   <meta name="author" content="Shivkumar Barpete,Parag Admache,Nilesh Dhakad">
     <!-- CSS FILE -->
   <link rel="stylesheet" href="style.css">
@@ -35,8 +35,8 @@
         <nav>
           <ul>
             <li><a href="#home" class="active">Home</a></li>
-            <li><a href="#analyzer">Analyzer</a></li>
-            <li><a href="#lab">Lab Test</a></li>
+            <li><a href="#analyzer">Consumer Check</a></li>
+            <li><a href="#lab">Lab Information</a></li>
             <li><a href="#history">History</a></li>
             <li><a href="#scope">Scope &amp; Limitations</a></li>
             <li><a href="#about">About</a></li>
@@ -60,15 +60,36 @@
   </header>
   <div id="progressBar" style="position: fixed; top: 70px; left: 0; width: 0%; height: 4px; background: #facc15; z-index: 999; transition: width 0.1s;"></div>
 
+  <!-- Mandatory Platform Disclaimer Notice -->
+  <div class="platform-notice-bar">
+    <i class="fas fa-shield-halved"></i>
+    <span><strong>Consumer Food Safety Check & Information Platform:</strong> This tool analyzes available product and label information. It does not replace laboratory testing.</span>
+  </div>
+
   <!-- Hero Section -->
   <section id="home" class="hero fade-in">
     <div class="container">
-      <h2>Advanced Food Safety Analysis</h2>
-      <p>FSSAI-compliant food safety testing with machine learning predictions and statistical analysis. MCA 1st Year Project by Shivkumar Barpete,Parag Admache,Nilesh Dhakad.</p>
-      <div class="btn-group" style="justify-content: center;">
-        <a href="#analyzer" class="btn btn-primary"><i class="fas fa-play-circle"></i> Start Analysis</a>
-        <a href="#about" class="btn btn-outline"><i class="fas fa-info-circle"></i> Learn More</a>
+      <h2>Food Safety Screening &amp; Information Platform</h2>
+      <p style="font-size: 1.1rem; margin-bottom: 20px;">
+        Check food product information, identify potential concerns, and understand which laboratory tests may be relevant.
+      </p>
+      
+      <!-- 3 Primary Actions -->
+      <div class="btn-group" style="justify-content: center; flex-wrap: wrap; gap: 12px; margin-bottom: 15px;">
+        <a href="#barcode-card" class="btn btn-primary" style="padding: 12px 22px; font-weight: 600;">
+          <i class="fas fa-barcode"></i> Scan Barcode
+        </a>
+        <a href="#label-ocr-card" class="btn" style="background:#2563eb; color:white; border:2px solid #2563eb; padding: 12px 22px; font-weight: 600;">
+          <i class="fas fa-upload"></i> Upload Label
+        </a>
+        <a href="#analyzerForm" class="btn btn-outline" style="border-color:white; color:white; padding: 12px 22px; font-weight: 600;">
+          <i class="fas fa-edit"></i> Enter Product Manually
+        </a>
       </div>
+
+      <p style="font-size: 0.85rem; color: #e2e8f0; opacity: 0.9;">
+        📌 FoodSafetyHub provides information-based screening. Actual food safety confirmation may require laboratory testing.
+      </p>
     </div>
   </section>
 <section class="section" style="padding: 40px 0; background: var(--bg-white);">
@@ -79,15 +100,15 @@
         <div class="kpi-value" id="dash_total" style="color:#16a34a;">0</div>
       </div>
       <div class="kpi-card" style="background: #dcfce7; border-left: 5px solid #059669;">
-        <div class="kpi-title">Low Risk Products</div>
+        <div class="kpi-title">No Obvious Issue</div>
         <div class="kpi-value" id="dash_safe" style="color:#059669;">0</div>
       </div>
       <div class="kpi-card" style="background: #fef2f2; border-left: 5px solid #dc2626;">
-        <div class="kpi-title">Higher Risk Products</div>
+        <div class="kpi-title">Attention / Potential Issue</div>
         <div class="kpi-value" id="dash_unsafe" style="color:#dc2626;">0</div>
       </div>
       <div class="kpi-card" style="background: #fef3c7; border-left: 5px solid #d97706;">
-        <div class="kpi-title">Avg Risk Score</div>
+        <div class="kpi-title">Avg Screening Index</div>
         <div class="kpi-value" id="dash_avg" style="color:#d97706;">0%</div>
       </div>
     </div>
@@ -97,35 +118,35 @@
   <section id="about" class="section">
     <div class="container reveal">
       <div class="section-title">
-        <h2>About FoodSafetyHub</h2>
-        <p>An innovative MCA 1st year project developed at IIIT Bhopal to revolutionize food safety testing</p>
+        <h2>How FoodSafetyHub Works</h2>
+        <p>Three core modules working together to provide decision-support screening and laboratory parameters guidance</p>
       </div>
       <div class="row">
         <div class="col">
-          <div class="card text-center">
-            <div class="card-header">
-              <i class="fas fa-flask"></i>
-              <h3>Heuristic Analysis</h3>
+          <div class="card text-center" style="height:100%;">
+            <div class="card-header" style="color:var(--primary);">
+              <i class="fas fa-clipboard-check"></i>
+              <h3>1. Rule-Based Consumer Screening</h3>
             </div>
-            <p>Comprehensive evaluation of food products based on multiple safety parameters including ingredients, expiry, storage conditions, and FSSAI compliance.</p>
+            <p style="font-size:0.88rem; color:#4b5563;">Evaluation of available label data, ingredient lists, E-number additives, allergen warnings, expiry/best-before dates, storage conditions, and FSSAI license format.</p>
           </div>
         </div>
         <div class="col">
-          <div class="card text-center">
-            <div class="card-header">
+          <div class="card text-center" style="height:100%;">
+            <div class="card-header" style="color:#0284c7;">
               <i class="fas fa-brain"></i>
-              <h3>ML Predictions</h3>
+              <h3>2. ML Exploratory Risk Screening</h3>
             </div>
-            <p>Advanced k-NN machine learning algorithm to predict food safety based on pH, moisture, and temperature parameters.</p>
+            <p style="font-size:0.88rem; color:#4b5563;">Supervised machine learning algorithms (k-NN, Regression models) used for predictive risk modeling on feature vectors (pH, moisture, storage temperature).</p>
           </div>
         </div>
         <div class="col">
-          <div class="card text-center">
-            <div class="card-header">
-              <i class="fas fa-chart-bar"></i>
-              <h3>Statistical Testing</h3>
+          <div class="card text-center" style="height:100%;">
+            <div class="card-header" style="color:#7c3aed;">
+              <i class="fas fa-microscope"></i>
+              <h3>3. Laboratory Parameter Guidance</h3>
             </div>
-            <p>Z-test and T-test implementations for laboratory data analysis with configurable confidence levels.</p>
+            <p style="font-size:0.88rem; color:#4b5563;">Category-specific laboratory testing parameter reference guide combined with Z-test / T-test statistical hypothesis screening for user-entered lab data.</p>
           </div>
         </div>
       </div>
@@ -224,6 +245,26 @@
   <section id="analyzer" class="section" style="background: var(--bg-light);">
     <div class="container reveal">
 
+      <!-- ========== 4-STEP WORKFLOW STEPPER ========== -->
+      <div class="workflow-stepper">
+        <div class="step-item active"><span class="step-num">1</span> SCAN / ENTER PRODUCT</div>
+        <div class="step-arrow"><i class="fas fa-chevron-right"></i></div>
+        <div class="step-item active"><span class="step-num">2</span> PRODUCT INFORMATION</div>
+        <div class="step-arrow"><i class="fas fa-chevron-right"></i></div>
+        <div class="step-item active"><span class="step-num">3</span> CONSUMER SAFETY CHECK</div>
+        <div class="step-arrow"><i class="fas fa-chevron-right"></i></div>
+        <div class="step-item"><span class="step-num">4</span> LABORATORY TESTING INFORMATION</div>
+      </div>
+
+      <!-- ========== QUICK ACTION BUTTONS ========== -->
+      <div class="quick-actions-bar">
+        <a href="#barcode-card" class="quick-action-btn"><i class="fas fa-barcode" style="color:#16a34a;"></i> Scan Barcode</a>
+        <a href="#label-ocr-card" class="quick-action-btn"><i class="fas fa-camera" style="color:#2563eb;"></i> Upload Product Label</a>
+        <a href="#analyzerForm" class="quick-action-btn"><i class="fas fa-edit" style="color:#f59e0b;"></i> Enter Product Manually</a>
+        <a href="#results-section-card" class="quick-action-btn"><i class="fas fa-clipboard-check" style="color:#059669;"></i> View Consumer Safety Check</a>
+        <a href="#lab" class="quick-action-btn"><i class="fas fa-flask" style="color:#7c3aed;"></i> View Laboratory Parameters</a>
+      </div>
+
       <!-- ========== MODE TOGGLE ========== -->
       <div style="display:flex; justify-content:center; margin-bottom: 10px;">
         <div class="mode-toggle-bar">
@@ -240,7 +281,7 @@
       </div>
 
        <!-- ========== BARCODE SCANNER SECTION ========== -->
-<div class="card" style="margin-bottom: 20px;">
+<div class="card" id="barcode-card" style="margin-bottom: 20px;">
     <h3><i class="fas fa-barcode"></i> Barcode Scanner</h3>
     <p style="font-size:0.85rem; color:#6b7280; margin-bottom:15px;">Scan barcode from camera or upload image. Fetches product details from Open Food Facts database.<br><small style="color:#4b5563; display:block; margin-top:4px;">📌 <strong>Note:</strong> Barcode scanning identifies the product and retrieves available product information. It does not verify laboratory safety.</small></p>
     
@@ -560,57 +601,113 @@
         </div><!-- end lab-mode-extras -->
         <hr style="margin: 30px 0; border: none; border-top: 1px solid var(--border);">
         
-        <div class="card-header">
-          <i class="fas fa-chart-line"></i>
-          <h3>Analysis Results</h3>
-        </div>
-        
-        <div class="kpi-grid">
-          <div class="kpi-card">
-            <div class="kpi-title">Overall Risk Score</div>
-            <div class="kpi-value" id="k_overall">—</div>
+        <div id="results-section-card">
+          <div class="card-header">
+            <i class="fas fa-clipboard-check"></i>
+            <h3>Final Product Analysis Report</h3>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-title">Expiry Status</div>
-            <div class="kpi-value" id="k_exp">—</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-title">Additives Flagged</div>
-            <div class="kpi-value" id="k_add">—</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-title">Allergens Detected</div>
-            <div class="kpi-value" id="k_all">—</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-title">Origin Status</div>
-            <div class="kpi-value" id="k_origin">—</div>
-          </div>
-        </div>
-        
-        <div id="dataSourceBadge" style="margin-bottom: 12px; font-size: 0.88rem; font-weight: 600; color: #4b5563;"></div>
-        <div id="inputWarningBanner" style="display:none; margin-bottom: 15px; padding: 12px; background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 6px; font-size: 0.88rem; color: #92400e;"></div>
 
-        <div>
-          <p><strong>Risk Assessment Verdict:</strong> <span id="verdict" class="badge">—</span></p>
-          <div id="fopWarnings" style="margin:15px 0; font-weight:600; color:#b91c1c;"></div>
-          <p><strong>ML-Based Preliminary Estimate (Experimental):</strong> <span id="knn_out">—</span></p>
-        </div>
-        
-        <ul class="results-list" id="bullets"></ul>
+          <!-- ==================== SECTION 1: CONSUMER SCREENING ==================== -->
+          <div style="margin-bottom: 25px; padding: 18px; background: #ffffff; border-radius: 10px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <h4 style="font-size: 1.05rem; color: var(--primary-dark); margin-bottom: 12px; border-bottom: 2px solid var(--primary-light); padding-bottom: 6px;">
+              <i class="fas fa-search"></i> SECTION 1: CONSUMER SCREENING
+            </h4>
 
-        <div id="generalDisclaimer" style="margin: 15px 0; padding: 12px 16px; background: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 6px; font-size: 0.85rem; color: #1e40af;">
-          <i class="fas fa-info-circle"></i> <strong>Preliminary Screening Assessment:</strong> This is a preliminary screening assessment based on available product information. It is not a laboratory test or regulatory certification.
-          <br><small style="color:#3b82f6; font-size:0.8rem; display:block; margin-top:4px;">📌 Assessment accuracy depends on the quality and completeness of the input data.</small>
-        </div>
-        
-        <div class="chart-container">
-          <canvas id="riskChart"></canvas>
-        </div>
-        
-        <div id="csvPreview" class="hidden">
-          <h4>CSV Preview</h4>
-          <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"></pre>
+            <!-- Checklist -->
+            <div style="margin-bottom: 15px;">
+              <strong style="font-size: 0.88rem; color: #475569;">Parameters Checked from Label &amp; Available Info:</strong>
+              <div class="check-grid" style="margin-top: 8px;">
+                <div class="check-item"><i class="fas fa-check-circle"></i> Expiry / Best Before Date</div>
+                <div class="check-item"><i class="fas fa-check-circle"></i> Ingredients List</div>
+                <div class="check-item"><i class="fas fa-check-circle"></i> Allergen Declarations</div>
+                <div class="check-item"><i class="fas fa-check-circle"></i> Additives &amp; E-numbers</div>
+                <div class="check-item"><i class="fas fa-check-circle"></i> Storage &amp; Origin Info</div>
+                <div class="check-item"><i class="fas fa-check-circle"></i> FSSAI Format Validation</div>
+                <div class="check-item"><i class="fas fa-check-circle"></i> Product Information / Barcode Data</div>
+              </div>
+            </div>
+
+            <!-- Observed KPI summary -->
+            <div class="kpi-grid" style="margin-bottom: 15px;">
+              <div class="kpi-card">
+                <div class="kpi-title">Screening Risk Level</div>
+                <div class="kpi-value" id="k_overall">—</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Expiry Status</div>
+                <div class="kpi-value" id="k_exp">—</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Additives Flagged</div>
+                <div class="kpi-value" id="k_add">—</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Allergens Detected</div>
+                <div class="kpi-value" id="k_all">—</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-title">Origin Status</div>
+                <div class="kpi-value" id="k_origin">—</div>
+              </div>
+            </div>
+
+            <div id="dataSourceBadge" style="margin-bottom: 12px; font-size: 0.88rem; font-weight: 600; color: #4b5563;"></div>
+            <div id="inputWarningBanner" style="display:none; margin-bottom: 15px; padding: 12px; background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 6px; font-size: 0.88rem; color: #92400e;"></div>
+            <div id="fopWarnings" style="margin:10px 0; font-weight:600; color:#b91c1c;"></div>
+            <ul class="results-list" id="bullets" style="margin-bottom: 15px;"></ul>
+
+            <!-- Outcome Verdict -->
+            <div style="padding: 14px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div style="margin-bottom: 8px;">
+                <strong>Consumer Screening Result:</strong> <span id="verdict" class="badge">—</span>
+              </div>
+              <!-- Why box -->
+              <div id="resultWhyBox"></div>
+            </div>
+          </div>
+
+          <!-- ==================== SECTION 2: LABORATORY TESTING ==================== -->
+          <div class="lab-limits-card" style="margin-bottom: 25px; background: #fefce8; border-left: 5px solid #d97706;">
+            <h4 style="color: #92400e; font-size: 1.02rem;"><i class="fas fa-microscope"></i> SECTION 2: LABORATORY TESTING PARAMETERS</h4>
+            <p style="font-size: 0.88rem; color: #78350f; line-height: 1.5; margin-bottom: 12px;">
+              Laboratory testing may be required to evaluate hazards that cannot be determined from a label or barcode.
+            </p>
+            <ul class="lab-limits-list" style="color: #92400e;">
+              <li>🦠 Microbiological Safety (Salmonella, E. coli, Listeria, Mould/Yeast)</li>
+              <li>🧪 Chemical Contaminants &amp; Heavy Metals (Lead, Arsenic, Mercury, Cadmium)</li>
+              <li>🌾 Pesticide &amp; Veterinary Drug Residues</li>
+              <li>☣ Toxins (Aflatoxins, Mycotoxins)</li>
+              <li>🔬 Adulteration &amp; Purity Testing</li>
+              <li>📊 Product-Specific Quality &amp; Composition Parameters</li>
+            </ul>
+            <div style="margin-top: 14px;">
+              <a href="#lab" class="btn" style="background: #d97706; color: white; padding: 8px 16px; font-size: 0.85rem; text-decoration: none; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="fas fa-flask"></i> Explore Laboratory Parameter Guide
+              </a>
+            </div>
+          </div>
+
+          <!-- ==================== SECTION 3: IMPORTANT LIMITATION ==================== -->
+          <div style="margin-bottom: 25px; padding: 14px 18px; background: #eff6ff; border-left: 5px solid #2563eb; border-radius: 8px; font-size: 0.88rem; color: #1e40af;">
+            <h4 style="font-size: 0.95rem; margin-bottom: 6px; color: #1e3a8a;"><i class="fas fa-shield-halved"></i> SECTION 3: IMPORTANT LIMITATION</h4>
+            FoodSafetyHub performs information-based screening. It cannot physically test a food sample and cannot certify a product as safe or compliant.
+          </div>
+
+          <!-- EXPERIMENTAL ML RISK SCREENING ESTIMATE -->
+          <div style="margin-bottom: 20px; padding: 14px 16px; background: #f0f9ff; border-left: 4px solid #0284c7; border-radius: 6px; font-size: 0.88rem;">
+            <strong><i class="fas fa-brain"></i> Model-Based Risk Screening Estimate (Experimental k-NN):</strong> 
+            <span id="knn_out" style="font-weight: 600; color: #0369a1;">—</span>
+            <br><small style="color: #0284c7; display: block; margin-top: 4px;">📌 Supplementary decision-support estimate based on training feature vectors. Does not constitute laboratory certification.</small>
+          </div>
+
+          <div class="chart-container">
+            <canvas id="riskChart"></canvas>
+          </div>
+          
+          <div id="csvPreview" class="hidden">
+            <h4>CSV Preview</h4>
+            <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto;"></pre>
+          </div>
         </div>
       </div>
     </div>
@@ -620,14 +717,57 @@
   <section id="lab" class="section">
     <div class="container reveal">
       <div class="section-title">
-        <h2>Laboratory Testing &amp; Traceability</h2>
-        <p>Statistical analysis of laboratory measurements with full sample traceability and structured assessment reports</p>
+        <h2>Laboratory Testing Reference &amp; Parameters Guide</h2>
+        <p>Educational guide to laboratory parameters, category-specific safety parameters, and statistical reference screening for user-entered lab data.</p>
       </div>
+
+      <!-- CATEGORY PARAMETER REFERENCE GUIDE CARD -->
+      <div class="card" style="margin-bottom: 25px; border-left: 5px solid #7c3aed;">
+        <div class="card-header" style="color: #6d28d9;">
+          <i class="fas fa-book-medical"></i>
+          <h3>Category-Specific Laboratory Parameter Guide</h3>
+        </div>
+        <p style="font-size: 0.88rem; color: #4b5563; margin-bottom: 15px;">
+          Select a food category below to explore the parameter groups commonly evaluated in official accredited laboratory testing.
+        </p>
+
+        <div class="form-group" style="margin-bottom: 20px; max-width: 400px;">
+          <label class="form-label" for="labCategoryGuideSelect" style="font-weight: 600; color: #374151;">
+            <i class="fas fa-filter" style="color: #7c3aed;"></i> Select Food Category:
+          </label>
+          <select class="form-select" id="labCategoryGuideSelect" style="font-weight: 500; border-color: #c4b5fd;">
+            <option value="Milk &amp; Dairy">Milk &amp; Dairy</option>
+            <option value="Edible Oils &amp; Fats">Edible Oils &amp; Fats</option>
+            <option value="Cereals &amp; Grains">Cereals &amp; Grains</option>
+            <option value="Spices">Spices</option>
+            <option value="Fruits &amp; Vegetables">Fruits &amp; Vegetables</option>
+            <option value="Meat &amp; Poultry">Meat &amp; Poultry</option>
+            <option value="Fish &amp; Seafood">Fish &amp; Seafood</option>
+            <option value="Bakery Products">Bakery Products</option>
+            <option value="Packaged Foods" selected>Packaged Foods</option>
+            <option value="Beverages">Beverages</option>
+            <option value="Sweets / Confectionery">Sweets / Confectionery</option>
+          </select>
+        </div>
+
+        <div id="categoryLabParamsDisplay" style="margin-top: 15px;"></div>
+
+        <div style="margin-top: 15px; padding: 10px 14px; background: #faf5ff; border-radius: 6px; border: 1px solid #e9d5ff; font-size: 0.82rem; color: #6b21a8;">
+          📌 <strong>Informational Reference:</strong> Commonly evaluated parameters may vary depending on official regulatory standards (e.g., FSSAI manuals), product composition, and laboratory SOPs.
+        </div>
+      </div>
+
+      <!-- USER-ENTERED LAB DATA STATISTICAL ANALYSIS CARD -->
       <div class="card">
         <div class="card-header">
           <i class="fas fa-microscope"></i>
-          <h3>Lab Data Analysis &amp; Traceability</h3>
+          <h3>User-Entered Laboratory Data &amp; Statistical Reference Analysis</h3>
         </div>
+        <p style="font-size: 0.85rem; color: #4b5563; margin-bottom: 15px;">
+          Record user-entered laboratory measurements and compare sample means against reference limits using Z-test / T-test statistical screening.
+          <br><small style="color: #6b7280; display: block; margin-top: 4px;">📌 <strong>Note:</strong> Statistical analysis is an informational screening tool for user-entered data and does not replace accredited physical laboratory certification.</small>
+        </p>
+
         <form id="labForm">
           <div class="form-group" style="margin-bottom:20px; background:#f8fafc; padding:12px 16px; border-radius:8px; border:1px solid #e2e8f0;">
             <label class="form-label"><i class="fas fa-folder-open"></i> Restore Saved Lab Assessment</label>
@@ -705,6 +845,12 @@
                 <div class="form-group">
                   <label class="form-label">Reviewer Name (optional)</label>
                   <input type="text" class="form-control" id="lab_reviewer" placeholder="e.g., Quality Manager B">
+                </div>
+              </div>
+              <div class="col">
+                <div class="form-group">
+                  <label class="form-label">Testing Laboratory Name (optional)</label>
+                  <input type="text" class="form-control" id="lab_facility" placeholder="e.g., National Food Testing Lab">
                 </div>
               </div>
             </div>
@@ -786,8 +932,8 @@
           </div>
               
           <div class="btn-group" style="flex-wrap:wrap; gap:10px; margin-top:10px;">
-            <button type="button" class="btn btn-primary" id="labRun"><i class="fas fa-play"></i> Run Statistical Test</button>
-            <button type="button" class="btn btn-secondary" id="labDemo"><i class="fas fa-flask"></i> Load Demo</button>
+            <button type="button" class="btn btn-primary" id="labRun"><i class="fas fa-play"></i> Run Statistical Reference Screening</button>
+            <button type="button" class="btn btn-secondary" id="labDemo"><i class="fas fa-flask"></i> Load Sample Data</button>
             <button type="button" class="btn btn-outline" id="labSave"><i class="fas fa-save"></i> Save Lab Assessment</button>
             <button type="button" class="btn btn-outline" id="labExportPdf"><i class="fas fa-file-pdf"></i> Export Structured PDF Report</button>
           </div>
@@ -797,10 +943,10 @@
         
         <div class="card-header">
           <i class="fas fa-clipboard-check"></i>
-          <h3>Statistical Assessment Results</h3>
+          <h3>User-Entered Laboratory Data — Statistical Reference Screening Results</h3>
         </div>
         
-        <p><strong>Statistical Assessment Outcome:</strong> <span id="lab_summary" class="badge">—</span></p>
+        <p><strong>Statistical Screening Outcome:</strong> <span id="lab_summary" class="badge">—</span></p>
         <div id="lab_stats_indicators" style="display:flex; gap:15px; margin: 10px 0; font-size: 0.88rem; color: #475569;">
           <span><strong>n:</strong> <span id="lab_n">—</span></span>
           <span><strong>Mean:</strong> <span id="lab_mean">—</span></span>
@@ -810,7 +956,7 @@
         <ul class="results-list" id="lab_out"></ul>
         
         <div style="margin-top:15px; padding:12px 16px; background:#eff6ff; border-left:4px solid #3b82f6; border-radius:6px; font-size:0.85rem; color:#1e40af;">
-          <i class="fas fa-info-circle"></i> <strong>Statistical Assessment Notice:</strong> Statistical analysis evaluates the provided sample measurements against the specified reference limit. It does not by itself constitute complete food-safety certification.
+          <i class="fas fa-info-circle"></i> <strong>Statistical Screening Notice:</strong> Statistical or model-based analysis is an informational reference screening tool for user-entered data and does not replace physical laboratory testing or official certification.
         </div>
         
         <div class="chart-container">

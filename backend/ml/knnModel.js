@@ -30,7 +30,7 @@ async function trainAndPredictCategory(category, inputFeatureMap) {
 
   return {
     prediction: predictedLabel,
-    verdict: predictedLabel === 0 ? 'Low Risk / Safe' : 'Higher Risk / Unsafe',
+    verdict: predictedLabel === 0 ? 'Low Risk Screening Estimate' : 'Higher Risk Screening Estimate',
     trainedOn: dataset.length,
     k: k,
     category: normCat,

@@ -317,9 +317,34 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         score = clamp(Math.round(score), 0, 100);
-        var verdict = 'Moderate Risk Based on Available Information', badge = 'badge-warn';
-        if (score <= 30) { verdict = 'Low Risk Based on Available Information'; badge = 'badge-safe'; } 
-        else if (score >= 70) { verdict = 'Higher Risk Based on Available Information'; badge = 'badge-risk'; }
+        
+        var isInsufficient = (!name || name === 'Unknown Product') && (!exp) && (!ing);
+        var riskLevelState = 'MODERATE CONCERN';
+        var verdict = 'Some information requires attention.';
+        var badge = 'badge-warn';
+
+        if (isInsufficient) {
+            riskLevelState = 'INSUFFICIENT INFORMATION';
+            verdict = 'Insufficient Information for Screening Assessment';
+            badge = 'badge-warn';
+            score = 0;
+            notes.push("⚠️ Insufficient product information provided for screening assessment.");
+        } else if (score <= 30) {
+            riskLevelState = 'LOW CONCERN';
+            verdict = 'No obvious issue found in the available product information.';
+            badge = 'badge-safe';
+            notes.push("✅ No obvious issue found in available product information.");
+        } else if (score >= 70) {
+            riskLevelState = 'HIGH CONCERN';
+            verdict = 'Potential issue detected in the available product information.';
+            badge = 'badge-risk';
+            notes.push("⚠️ Potential issue detected in available product information.");
+        } else {
+            riskLevelState = 'MODERATE CONCERN';
+            verdict = 'Some information requires attention.';
+            badge = 'badge-warn';
+            notes.push("⚠️ Some information requires attention.");
+        }
 
         var breakdown = {
             Nutrition: nutScorePenalty,
@@ -329,16 +354,13 @@ document.addEventListener('DOMContentLoaded', function () {
             Origin: origin === 'India' ? 0 : 5
         };
 
-        if (score > 70) notes.push("⚠️ Higher risk based on available information"); 
-        else if (score > 40) notes.push("⚠️ Moderate risk based on available information"); 
-        else notes.push("✅ Low risk based on available information");
-
         return {
             name: name, cat: cat, expStatus: expStatus, allergenCount: allergenCount,
             additiveCount: additiveCount, notes: notes, score: score, badge: badge,
-            verdict: verdict, breakdown: breakdown, originStatus: originStatus,
+            verdict: verdict, riskLevelState: riskLevelState, breakdown: breakdown, originStatus: originStatus,
             tempStatus: tempStatus, fopWarnings: fopW, pH: pH, moisture: moisture,
-            temperature: temperature, dataOrigin: dataOrigin, missingFields: missingFields
+            temperature: temperature, dataOrigin: dataOrigin, missingFields: missingFields,
+            fssai: fssai
         };
     }
 
@@ -367,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function runChecks() {
         var r = analyze();
-        if (el('k_overall')) el('k_overall').textContent = r.score + ' / 100';
+        if (el('k_overall')) el('k_overall').textContent = r.riskLevelState + (r.riskLevelState !== 'INSUFFICIENT INFORMATION' ? ' (' + r.score + '/100)' : '');
         if (el('k_exp')) el('k_exp').textContent = r.expStatus;
         if (el('k_add')) el('k_add').textContent = r.additiveCount;
         if (el('k_all')) el('k_all').textContent = r.allergenCount;
@@ -387,8 +409,34 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         var ul = el('bullets'); if (ul) { ul.innerHTML = ''; r.notes.forEach(function (n) { var li = document.createElement('li'); li.innerHTML = '<i class="fas fa-info-circle"></i> ' + n; ul.appendChild(li); }); }
-        var v = el('verdict'); if (v) { v.textContent = r.verdict + ' (' + r.score + ')'; v.className = 'badge ' + r.badge; }
+        var v = el('verdict'); if (v) { v.textContent = r.verdict + (r.score > 0 ? ' (' + r.score + '/100)' : ''); v.className = 'badge ' + r.badge; }
         var fd = el('fopWarnings'); if (fd) { if (r.fopWarnings.length) { fd.innerHTML = '🚨 ' + r.fopWarnings.join(' • '); fd.style.display = 'block'; } else fd.style.display = 'none'; }
+
+        // Render "Why was this result given?" breakdown box
+        var whyBox = el('resultWhyBox');
+        if (whyBox) {
+            var whyHtml = '<div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px 16px; margin-top:12px;">';
+            whyHtml += '<h5 style="font-size:0.9rem; color:#1e293b; margin-bottom:8px; display:flex; align-items:center; gap:6px;"><i class="fas fa-question-circle" style="color:#0284c7;"></i> Why was this result given?</h5>';
+            whyHtml += '<ul style="list-style:none; padding:0; margin:0; font-size:0.85rem; color:#334155; line-height:1.6;">';
+            if (r.riskLevelState === 'INSUFFICIENT INFORMATION') {
+                whyHtml += '<li>• Required product information (name, expiry date, ingredients) was not provided.</li>';
+            } else {
+                if (r.expStatus.startsWith('Expired')) whyHtml += '<li>• Product is past its expiry/best-before date (' + escapeHtml(r.expStatus) + ').</li>';
+                else if (r.expStatus.startsWith('Near')) whyHtml += '<li>• Product is near its expiry date (' + escapeHtml(r.expStatus) + ').</li>';
+                else if (r.expStatus === 'Data unavailable') whyHtml += '<li>• Expiry / best-before date was not provided.</li>';
+                if (r.allergenCount > 0) whyHtml += '<li>• ' + r.allergenCount + ' potential allergen(s) detected in ingredients.</li>';
+                if (r.additiveCount > 0) whyHtml += '<li>• ' + r.additiveCount + ' additive(s) / E-numbers flagged on watchlist.</li>';
+                if (r.fopWarnings && r.fopWarnings.length > 0) whyHtml += '<li>• Front-of-pack nutrition concerns: ' + escapeHtml(r.fopWarnings.join(', ')) + '.</li>';
+                if (r.originStatus === 'Imported') whyHtml += '<li>• Product is imported; origin screening applied.</li>';
+                if (!r.fssai || !/^\d{14}$/.test(r.fssai)) whyHtml += '<li>• FSSAI license number is missing or invalid format.</li>';
+                if (r.score <= 30 && r.allergenCount === 0 && r.additiveCount === 0 && (!r.fopWarnings || r.fopWarnings.length === 0)) {
+                    whyHtml += '<li>• No obvious expiration, allergen, additive, or nutritional concerns were identified in the available input data.</li>';
+                }
+            }
+            whyHtml += '</ul></div>';
+            whyBox.innerHTML = whyHtml;
+        }
+
         if (riskChart) { riskChart.data.labels = Object.keys(r.breakdown); riskChart.data.datasets[0].data = Object.values(r.breakdown); riskChart.update(); }
     }
 
@@ -657,15 +705,19 @@ document.addEventListener('DOMContentLoaded', function () {
             'Statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' > ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' < α = ' + alpha + ').' :
             'No statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' ≤ ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' ≥ α = ' + alpha + ').';
 
+        var facility = el('lab_facility') ? el('lab_facility').value.trim() : '';
+
         var listItems = [
-            '<strong>Report ID:</strong> <span class="text-primary font-bold">' + escapeHtml(reportId) + '</span> ' + (sampleId ? '| <strong>Sample ID:</strong> ' + escapeHtml(sampleId) : '') + (batchNo ? ' | <strong>Batch/Lot:</strong> ' + escapeHtml(batchNo) : ''),
+            '<strong>Data Origin:</strong> <span class="badge" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a;">User-Entered Laboratory Measurements</span>',
+            '<strong>Report Tracking ID:</strong> <span class="text-primary font-bold">' + escapeHtml(reportId) + '</span> ' + (sampleId ? '| <strong>Sample ID:</strong> ' + escapeHtml(sampleId) : '') + (batchNo ? ' | <strong>Batch/Lot:</strong> ' + escapeHtml(batchNo) : ''),
             (sampleName ? '<strong>Product / Sample Name:</strong> ' + escapeHtml(sampleName) : null),
-            (testMethod ? '<strong>Test Method:</strong> ' + escapeHtml(testMethod) : null),
-            '<strong>Parameter Name:</strong> ' + escapeHtml(param) + ' (' + escapeHtml(unit) + ')',
-            '<strong>Sample Measurements:</strong> ' + data.join(', ') + ' ' + escapeHtml(unit),
+            (facility ? '<strong>Testing Laboratory:</strong> ' + escapeHtml(facility) : null),
+            (testMethod ? '<strong>Test Method / Standard:</strong> ' + escapeHtml(testMethod) : null),
+            '<strong>Parameter Evaluated:</strong> ' + escapeHtml(param) + ' (' + escapeHtml(unit) + ')',
+            '<strong>User-Entered Measurements:</strong> ' + data.join(', ') + ' ' + escapeHtml(unit),
             '<strong>Sample Size (n):</strong> ' + n + ' | <strong>Sample Mean (x̄):</strong> ' + mean.toFixed(2) + ' ' + escapeHtml(unit),
-            '<strong>Reference Limit (L):</strong> ' + L + ' ' + escapeHtml(unit) + ' <small style="color:#6b7280;">[' + escapeHtml(sourceText) + ']</small>',
-            '<strong>Statistical Test:</strong> ' + (useZ ? 'Z-Test (known σ = ' + sigma + ')' : 'T-Test (sample s = ' + sd.toFixed(2) + ')'),
+            '<strong>Reference Threshold Limit (L):</strong> ' + L + ' ' + escapeHtml(unit) + ' <small style="color:#6b7280;">[' + escapeHtml(sourceText) + ']</small>',
+            '<strong>Statistical Model Used:</strong> ' + (useZ ? 'Z-Test (known σ = ' + sigma + ')' : 'T-Test (sample s = ' + sd.toFixed(2) + ')'),
             '<strong>Standard Error (SE):</strong> ' + se.toFixed(2) + ' | <strong>Test Statistic (' + (useZ ? 'z' : 't') + '):</strong> ' + z.toFixed(2),
             '<strong>p-value:</strong> ' + p.toFixed(4) + ' (Alpha level α = ' + alpha + ', Confidence Level = ' + Math.round((1 - alpha) * 100) + '%)',
             '<strong>Statistical Interpretation:</strong> ' + interpretation,
@@ -958,8 +1010,8 @@ async function renderHistory() {
         var arr = await res.json();
         if (!res.ok) return;
 
-        var safe = arr.filter(function (r) { return r.verdict.includes('Low Risk'); }).length;
-        var unsafe = arr.filter(function (r) { return r.verdict.includes('Higher Risk'); }).length;
+        var safe = arr.filter(function (r) { return r.verdict.includes('No obvious issue') || r.verdict.includes('Low Risk') || r.safe === 1; }).length;
+        var unsafe = arr.filter(function (r) { return r.verdict.includes('Potential issue') || r.verdict.includes('Attention') || r.verdict.includes('Higher Risk'); }).length;
         var avgScore = arr.length ? Math.round(arr.reduce(function (s, r) { return s + r.score; }, 0) / arr.length) : 0;
 
         if (el('dash_total')) el('dash_total').textContent = arr.length;
@@ -1764,6 +1816,39 @@ async function renderHistory() {
         }
     }
 
+    function getLabelProductName(text) {
+        var ignored = /^(ingredients|nutrition|nutrition facts|calories|net weight|manufactured|mfd|expiry|exp|best before|food product|serving size|per 100g)$/i;
+        var lines = text.split(/\n|(?=ingredients|nutrition|calories|net weight|best before)/i)
+            .map(function (line) { return line.replace(/[^a-zA-Z0-9&' -]/g, ' ').replace(/\s+/g, ' ').trim(); })
+            .filter(function (line) { return line.length >= 3 && line.length <= 80 && !ignored.test(line); });
+        return lines[0] || '';
+    }
+
+    function getLabelIngredients(text) {
+        var match = text.match(/ingredients?\s*[:\-]?\s*(.*?)(?=nutrition|allergen|contains|net weight|manufactured|best before|expiry|$)/i);
+        return match && match[1] ? match[1].trim() : '';
+    }
+
+    function getLabelNumber(text, pattern) {
+        var match = text.match(pattern);
+        return match && match[1] ? match[1].replace(',', '.').trim() : '';
+    }
+
+    function fillFormFromLabel(details) {
+        if (details.name && el('p_name')) el('p_name').value = details.name;
+        if (details.category && el('p_cat')) {
+            el('p_cat').value = details.category;
+            el('p_cat').dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        if (details.ingredients && el('p_ing')) el('p_ing').value = details.ingredients;
+        if (details.expiry && el('p_exp')) el('p_exp').value = details.expiry;
+        if (details.kcal && el('n_kcal')) el('n_kcal').value = details.kcal;
+        if (details.sugar && el('n_sugar')) el('n_sugar').value = details.sugar;
+        if (details.sodium && el('n_sodium')) el('n_sodium').value = details.sodium;
+        if (details.sat && el('n_sat')) el('n_sat').value = details.sat;
+        window.lastDataOrigin = details.source || 'Extracted from uploaded product label';
+    }
+
 
     // ========== IMAGE UPLOAD - EK ALERT, NO HTML ==========
     var labelInput = el('labelImage');
@@ -1791,35 +1876,54 @@ async function renderHistory() {
 
                                 analyzeLabelWithOCR(imageDataUrl).then(async function (r) {
                     var imgRes = el('imageResult');
-                    var product = r.likelyFood ? await enrichLabelFromOpenFoodFacts(r.text) : null;
+                    var product = r.text ? await enrichLabelFromOpenFoodFacts(r.text) : null;
                     var category = product ? (product.categories || '').toLowerCase() : '';
-                    var productName = product && product.product_name ? product.product_name : '';
+                    var productName = product && product.product_name ? product.product_name : getLabelProductName(r.text);
                     var detectedCategory = r.topCat;
                     if (category.indexOf('dairy') !== -1 || category.indexOf('milk') !== -1) detectedCategory = 'Dairy';
                     if (category.indexOf('beverage') !== -1 || category.indexOf('drink') !== -1) detectedCategory = 'Beverage';
+                    if (category.indexOf('bakery') !== -1 || category.indexOf('bread') !== -1) detectedCategory = 'Bakery';
+                    if (category.indexOf('frozen') !== -1) detectedCategory = 'Frozen Food';
+                    if (category.indexOf('baby') !== -1) detectedCategory = 'Baby Food';
+                    var labelIngredients = (product && (product.ingredients_text || product.ingredients_text_en)) || getLabelIngredients(r.text);
+                    var labelNutrition = product && product.nutriments ? product.nutriments : {};
+                    var labelDetails = {
+                        name: productName,
+                        category: detectedCategory && (product || r.likelyFood) ? detectedCategory : '',
+                        ingredients: labelIngredients,
+                        kcal: labelNutrition['energy-kcal_100g'] || getLabelNumber(r.text, /(?:energy|calories|kcal)[^\d]{0,12}(\d+(?:[.,]\d+)?)/i),
+                        sugar: labelNutrition.sugars_100g || getLabelNumber(r.text, /sugars?[^\d]{0,12}(\d+(?:[.,]\d+)?)/i),
+                        sodium: labelNutrition.sodium_100g ? labelNutrition.sodium_100g * 1000 : getLabelNumber(r.text, /sodium[^\d]{0,12}(\d+(?:[.,]\d+)?)/i),
+                        sat: labelNutrition['saturated-fat_100g'] || getLabelNumber(r.text, /saturated\s+fat[^\d]{0,12}(\d+(?:[.,]\d+)?)/i),
+                        source: product ? 'Retrieved from Open Food Facts and uploaded label' : 'Extracted from uploaded product label'
+                    };
 
                     if(imgRes) {
                         imgRes.style.display = 'block';
-                        imgRes.style.background = r.likelyFood ? '#f0fdf4' : '#fffbeb';
-                        imgRes.style.border = '2px solid ' + (r.likelyFood ? '#16a34a' : '#d97706');
-                        imgRes.innerHTML = '<strong style="color:' + (r.likelyFood ? '#16a34a' : '#b45309') + ';">' + (r.likelyFood ? '✅ Label Text Detected' : '⚠️ Image Uploaded, Food Label Not Confirmed') + '</strong><br>🏷️ Category: <strong>' + escapeHtml(detectedCategory) + '</strong><br>📊 OCR Confidence: ' + r.confidence + '%<br>🔍 ' + r.checks.join(' | ') + (productName ? '<br>🌐 Open Food Facts match: <strong>' + escapeHtml(productName) + '</strong>' : '<br><small>OCR/API could not identify a catalog product. You can still complete the form manually.</small>');
+                        imgRes.style.background = '#f0fdf4';
+                        imgRes.style.border = '2px solid #16a34a';
+                        if (labelDetails.name || labelDetails.ingredients || product) {
+                            imgRes.innerHTML = '<strong style="color:#15803d;">✅ Information detected from label — Please review and edit extracted information before running analysis:</strong>' + (labelDetails.name ? '<br>📦 Product: <strong>' + escapeHtml(labelDetails.name) + '</strong>' : '') + (labelDetails.category ? '<br>🏷️ Category: <strong>' + escapeHtml(labelDetails.category) + '</strong>' : '') + (labelDetails.ingredients ? '<br>📝 Ingredients: ' + escapeHtml(labelDetails.ingredients) : '') + (product ? '<br>🌐 Additional information matched with Open Food Facts' : '') + '<br><small style="color:#4b5563;">You can make corrections in the form below before performing safety checks.</small>';
+                        } else {
+                            imgRes.style.background = '#fffbeb';
+                            imgRes.style.borderColor = '#d97706';
+                            imgRes.innerHTML = '<strong style="color:#b45309;">⚠️ Text could not be read from this image</strong><br><small>No dummy product information was added. Upload a clear, front-facing label photo with visible product text.</small>';
+                        }
                     }
 
-                    if (el('p_cat')) el('p_cat').value = detectedCategory;
-                    if (productName && el('p_name')) el('p_name').value = productName;
-                    if (product && product.ingredients_text && el('p_ing')) el('p_ing').value = product.ingredients_text;
+                    fillFormFromLabel(labelDetails);
                     var range = tempRanges[detectedCategory];
                     if (range) { if (el('t_min')) el('t_min').value = range[0]; if (el('t_max')) el('t_max').value = range[1]; }
-                    if (el('p_origin')) el('p_origin').value = 'India';
-                    if (el('p_name') && !productName) el('p_name').focus();
+                    if (el('p_name') && !labelDetails.name) el('p_name').focus();
 
                 }).catch(function (err) {
                     console.error('Label OCR failed', err);
                     var imgRes = el('imageResult');
                     if (imgRes) {
                         imgRes.style.display = 'block';
-                        imgRes.style.background = '#fffbeb';
-                        imgRes.innerHTML = '<strong style="color:#b45309;">⚠️ Image uploaded, but OCR could not read it</strong><br><small>You can still enter the product details manually. Try a brighter, front-facing label image.</small>';
+                        imgRes.style.background = '#f0fdf4';
+                        imgRes.style.border = '2px solid #16a34a';
+                        imgRes.innerHTML = '<strong style="color:#b45309;">⚠️ Text could not be read from this image</strong><br><small>No dummy product information was added. Upload a clear, front-facing label photo with visible product text.</small>';
                     }
                 });
             };
@@ -2004,7 +2108,7 @@ function fetchProductFromAPI(barcode) {
         })
         .catch(function (err) {
             console.error("API Error:", err);
-            resultDiv.innerHTML = '<div style="padding:15px; background:#fef2f2; border:2px solid #dc2626; border-radius:8px; color:#b91c1c; text-align:center;"><strong>❌ Product Lookup Failed</strong><br><small>' + escapeHtml(err.message || 'Check network connection') + '<br>You can still select a category and fill in product details manually below.</small></div>';
+            resultDiv.innerHTML = '<div style="padding:15px; background:#fffbeb; border:2px solid #f59e0b; border-radius:8px; color:#92400e; text-align:center;"><strong>⚠️ Product information could not be retrieved from the barcode database.</strong><br><small>You can enter the product details manually below or upload a product label photo.</small></div>';
         });
 }
 
@@ -2025,7 +2129,45 @@ window.autoFillFromBarcode = function(name, category, ingredients, origin, kcal,
     if (sat && el('n_sat')) el('n_sat').value = parseFloat(sat).toFixed(1);
     if (trans && el('n_trans')) el('n_trans').value = parseFloat(trans).toFixed(1);
     
-    // Set temperature
+    // Check missing fields for explicit warning
+    var missing = [];
+    if (!expDate) missing.push('Expiry Date');
+    if (!ingredients) missing.push('Ingredients List');
+    if (!sugar && !sodium) missing.push('Nutrition Details');
+
+    var barcodeStepBanner = el('barcodeStepBanner');
+    if (!barcodeStepBanner) {
+        barcodeStepBanner = document.createElement('div');
+        barcodeStepBanner.id = 'barcodeStepBanner';
+        var form = el('analyzerForm');
+        if (form && form.parentNode) form.parentNode.insertBefore(barcodeStepBanner, form);
+    }
+    
+    var stepHtml = '<div style="margin-bottom:20px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:16px;">';
+    stepHtml += '<h4 style="color:#15803d; font-size:0.95rem; margin-bottom:10px;"><i class="fas fa-barcode"></i> Barcode Retrieval Flow Status</h4>';
+    stepHtml += '<div style="display:flex; flex-wrap:wrap; gap:8px; font-size:0.82rem; margin-bottom:10px;">';
+    stepHtml += '<span class="badge" style="background:#dcfce7; color:#15803d;">✓ STEP 1: Product Found</span>';
+    stepHtml += '<span class="badge" style="background:#dcfce7; color:#15803d;">✓ STEP 2: Details Loaded</span>';
+    stepHtml += '<span class="badge" style="background:#dcfce7; color:#15803d;">✓ STEP 3: Form Updated</span>';
+    stepHtml += '<span class="badge" style="background:#e0f2fe; color:#0369a1;">STEP 4: Ready for Safety Check</span>';
+    stepHtml += '<span class="badge" style="background:' + (missing.length ? '#fef3c7' : '#dcfce7') + '; color:' + (missing.length ? '#92400e' : '#15803d') + ';">STEP 5: ' + (missing.length ? 'Missing Info Identified' : 'Info Complete') + '</span>';
+    stepHtml += '<span class="badge" style="background:#faf5ff; color:#6d28d9;">STEP 6: Lab Parameters Mapped</span>';
+    stepHtml += '</div>';
+    
+    if (missing.length > 0) {
+        stepHtml += '<div style="font-size:0.85rem; color:#92400e; background:#fffbeb; padding:10px; border-radius:6px; border-left:4px solid #f59e0b;">';
+        stepHtml += '⚠️ <strong>Some product information was unavailable in the Open Food Facts database</strong> (' + escapeHtml(missing.join(', ')) + '). Missing data is not treated as proof of safety. Please fill in missing details before running screening.';
+        stepHtml += '</div>';
+    } else {
+        stepHtml += '<div style="font-size:0.85rem; color:#15803d; background:#ffffff; padding:8px 12px; border-radius:6px;">';
+        stepHtml += '✅ Available product metadata loaded successfully. Click "Run Safety Checks" below to perform consumer screening.';
+        stepHtml += '</div>';
+    }
+    stepHtml += '</div>';
+    barcodeStepBanner.innerHTML = stepHtml;
+    barcodeStepBanner.style.display = 'block';
+
+    // Set temperature range
     var range = tempRanges[category];
     if (range) {
         if (el('t_min')) el('t_min').value = range[0];
@@ -2033,24 +2175,8 @@ window.autoFillFromBarcode = function(name, category, ingredients, origin, kcal,
     }
     
     if (el('fssai')) el('fssai').value = '';
-    
-    // Scroll to form top
-    if (el('p_name')) el('p_name').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    
-    // Highlight the name field
-    if (el('p_name')) {
-        el('p_name').style.borderColor = '#16a34a';
-        el('p_name').style.boxShadow = '0 0 0 3px rgba(22,163,74,0.2)';
-        setTimeout(function() {
-            el('p_name').style.borderColor = '';
-            el('p_name').style.boxShadow = '';
-        }, 3000);
-    }
-    
-       // Hide barcode result for clean UI
     if (el('barcodeResult')) el('barcodeResult').style.display = 'none';
     
-    // Smooth scroll to the Product Name field
     if (el('p_name')) {
         el('p_name').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
@@ -2388,17 +2514,24 @@ function showCSVBatchAnalysis(rows) {
         avgRiskScore += score;
 
         // Categorize Result
-        var status = 'Moderate';
+        var isInsufficient = (!name || name === 'Unknown Product') && (!exp) && (!ing);
+        var status = 'Moderate Concern';
         var colorClass = 'badge-warn';
-        if (score <= 30) { 
-            status = 'Safe'; 
+
+        if (isInsufficient) {
+            status = 'Insufficient Information';
+            colorClass = 'badge-warn';
+            score = 0;
+        } else if (score <= 30) { 
+            status = 'Low Concern'; 
             colorClass = 'badge-safe';
             safeCount++; 
         } else if (score >= 70) { 
-            status = 'Unsafe'; 
+            status = 'High Concern'; 
             colorClass = 'badge-risk';
             unsafeCount++; 
         } else {
+            status = 'Moderate Concern';
             moderateCount++;
         }
 
@@ -2422,22 +2555,23 @@ function showCSVBatchAnalysis(rows) {
     
     // 1. Summary Dashboard (KPIs)
     html += '<div style="background:#fff; padding:20px; border-radius:12px; box-shadow:var(--shadow); margin-bottom:20px; border:1px solid var(--border);">';
-    html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">';
-    html += '<h3 style="margin:0; color:var(--text-dark);">📊 Batch Analysis Report</h3>';
+    html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">';
+    html += '<h3 style="margin:0; color:var(--text-dark);">📊 Batch Consumer Screening Analysis Report</h3>';
     
-    // CHANGED: Added ID to button, removed onclick
     html += '<button id="btn-download-batch" class="btn btn-primary" style="padding:8px 16px; font-size:0.9rem;"><i class="fas fa-download"></i> Download Results CSV</button>';
     
     html += '</div>';
     
     html += '<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));">';
     html += '<div class="kpi-card"><div class="kpi-title">Total Products</div><div class="kpi-value">' + total + '</div></div>';
-    html += '<div class="kpi-card" style="border-color:#16a34a;"><div class="kpi-title">Safe</div><div class="kpi-value" style="color:#16a34a;">' + safeCount + '</div></div>';
-    html += '<div class="kpi-card" style="border-color:#dc2626;"><div class="kpi-title">Unsafe</div><div class="kpi-value" style="color:#dc2626;">' + unsafeCount + '</div></div>';
+    html += '<div class="kpi-card" style="border-color:#16a34a;"><div class="kpi-title">Low Concern</div><div class="kpi-value" style="color:#16a34a;">' + safeCount + '</div></div>';
+    html += '<div class="kpi-card" style="border-color:#dc2626;"><div class="kpi-title">High Concern</div><div class="kpi-value" style="color:#dc2626;">' + unsafeCount + '</div></div>';
     html += '<div class="kpi-card" style="border-color:#f59e0b;"><div class="kpi-title">Allergens</div><div class="kpi-value" style="color:#f59e0b;">' + allergenCountTotal + '</div></div>';
     html += '</div>';
     
-    html += '<div style="margin-top:15px; font-size:0.9rem; color:var(--text-light);">Average Risk Score: ' + avgRiskScore + '/100</div>';
+    html += '<div style="margin-top:15px; font-size:0.85rem; color:var(--text-light); background:#f8fafc; padding:10px 14px; border-radius:6px; border-left:4px solid var(--primary);">';
+    html += '📌 <strong>Consumer Screening Analysis:</strong> This batch report is based on provided data entries only. It does not replace physical laboratory testing.';
+    html += '</div>';
     html += '</div>';
 
     // 2. Detailed Table
@@ -2650,6 +2784,149 @@ if (el('labSavedSelect')) {
     renderLabSavedSelect();
     el('labSavedSelect').addEventListener('change', function() {
         loadSavedLabAssessment(this.value);
+    });
+}
+
+// ============================================================
+//  CATEGORY-SPECIFIC LABORATORY PARAMETER REFERENCE GUIDE
+// ============================================================
+var categoryLabParameters = {
+  "Milk & Dairy": [
+    { group: "Microbiological Testing", items: ["Total Plate Count", "Coliforms", "E. coli", "Listeria monocytogenes", "Yeast & Mould"] },
+    { group: "Chemical & Heavy Metals", items: ["Lead", "Arsenic", "Chemical Contaminants", "Veterinary Drug Residues"] },
+    { group: "Residue Testing", items: ["Antibiotic Residues", "Pesticide Residues"] },
+    { group: "Toxin Testing", items: ["Aflatoxin M1"] },
+    { group: "Physical & Quality", items: ["Moisture / Total Solids", "Titratable Acidity", "Specific Gravity", "Odour / Appearance"] },
+    { group: "Composition / Nutrition", items: ["Milk Fat (%)", "Protein / SNF (%)", "Added Water", "Lactose"] },
+    { group: "Adulteration Testing", items: ["Water Dilution Check", "Starch / Flour Adulteration", "Detergent / Urea Check", "Neutralizer Check"] }
+  ],
+  "Edible Oils & Fats": [
+    { group: "Microbiological Testing", items: ["Moisture-associated Moulds (if water present)"] },
+    { group: "Chemical & Heavy Metals", items: ["Lead", "Arsenic", "Cadmium", "Hexane Residues", "PAHs"] },
+    { group: "Residue Testing", items: ["Pesticide Residues"] },
+    { group: "Toxin Testing", items: ["Aflatoxins (in unrefined seed oils)"] },
+    { group: "Physical & Quality", items: ["Refractive Index", "Specific Gravity", "Color Value (Lovibond)", "Odour / Clarity"] },
+    { group: "Composition / Nutrition", items: ["Free Fatty Acids (FFA)", "Peroxide Value", "Iodine Value", "Trans Fat (%)"] },
+    { group: "Adulteration Testing", items: ["Argemone Oil Check", "Mineral Oil Adulteration", "Castor Oil Check", "Sesame Oil Check"] }
+  ],
+  "Spices": [
+    { group: "Microbiological Testing", items: ["Salmonella spp.", "Bacillus cereus", "Clostridium perfringens", "Yeast & Mould"] },
+    { group: "Chemical & Heavy Metals", items: ["Lead", "Arsenic", "Cadmium", "Non-permitted Dyes (Metanil Yellow, Sudan Dyes)"] },
+    { group: "Residue Testing", items: ["Ethylene Oxide (EtO) Residues", "Pesticide Residues"] },
+    { group: "Toxin Testing", items: ["Aflatoxins (B1, B2, G1, G2)", "Ochratoxin A"] },
+    { group: "Physical & Quality", items: ["Moisture Content (%)", "Total Ash / Acid Insoluble Ash", "Extraneous Foreign Matter"] },
+    { group: "Composition / Nutrition", items: ["Curcumin / Piperine / Capsaicin Content", "Volatile Oil Content", "Total Protein"] },
+    { group: "Adulteration Testing", items: ["Starch / Sawdust Adulteration", "Lead Chromate Dye Check", "Brick Dust / Sand Check"] }
+  ],
+  "Cereals & Grains": [
+    { group: "Microbiological Testing", items: ["Total Viable Count", "Yeast & Mould (Aspergillus, Penicillium)"] },
+    { group: "Chemical & Heavy Metals", items: ["Lead", "Cadmium", "Inorganic Arsenic"] },
+    { group: "Residue Testing", items: ["Organophosphorus & Synthetic Pyrethroid Pesticides", "Fumigant Residues"] },
+    { group: "Toxin Testing", items: ["Deoxynivalenol (DON)", "T-2 Toxin", "Fumonisin", "Aflatoxins"] },
+    { group: "Physical & Quality", items: ["Moisture Content (%)", "Foreign Matter / Weeviled Grains", "Broken / Damaged Kernels", "Uric Acid Level"] },
+    { group: "Composition / Nutrition", items: ["Crude Protein", "Carbohydrates", "Dietary Fiber", "Gluten Content"] },
+    { group: "Adulteration Testing", items: ["Chalk / Marble Dust Check", "Ergot Fungus Contamination", "Clay / Pebble Check"] }
+  ],
+  "Meat & Poultry": [
+    { group: "Microbiological Testing", items: ["Salmonella spp.", "Campylobacter jejuni", "E. coli O157:H7", "Listeria monocytogenes", "Staphylococcus aureus"] },
+    { group: "Chemical & Heavy Metals", items: ["Lead", "Cadmium", "Nitrites & Nitrates"] },
+    { group: "Residue Testing", items: ["Veterinary Antibiotic Residues", "Hormone Residues"] },
+    { group: "Toxin Testing", items: ["Bacterial Enterotoxins"] },
+    { group: "Physical & Quality", items: ["pH Value", "Water Holding Capacity", "Drip Loss", "Color (L*, a*, b*)", "Odour"] },
+    { group: "Composition / Nutrition", items: ["Total Protein", "Intramuscular Fat", "Moisture Content"] },
+    { group: "Adulteration Testing", items: ["Species Substitution (Meat Speciation PCR)", "Added Water / Polyphosphates", "TVB-N Spoilage Indicator"] }
+  ],
+  "Fish & Seafood": [
+    { group: "Microbiological Testing", items: ["Vibrio cholerae / Vibrio parahaemolyticus", "Salmonella spp.", "Listeria monocytogenes", "Histamine Formers"] },
+    { group: "Chemical & Heavy Metals", items: ["Methylmercury", "Lead", "Cadmium", "Formaldehyde / Formalin Adulteration"] },
+    { group: "Residue Testing", items: ["Antibiotic Residues (Nitrofurans, Chloramphenicol)", "Pesticide Residues"] },
+    { group: "Toxin Testing", items: ["Ciguatoxins", "Scombroid Histamine Toxin"] },
+    { group: "Physical & Quality", items: ["Core Temperature", "Total Volatile Basic Nitrogen (TVB-N)", "Organoleptic Score"] },
+    { group: "Composition / Nutrition", items: ["Moisture Content", "Crude Protein", "Omega-3 Fatty Acids"] },
+    { group: "Adulteration Testing", items: ["Formalin Preserved Fish Check", "STPP Excess Water Retention Check", "Species Fraud"] }
+  ],
+  "Fruits & Vegetables": [
+    { group: "Microbiological Testing", items: ["E. coli", "Salmonella spp.", "Listeria monocytogenes", "Norovirus / Parasite Cysts"] },
+    { group: "Chemical & Heavy Metals", items: ["Calcium Carbide / Acetylene Ripening Residues", "Lead", "Cadmium"] },
+    { group: "Residue Testing", items: ["Multi-residue Pesticides", "Fungicide Residues", "Herbicides"] },
+    { group: "Toxin Testing", items: ["Patulin (in apple products)", "Solanine (in damaged potatoes)"] },
+    { group: "Physical & Quality", items: ["Moisture Content", "Brix (°Bx) / Total Soluble Solids", "Physical Defects / Rot", "Foreign Matter"] },
+    { group: "Composition / Nutrition", items: ["Vitamin C / Ascorbic Acid", "Sugars", "Acidity"] },
+    { group: "Adulteration Testing", items: ["Malachite Green Dye Check", "Copper Sulphate Brightening Check", "Wax Coating Verification"] }
+  ],
+  "Bakery Products": [
+    { group: "Microbiological Testing", items: ["Rope Spore Count (Bacillus subtilis)", "Yeast & Mould", "Staphylococcus aureus"] },
+    { group: "Chemical & Heavy Metals", items: ["Potassium Bromate / Iodate Residues", "Heavy Metals"] },
+    { group: "Residue Testing", items: ["Pesticide Residues in Flour"] },
+    { group: "Toxin Testing", items: ["Mycotoxins in Grain Flour"] },
+    { group: "Physical & Quality", items: ["Moisture Content (%)", "Crumb Structure / Texture", "Volume / Density", "pH"] },
+    { group: "Composition / Nutrition", items: ["Fat Content", "Total Sugar", "Sodium / Salt", "Trans Fat (%)"] },
+    { group: "Adulteration Testing", items: ["Non-permitted Colors Check", "Chalk Powder in Flour Check", "Excessive Preservative Level"] }
+  ],
+  "Packaged Foods": [
+    { group: "Microbiological Testing", items: ["Total Commercial Sterility (Canned Foods)", "Enterobacteriaceae", "Yeast & Mould"] },
+    { group: "Chemical & Heavy Metals", items: ["Packaging Migrants (BPA, Phthalates)", "Heavy Metals (Lead, Cadmium)", "Non-permitted Synthetic Additives"] },
+    { group: "Residue Testing", items: ["Pesticide Residues"] },
+    { group: "Toxin Testing", items: ["Aflatoxins / Mycotoxins"] },
+    { group: "Physical & Quality", items: ["Net Weight / Fill Volume", "Headspace Oxygen", "Moisture Content", "pH / Water Activity"] },
+    { group: "Composition / Nutrition", items: ["Saturated Fat", "Trans Fat", "Added Sugar", "Sodium", "Energy (kcal)"] },
+    { group: "Adulteration Testing", items: ["Substandard Ingredient Substitution", "Synthetic Color / Flavor Enhancement Check"] }
+  ],
+  "Beverages": [
+    { group: "Microbiological Testing", items: ["Coliform Bacteria", "Pseudomonas aeruginosa", "Yeast & Mould", "Fecal Streptococci"] },
+    { group: "Chemical & Heavy Metals", items: ["Arsenic", "Lead", "Cadmium", "BPA Migration", "Bromated Vegetable Oil"] },
+    { group: "Residue Testing", items: ["Pesticide Residues"] },
+    { group: "Toxin Testing", items: ["Patulin (Fruit Juices)"] },
+    { group: "Physical & Quality", items: ["Brix (°Bx) / Sugar Content", "pH / Acidity", "Turbidity / Clarity", "Carbonation Level"] },
+    { group: "Composition / Nutrition", items: ["Fruit Juice Content (%)", "Added Sugar", "Caffeine Content", "Sodium / Potassium"] },
+    { group: "Adulteration Testing", items: ["Synthetic Sweetener Adulteration", "Artificial Dye Check", "Diluted Juice Ratio Check"] }
+  ],
+  "Sweets / Confectionery": [
+    { group: "Microbiological Testing", items: ["Salmonella spp.", "Staphylococcus aureus", "Yeast & Mould"] },
+    { group: "Chemical & Heavy Metals", items: ["Non-permitted Dyes (Rhodamine B, Metanil Yellow)", "Silver Leaf (Vark) Purity (Aluminum Adulteration)"] },
+    { group: "Residue Testing", items: ["Pesticide Residues"] },
+    { group: "Toxin Testing", items: ["Aflatoxins in Nut Sweets"] },
+    { group: "Physical & Quality", items: ["Moisture Content (%)", "Texture / Hardness", "Visual Appearance"] },
+    { group: "Composition / Nutrition", items: ["Total Sugar", "Fat Content", "Milk Solids Content"] },
+    { group: "Adulteration Testing", items: ["Aluminum Vark Substitution for Silver Vark", "Adulterated Mawa / Khoya Base Check", "Non-edible Dye Check"] }
+  ]
+};
+
+function renderCategoryLabParamsGuide(category) {
+    var container = el('categoryLabParamsDisplay');
+    if (!container) return;
+    category = category || 'Packaged Foods';
+    var list = categoryLabParameters[category] || categoryLabParameters['Packaged Foods'];
+
+    var html = '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">';
+    list.forEach(function(grp) {
+        html += '<div style="background:#ffffff; border:1px solid #e9d5ff; border-radius:8px; padding:12px 14px; box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+        html += '<h5 style="color:#6d28d9; font-size:0.88rem; margin-bottom:8px; display:flex; align-items:center; gap:6px;">';
+        var icon = 'fa-vial';
+        if (grp.group.includes('Microbiological')) icon = 'fa-bacteria';
+        else if (grp.group.includes('Chemical')) icon = 'fa-flask';
+        else if (grp.group.includes('Residue')) icon = 'fa-seedling';
+        else if (grp.group.includes('Toxin')) icon = 'fa-biohazard';
+        else if (grp.group.includes('Physical')) icon = 'fa-ruler-combined';
+        else if (grp.group.includes('Composition')) icon = 'fa-chart-pie';
+        else if (grp.group.includes('Adulteration')) icon = 'fa-search-minus';
+        html += '<i class="fas ' + icon + '" style="color:#7c3aed;"></i> ' + escapeHtml(grp.group);
+        html += '</h5>';
+        html += '<ul style="list-style:none; padding:0; margin:0; font-size:0.83rem; color:#475569; line-height:1.6;">';
+        grp.items.forEach(function(item) {
+            html += '<li style="padding:2px 0;">• ' + escapeHtml(item) + '</li>';
+        });
+        html += '</ul>';
+        html += '</div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+if (el('labCategoryGuideSelect')) {
+    renderCategoryLabParamsGuide(el('labCategoryGuideSelect').value);
+    el('labCategoryGuideSelect').addEventListener('change', function() {
+        renderCategoryLabParamsGuide(this.value);
     });
 }
 if (el('processCsvBtn')) el('processCsvBtn').addEventListener('click', function () {

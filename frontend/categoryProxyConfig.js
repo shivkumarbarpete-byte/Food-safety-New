@@ -216,9 +216,9 @@ function computeProxyRiskScore(category, answers) {
   finalScore = Math.round(finalScore);
 
   let verdict;
-  if (finalScore >= 60) verdict = "Higher Risk Based on Available Information";
-  else if (finalScore >= 30) verdict = "Moderate Risk Based on Available Information";
-  else verdict = "Low Risk Based on Available Information";
+  if (finalScore >= 70) verdict = "Potential issue detected in the available product information.";
+  else if (finalScore >= 31) verdict = "Some information requires attention.";
+  else verdict = "No obvious issue found in the available product information.";
 
   return { score: finalScore, verdict, breakdown };
 }

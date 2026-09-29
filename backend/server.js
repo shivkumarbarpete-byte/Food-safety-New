@@ -4,8 +4,8 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 
 // Load environment variables
-dotenv.config();
-console.log('JWT SECRET:', process.env.JWT_SECRET);
+dotenv.config({ path: require('path').join(__dirname, '.env') });
+console.log('JWT SECRET loaded:', process.env.JWT_SECRET ? 'Yes' : 'No');
 // Connect to MongoDB
 connectDB();
 
