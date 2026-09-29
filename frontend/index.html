@@ -69,9 +69,9 @@
   <!-- Hero Section -->
   <section id="home" class="hero fade-in">
     <div class="container">
-      <h2>Food Safety Screening &amp; Information Platform</h2>
+      <h2>Food Product Safety Screening &amp; Laboratory Testing Guide</h2>
       <p style="font-size: 1.1rem; margin-bottom: 20px;">
-        Check food product information, identify potential concerns, and understand which laboratory tests may be relevant.
+        FoodSafetyHub analyzes available product and label information to identify potential concerns and helps users understand which laboratory tests may be relevant.
       </p>
       
       <!-- 3 Primary Actions -->
@@ -125,28 +125,28 @@
         <div class="col">
           <div class="card text-center" style="height:100%;">
             <div class="card-header" style="color:var(--primary);">
-              <i class="fas fa-clipboard-check"></i>
-              <h3>1. Rule-Based Consumer Screening</h3>
+              <i class="fas fa-search"></i>
+              <h3>1. CHECK A PRODUCT</h3>
             </div>
-            <p style="font-size:0.88rem; color:#4b5563;">Evaluation of available label data, ingredient lists, E-number additives, allergen warnings, expiry/best-before dates, storage conditions, and FSSAI license format.</p>
-          </div>
-        </div>
-        <div class="col">
-          <div class="card text-center" style="height:100%;">
-            <div class="card-header" style="color:#0284c7;">
-              <i class="fas fa-brain"></i>
-              <h3>2. ML Exploratory Risk Screening</h3>
-            </div>
-            <p style="font-size:0.88rem; color:#4b5563;">Supervised machine learning algorithms (k-NN, Regression models) used for predictive risk modeling on feature vectors (pH, moisture, storage temperature).</p>
+            <p style="font-size:0.88rem; color:#4b5563;">Scan a barcode, upload a label or enter product details.</p>
           </div>
         </div>
         <div class="col">
           <div class="card text-center" style="height:100%;">
             <div class="card-header" style="color:#7c3aed;">
               <i class="fas fa-microscope"></i>
-              <h3>3. Laboratory Parameter Guidance</h3>
+              <h3>2. UNDERSTAND LAB TESTING</h3>
             </div>
-            <p style="font-size:0.88rem; color:#4b5563;">Category-specific laboratory testing parameter reference guide combined with Z-test / T-test statistical hypothesis screening for user-entered lab data.</p>
+            <p style="font-size:0.88rem; color:#4b5563;">See which laboratory parameters may be relevant for different food categories.</p>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card text-center" style="height:100%;">
+            <div class="card-header" style="color:#0284c7;">
+              <i class="fas fa-brain"></i>
+              <h3>3. ADVANCED ANALYSIS</h3>
+            </div>
+            <p style="font-size:0.88rem; color:#4b5563;">Explore ML and statistical screening tools.</p>
           </div>
         </div>
       </div>
@@ -334,7 +334,7 @@
 </div>
       <div class="section-title">
         <h2>Product Safety Analyzer</h2>
-        <p>Comprehensive food product analysis with FSSAI compliance checking and risk assessment</p>
+        <p>Comprehensive food product screening based on available label data and ingredient analysis.</p>
       </div>
  
       <div class="card">
@@ -690,15 +690,18 @@
           <!-- ==================== SECTION 3: IMPORTANT LIMITATION ==================== -->
           <div style="margin-bottom: 25px; padding: 14px 18px; background: #eff6ff; border-left: 5px solid #2563eb; border-radius: 8px; font-size: 0.88rem; color: #1e40af;">
             <h4 style="font-size: 0.95rem; margin-bottom: 6px; color: #1e3a8a;"><i class="fas fa-shield-halved"></i> SECTION 3: IMPORTANT LIMITATION</h4>
-            FoodSafetyHub performs information-based screening. It cannot physically test a food sample and cannot certify a product as safe or compliant.
+            FoodSafetyHub provides information-based screening and educational laboratory guidance. It does not perform physical laboratory testing or provide regulatory certification.
           </div>
 
           <!-- EXPERIMENTAL ML RISK SCREENING ESTIMATE -->
-          <div style="margin-bottom: 20px; padding: 14px 16px; background: #f0f9ff; border-left: 4px solid #0284c7; border-radius: 6px; font-size: 0.88rem;">
-            <strong><i class="fas fa-brain"></i> Model-Based Risk Screening Estimate (Experimental k-NN):</strong> 
-            <span id="knn_out" style="font-weight: 600; color: #0369a1;">—</span>
-            <br><small style="color: #0284c7; display: block; margin-top: 4px;">📌 Supplementary decision-support estimate based on training feature vectors. Does not constitute laboratory certification.</small>
-          </div>
+          <details style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px;">
+            <summary style="cursor: pointer; font-weight: 600; color: #0f172a;"><i class="fas fa-brain" style="color: #0284c7;"></i> View Advanced ML Analysis</summary>
+            <div style="margin-top: 12px; padding: 14px 16px; background: #f0f9ff; border-left: 4px solid #0284c7; border-radius: 6px; font-size: 0.88rem;">
+              <strong>Model-Based Risk Screening Estimate (Experimental k-NN):</strong> 
+              <span id="knn_out" style="font-weight: 600; color: #0369a1;">—</span>
+              <br><small style="color: #0284c7; display: block; margin-top: 4px;">📌 Supplementary decision-support estimate based on training feature vectors. Does not constitute laboratory certification.</small>
+            </div>
+          </details>
 
           <div class="chart-container">
             <canvas id="riskChart"></canvas>
@@ -739,18 +742,30 @@
             <option value="Milk &amp; Dairy">Milk &amp; Dairy</option>
             <option value="Edible Oils &amp; Fats">Edible Oils &amp; Fats</option>
             <option value="Cereals &amp; Grains">Cereals &amp; Grains</option>
+            <option value="Pulses">Pulses</option>
             <option value="Spices">Spices</option>
             <option value="Fruits &amp; Vegetables">Fruits &amp; Vegetables</option>
             <option value="Meat &amp; Poultry">Meat &amp; Poultry</option>
             <option value="Fish &amp; Seafood">Fish &amp; Seafood</option>
             <option value="Bakery Products">Bakery Products</option>
-            <option value="Packaged Foods" selected>Packaged Foods</option>
             <option value="Beverages">Beverages</option>
-            <option value="Sweets / Confectionery">Sweets / Confectionery</option>
+            <option value="Sweets &amp; Confectionery">Sweets &amp; Confectionery</option>
+            <option value="Packaged Foods" selected>Packaged Foods</option>
+            <option value="Other">Other</option>
           </select>
         </div>
 
         <div id="categoryLabParamsDisplay" style="margin-top: 15px;"></div>
+
+        <div id="whyTheseParametersMatter" style="margin-top: 25px; padding: 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <h4 style="color: #0f172a; margin-bottom: 12px;"><i class="fas fa-graduation-cap" style="color: #3b82f6;"></i> Why These Parameters Matter</h4>
+          <div style="font-size: 0.88rem; color: #334155; line-height: 1.6; display: grid; gap: 12px;">
+            <div><strong>Microbiological Parameters (e.g., E. coli):</strong> Microbiological indicator used to evaluate possible contamination. Testing requires laboratory methods.</div>
+            <div><strong>Heavy Metals:</strong> Chemical contaminants such as lead, arsenic, cadmium or mercury may be evaluated depending on the food and applicable requirements.</div>
+            <div><strong>Pesticide Residues:</strong> Laboratory analysis may be used to detect pesticide residues in applicable food products.</div>
+            <div><strong>Aflatoxins:</strong> Certain foods may be tested for aflatoxins and other mycotoxins.</div>
+          </div>
+        </div>
 
         <div style="margin-top: 15px; padding: 10px 14px; background: #faf5ff; border-radius: 6px; border: 1px solid #e9d5ff; font-size: 0.82rem; color: #6b21a8;">
           📌 <strong>Informational Reference:</strong> Commonly evaluated parameters may vary depending on official regulatory standards (e.g., FSSAI manuals), product composition, and laboratory SOPs.
@@ -761,11 +776,10 @@
       <div class="card">
         <div class="card-header">
           <i class="fas fa-microscope"></i>
-          <h3>User-Entered Laboratory Data &amp; Statistical Reference Analysis</h3>
+          <h3>Record Laboratory Data</h3>
         </div>
         <p style="font-size: 0.85rem; color: #4b5563; margin-bottom: 15px;">
-          Record user-entered laboratory measurements and compare sample means against reference limits using Z-test / T-test statistical screening.
-          <br><small style="color: #6b7280; display: block; margin-top: 4px;">📌 <strong>Note:</strong> Statistical analysis is an informational screening tool for user-entered data and does not replace accredited physical laboratory certification.</small>
+          Enter results obtained from an actual laboratory report. FoodSafetyHub does not perform physical laboratory testing.
         </p>
 
         <form id="labForm">

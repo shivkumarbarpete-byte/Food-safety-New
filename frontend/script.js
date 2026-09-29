@@ -389,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function runChecks() {
         var r = analyze();
-        if (el('k_overall')) el('k_overall').textContent = r.riskLevelState + (r.riskLevelState !== 'INSUFFICIENT INFORMATION' ? ' (' + r.score + '/100)' : '');
+        if (el('k_overall')) el('k_overall').textContent = r.riskLevelState;
         if (el('k_exp')) el('k_exp').textContent = r.expStatus;
         if (el('k_add')) el('k_add').textContent = r.additiveCount;
         if (el('k_all')) el('k_all').textContent = r.allergenCount;
@@ -409,31 +409,41 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         var ul = el('bullets'); if (ul) { ul.innerHTML = ''; r.notes.forEach(function (n) { var li = document.createElement('li'); li.innerHTML = '<i class="fas fa-info-circle"></i> ' + n; ul.appendChild(li); }); }
-        var v = el('verdict'); if (v) { v.textContent = r.verdict + (r.score > 0 ? ' (' + r.score + '/100)' : ''); v.className = 'badge ' + r.badge; }
+        var v = el('verdict'); if (v) { v.textContent = r.verdict; v.className = 'badge ' + r.badge; }
         var fd = el('fopWarnings'); if (fd) { if (r.fopWarnings.length) { fd.innerHTML = '🚨 ' + r.fopWarnings.join(' • '); fd.style.display = 'block'; } else fd.style.display = 'none'; }
 
         // Render "Why was this result given?" breakdown box
         var whyBox = el('resultWhyBox');
         if (whyBox) {
-            var whyHtml = '<div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px 16px; margin-top:12px;">';
-            whyHtml += '<h5 style="font-size:0.9rem; color:#1e293b; margin-bottom:8px; display:flex; align-items:center; gap:6px;"><i class="fas fa-question-circle" style="color:#0284c7;"></i> Why was this result given?</h5>';
-            whyHtml += '<ul style="list-style:none; padding:0; margin:0; font-size:0.85rem; color:#334155; line-height:1.6;">';
+            var whyHtml = '<div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px 16px; margin-top:12px; font-size: 0.9rem; color: #334155;">';
+            whyHtml += '<h5 style="color:#0284c7; margin-bottom:4px;">WHAT WE CHECKED</h5>';
+            whyHtml += '<p style="margin-top:0; margin-bottom:12px;">✓ Expiry ✓ Ingredients ✓ Allergens ✓ Additives ✓ Label information</p>';
+            
+            whyHtml += '<h5 style="color:#0284c7; margin-bottom:4px;">WHAT WE FOUND</h5>';
+            whyHtml += '<p style="margin-top:0; margin-bottom:12px;">' + escapeHtml(r.verdict) + '</p>';
+            
+            whyHtml += '<h5 style="color:#0284c7; margin-bottom:4px;">WHY</h5>';
+            whyHtml += '<ul style="margin-top:0; margin-bottom:12px; padding-left:20px;">';
             if (r.riskLevelState === 'INSUFFICIENT INFORMATION') {
-                whyHtml += '<li>• Required product information (name, expiry date, ingredients) was not provided.</li>';
+                whyHtml += '<li>Required product information (name, expiry date, ingredients) was not provided.</li>';
             } else {
-                if (r.expStatus.startsWith('Expired')) whyHtml += '<li>• Product is past its expiry/best-before date (' + escapeHtml(r.expStatus) + ').</li>';
-                else if (r.expStatus.startsWith('Near')) whyHtml += '<li>• Product is near its expiry date (' + escapeHtml(r.expStatus) + ').</li>';
-                else if (r.expStatus === 'Data unavailable') whyHtml += '<li>• Expiry / best-before date was not provided.</li>';
-                if (r.allergenCount > 0) whyHtml += '<li>• ' + r.allergenCount + ' potential allergen(s) detected in ingredients.</li>';
-                if (r.additiveCount > 0) whyHtml += '<li>• ' + r.additiveCount + ' additive(s) / E-numbers flagged on watchlist.</li>';
-                if (r.fopWarnings && r.fopWarnings.length > 0) whyHtml += '<li>• Front-of-pack nutrition concerns: ' + escapeHtml(r.fopWarnings.join(', ')) + '.</li>';
-                if (r.originStatus === 'Imported') whyHtml += '<li>• Product is imported; origin screening applied.</li>';
-                if (!r.fssai || !/^\d{14}$/.test(r.fssai)) whyHtml += '<li>• FSSAI license number is missing or invalid format.</li>';
+                if (r.expStatus.startsWith('Expired')) whyHtml += '<li>Product is past its expiry/best-before date (' + escapeHtml(r.expStatus) + ').</li>';
+                else if (r.expStatus.startsWith('Near')) whyHtml += '<li>Product is near its expiry date (' + escapeHtml(r.expStatus) + ').</li>';
+                else if (r.expStatus === 'Data unavailable') whyHtml += '<li>Expiry / best-before date was not provided.</li>';
+                if (r.allergenCount > 0) whyHtml += '<li>' + r.allergenCount + ' potential allergen(s) detected in ingredients.</li>';
+                if (r.additiveCount > 0) whyHtml += '<li>' + r.additiveCount + ' additive(s) / E-numbers flagged on watchlist.</li>';
+                if (r.fopWarnings && r.fopWarnings.length > 0) whyHtml += '<li>Front-of-pack nutrition concerns: ' + escapeHtml(r.fopWarnings.join(', ')) + '.</li>';
+                if (r.originStatus === 'Imported') whyHtml += '<li>Product is imported; origin screening applied.</li>';
+                if (!r.fssai || !/^\d{14}$/.test(r.fssai)) whyHtml += '<li>FSSAI license number is missing or invalid format.</li>';
                 if (r.score <= 30 && r.allergenCount === 0 && r.additiveCount === 0 && (!r.fopWarnings || r.fopWarnings.length === 0)) {
-                    whyHtml += '<li>• No obvious expiration, allergen, additive, or nutritional concerns were identified in the available input data.</li>';
+                    whyHtml += '<li>The available product information did not trigger the configured screening rules.</li>';
                 }
             }
-            whyHtml += '</ul></div>';
+            whyHtml += '</ul>';
+            
+            whyHtml += '<h5 style="color:#0284c7; margin-bottom:4px;">WHAT WE CANNOT DETERMINE</h5>';
+            whyHtml += '<p style="margin-top:0; margin-bottom:0;">Barcode and label information cannot confirm microbiological, chemical contaminant or laboratory-only hazards.</p>';
+            whyHtml += '</div>';
             whyBox.innerHTML = whyHtml;
         }
 
@@ -676,34 +686,50 @@ document.addEventListener('DOMContentLoaded', function () {
         var alpha = parseFloat(el('lab_alpha') ? el('lab_alpha').value : '0.05');
         var out = el('lab_out'), summary = el('lab_summary');
         if (!out) return; out.innerHTML = '';
-        if (!data.length || isNaN(L)) { 
-            out.innerHTML = '<li>Enter valid numeric measurements and reference limit.</li>'; 
+        if (!data.length) { 
+            out.innerHTML = '<li>Enter valid numeric measurements.</li>'; 
             if (summary) { summary.textContent = 'Invalid Data'; summary.className = 'badge badge-risk'; } 
             return; 
         }
-        if (data.length < 2) { out.innerHTML = '<li>Need at least 2 numeric measurements for statistical analysis.</li>'; return; }
 
         var n = data.length, mean = data.reduce(function (a, b) { return a + b; }, 0) / n;
-        var sd = isNaN(sigma) ? Math.sqrt(data.reduce(function (a, x) { return a + (x - mean) * (x - mean); }, 0) / (n - 1)) : sigma;
-        var se = sd / Math.sqrt(n);
-        var z = (mean - L) / se;
-        var useZ = !isNaN(sigma);
-        var p = useZ ? (1 - stdNormCDF(z)) : (1 - studentTCDF(z, n - 1));
+        var sd = 0, se = 0, z = 0, p = 0, useZ = false;
+
+        if (n > 1) {
+            sd = isNaN(sigma) ? Math.sqrt(data.reduce(function (a, x) { return a + (x - mean) * (x - mean); }, 0) / (n - 1)) : sigma;
+            se = sd / Math.sqrt(n);
+            if (!isNaN(L)) {
+                z = (mean - L) / se;
+                useZ = !isNaN(sigma);
+                p = useZ ? (1 - stdNormCDF(z)) : (1 - studentTCDF(z, n - 1));
+            }
+        }
 
         if (el('lab_n')) el('lab_n').textContent = n;
         if (el('lab_mean')) el('lab_mean').textContent = mean.toFixed(2) + ' ' + unit;
-        if (el('lab_sd')) el('lab_sd').textContent = sd.toFixed(2) + ' ' + unit;
+        if (el('lab_sd')) el('lab_sd').textContent = (n > 1 ? sd.toFixed(2) : 'N/A') + ' ' + unit;
 
-        var dec = p < alpha ? 'Exceeds Reference Limit (p < α)' : 'Within Reference Limit (p ≥ α)';
-        if (summary) { 
-            summary.textContent = dec; 
-            summary.className = 'badge ' + (p < alpha ? 'badge-risk' : 'badge-safe'); 
+        var dec = 'Analysis Complete';
+        if (!isNaN(L) && n > 1) {
+            dec = p < alpha ? 'Exceeds Reference Limit (p < α)' : 'Within Reference Limit (p ≥ α)';
+            if (summary) { 
+                summary.textContent = dec; 
+                summary.className = 'badge ' + (p < alpha ? 'badge-risk' : 'badge-safe'); 
+            }
+        } else {
+            if (summary) { 
+                summary.textContent = 'Reference limit not provided / Insufficient data for test'; 
+                summary.className = 'badge badge-warn'; 
+            }
         }
 
         var sourceText = sourceType + (sourceDesc ? ' (' + escapeHtml(sourceDesc) + ')' : '');
-        var interpretation = p < alpha ? 
-            'Statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' > ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' < α = ' + alpha + ').' :
-            'No statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' ≤ ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' ≥ α = ' + alpha + ').';
+        var interpretation = 'Reference limit not provided. Cannot determine safety.';
+        if (!isNaN(L) && n > 1) {
+            interpretation = p < alpha ? 
+                'Statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' > ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' < α = ' + alpha + ').' :
+                'No statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' ≤ ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' ≥ α = ' + alpha + ').';
+        }
 
         var facility = el('lab_facility') ? el('lab_facility').value.trim() : '';
 
@@ -716,10 +742,10 @@ document.addEventListener('DOMContentLoaded', function () {
             '<strong>Parameter Evaluated:</strong> ' + escapeHtml(param) + ' (' + escapeHtml(unit) + ')',
             '<strong>User-Entered Measurements:</strong> ' + data.join(', ') + ' ' + escapeHtml(unit),
             '<strong>Sample Size (n):</strong> ' + n + ' | <strong>Sample Mean (x̄):</strong> ' + mean.toFixed(2) + ' ' + escapeHtml(unit),
-            '<strong>Reference Threshold Limit (L):</strong> ' + L + ' ' + escapeHtml(unit) + ' <small style="color:#6b7280;">[' + escapeHtml(sourceText) + ']</small>',
-            '<strong>Statistical Model Used:</strong> ' + (useZ ? 'Z-Test (known σ = ' + sigma + ')' : 'T-Test (sample s = ' + sd.toFixed(2) + ')'),
-            '<strong>Standard Error (SE):</strong> ' + se.toFixed(2) + ' | <strong>Test Statistic (' + (useZ ? 'z' : 't') + '):</strong> ' + z.toFixed(2),
-            '<strong>p-value:</strong> ' + p.toFixed(4) + ' (Alpha level α = ' + alpha + ', Confidence Level = ' + Math.round((1 - alpha) * 100) + '%)',
+            (!isNaN(L) ? '<strong>Reference Threshold Limit (L):</strong> ' + L + ' ' + escapeHtml(unit) + ' <small style="color:#6b7280;">[' + escapeHtml(sourceText) + ']</small>' : '<strong>Reference Threshold Limit:</strong> Reference limit not provided.'),
+            (!isNaN(L) && n > 1 ? '<strong>Statistical Model Used:</strong> ' + (useZ ? 'Z-Test (known σ = ' + sigma + ')' : 'T-Test (sample s = ' + sd.toFixed(2) + ')') : null),
+            (!isNaN(L) && n > 1 ? '<strong>Standard Error (SE):</strong> ' + se.toFixed(2) + ' | <strong>Test Statistic (' + (useZ ? 'z' : 't') + '):</strong> ' + z.toFixed(2) : null),
+            (!isNaN(L) && n > 1 ? '<strong>p-value:</strong> ' + p.toFixed(4) + ' (Alpha level α = ' + alpha + ', Confidence Level = ' + Math.round((1 - alpha) * 100) + '%)' : null),
             '<strong>Statistical Interpretation:</strong> ' + interpretation,
             (analyst || reviewer ? '<strong>Personnel:</strong> Analyst: ' + escapeHtml(analyst || 'N/A') + ' | Reviewer: ' + escapeHtml(reviewer || 'N/A') : null)
         ];
@@ -2881,7 +2907,7 @@ var categoryLabParameters = {
     { group: "Composition / Nutrition", items: ["Fruit Juice Content (%)", "Added Sugar", "Caffeine Content", "Sodium / Potassium"] },
     { group: "Adulteration Testing", items: ["Synthetic Sweetener Adulteration", "Artificial Dye Check", "Diluted Juice Ratio Check"] }
   ],
-  "Sweets / Confectionery": [
+  "Sweets & Confectionery": [
     { group: "Microbiological Testing", items: ["Salmonella spp.", "Staphylococcus aureus", "Yeast & Mould"] },
     { group: "Chemical & Heavy Metals", items: ["Non-permitted Dyes (Rhodamine B, Metanil Yellow)", "Silver Leaf (Vark) Purity (Aluminum Adulteration)"] },
     { group: "Residue Testing", items: ["Pesticide Residues"] },
@@ -2889,6 +2915,14 @@ var categoryLabParameters = {
     { group: "Physical & Quality", items: ["Moisture Content (%)", "Texture / Hardness", "Visual Appearance"] },
     { group: "Composition / Nutrition", items: ["Total Sugar", "Fat Content", "Milk Solids Content"] },
     { group: "Adulteration Testing", items: ["Aluminum Vark Substitution for Silver Vark", "Adulterated Mawa / Khoya Base Check", "Non-edible Dye Check"] }
+  ],
+  "Pulses": [
+    { group: "Quality & Composition", items: ["Moisture", "Foreign matter", "Adulteration"] },
+    { group: "Residue Testing", items: ["Pesticide residues where applicable"] },
+    { group: "Microbiological Testing", items: ["Microbiological parameters where applicable"] }
+  ],
+  "Other": [
+    { group: "General Testing", items: ["Product-specific parameters"] }
   ]
 };
 
