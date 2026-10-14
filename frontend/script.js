@@ -1,4 +1,4 @@
-
+﻿
 
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ============================================================
     //  BUTTON LOADING HELPER
     //  Usage: setButtonLoading(btn, true, 'Saving...')
-    //         setButtonLoading(btn, false)  — restores original
+    //         setButtonLoading(btn, false)  â€” restores original
     // ============================================================
     function setButtonLoading(btn, isLoading, loadingText) {
         if (!btn) return;
@@ -149,18 +149,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function parseCSVNums(s) { var n = s.split(/[,\s]+/).map(function (x) { return Number(x); }).filter(function (x) { return !isNaN(x); }); return n.length >= 2 ? n : []; }
 
-    // nutritionTraffic: display levels ONLY — does NOT contribute to score.
+    // nutritionTraffic: display levels ONLY â€” does NOT contribute to score.
     // Thresholds are UK/EU FSA 'traffic light' per-100g reference values.
     function nutritionTraffic(p) {
         var out = {};
-        if (p.sugar == null) out.sugar = { level: 'NA', text: '—' };
+        if (p.sugar == null) out.sugar = { level: 'NA', text: 'â€”' };
         else { var l = p.sugar > 22.5 ? 'high' : (p.sugar > 5 ? 'med' : 'low'); out.sugar = { level: l, text: p.sugar + ' g/100g' }; }
-        if (p.sodium == null) out.sodium = { level: 'NA', text: '—' };
+        if (p.sodium == null) out.sodium = { level: 'NA', text: 'â€”' };
         else { var l = p.sodium > 800 ? 'high' : (p.sodium > 300 ? 'med' : 'low'); out.sodium = { level: l, text: p.sodium + ' mg/100g' }; }
         // Sat fat: >10g/100g = high, >5g/100g = med (FSA reference)
-        if (p.sat == null) out.sat = { level: 'NA', text: '—' };
+        if (p.sat == null) out.sat = { level: 'NA', text: 'â€”' };
         else { var l = p.sat > 10 ? 'high' : (p.sat > 5 ? 'med' : 'low'); out.sat = { level: l, text: p.sat + ' g/100g' }; }
-        if (p.trans == null) out.trans = { level: 'NA', text: '—' };
+        if (p.trans == null) out.trans = { level: 'NA', text: 'â€”' };
         else { var l = p.trans > 2 ? 'high' : (p.trans > 0.5 ? 'med' : 'low'); out.trans = { level: l, text: p.trans + ' g/100g' }; }
         return out;
     }
@@ -175,24 +175,24 @@ document.addEventListener('DOMContentLoaded', function () {
         if (sugar !== null) {
             if (kcal) {
                 var e = (sugar * 4 / kcal) * 100;
-                if (e > 20) w.push("HIGH SUGAR ⚠️");
+                if (e > 20) w.push("HIGH SUGAR âš ï¸");
                 else if (e > 10) w.push("MEDIUM SUGAR");
             } else {
-                if (sugar > 22.5) w.push("HIGH SUGAR ⚠️");
+                if (sugar > 22.5) w.push("HIGH SUGAR âš ï¸");
                 else if (sugar > 10) w.push("MEDIUM SUGAR");
             }
         }
         if (sodium !== null) {
-            if (sodium > 1000) w.push("VERY HIGH SODIUM ⚠️");
+            if (sodium > 1000) w.push("VERY HIGH SODIUM âš ï¸");
             else if (sodium > 600) w.push("MEDIUM SODIUM");
         }
         if (sat !== null) {
             if (kcal) {
                 var e = (sat * 9 / kcal) * 100;
-                if (e > 25) w.push("HIGH SATURATED FAT ⚠️");
+                if (e > 25) w.push("HIGH SATURATED FAT âš ï¸");
                 else if (e > 12) w.push("MEDIUM SATURATED FAT");
             } else {
-                if (sat > 10) w.push("HIGH SATURATED FAT ⚠️");
+                if (sat > 10) w.push("HIGH SATURATED FAT âš ï¸");
                 else if (sat > 5) w.push("MEDIUM SATURATED FAT");
             }
         }
@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (pH !== null && (pH < 0 || pH > 14)) missingFields.push('Invalid pH (0-14)');
             if (moisture !== null && (moisture < 0 || moisture > 100)) missingFields.push('Invalid Moisture (0-100%)');
-            if (temperature !== null && (temperature < -50 || temperature > 150)) missingFields.push('Invalid Temp (-50 to 150°C)');
+            if (temperature !== null && (temperature < -50 || temperature > 150)) missingFields.push('Invalid Temp (-50 to 150Â°C)');
         }
 
         var sugar = numVal('n_sugar'), sodium = numVal('n_sodium'), sat = numVal('n_sat'), trans = numVal('n_trans'), kcal = numVal('n_kcal');
@@ -294,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (fopW.length) {
             notes.push('FOP: ' + fopW.join(' | '));
             fopW.forEach(function(w) {
-                var pen = w.includes('⚠️') ? 8 : 3;
+                var pen = w.includes('âš ï¸') ? 8 : 3;
                 score += pen;
                 nutScorePenalty += pen;
             });
@@ -328,22 +328,22 @@ document.addEventListener('DOMContentLoaded', function () {
             verdict = 'Insufficient Information for Screening Assessment';
             badge = 'badge-warn';
             score = 0;
-            notes.push("⚠️ Insufficient product information provided for screening assessment.");
+            notes.push("âš ï¸ Insufficient product information provided for screening assessment.");
         } else if (score <= 30) {
             riskLevelState = 'LOW CONCERN';
             verdict = 'No obvious issue found in the available product information.';
             badge = 'badge-safe';
-            notes.push("✅ No obvious issue found in available product information.");
+            notes.push("âœ… No obvious issue found in available product information.");
         } else if (score >= 70) {
             riskLevelState = 'HIGH CONCERN';
             verdict = 'Potential issue detected in the available product information.';
             badge = 'badge-risk';
-            notes.push("⚠️ Potential issue detected in available product information.");
+            notes.push("âš ï¸ Potential issue detected in available product information.");
         } else {
             riskLevelState = 'MODERATE CONCERN';
             verdict = 'Some information requires attention.';
             badge = 'badge-warn';
-            notes.push("⚠️ Some information requires attention.");
+            notes.push("âš ï¸ Some information requires attention.");
         }
 
         var breakdown = {
@@ -402,7 +402,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (el('inputWarningBanner')) {
             if (r.missingFields && r.missingFields.length > 0) {
                 el('inputWarningBanner').style.display = 'block';
-                el('inputWarningBanner').innerHTML = '⚠️ <strong>Input Data Warning:</strong> Data unavailable or out of range for [' + escapeHtml(r.missingFields.join(', ')) + ']. Assessment accuracy depends on the quality and completeness of the input data.';
+                el('inputWarningBanner').innerHTML = 'âš ï¸ <strong>Input Data Warning:</strong> Data unavailable or out of range for [' + escapeHtml(r.missingFields.join(', ')) + ']. Assessment accuracy depends on the quality and completeness of the input data.';
             } else {
                 el('inputWarningBanner').style.display = 'none';
             }
@@ -410,14 +410,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var ul = el('bullets'); if (ul) { ul.innerHTML = ''; r.notes.forEach(function (n) { var li = document.createElement('li'); li.innerHTML = '<i class="fas fa-info-circle"></i> ' + n; ul.appendChild(li); }); }
         var v = el('verdict'); if (v) { v.textContent = r.verdict; v.className = 'badge ' + r.badge; }
-        var fd = el('fopWarnings'); if (fd) { if (r.fopWarnings.length) { fd.innerHTML = '🚨 ' + r.fopWarnings.join(' • '); fd.style.display = 'block'; } else fd.style.display = 'none'; }
+        var fd = el('fopWarnings'); if (fd) { if (r.fopWarnings.length) { fd.innerHTML = 'ðŸš¨ ' + r.fopWarnings.join(' â€¢ '); fd.style.display = 'block'; } else fd.style.display = 'none'; }
 
         // Render "Why was this result given?" breakdown box
         var whyBox = el('resultWhyBox');
         if (whyBox) {
             var whyHtml = '<div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px 16px; margin-top:12px; font-size: 0.9rem; color: #334155;">';
             whyHtml += '<h5 style="color:#0284c7; margin-bottom:4px;">WHAT WE CHECKED</h5>';
-            whyHtml += '<p style="margin-top:0; margin-bottom:12px;">✓ Expiry ✓ Ingredients ✓ Allergens ✓ Additives ✓ Label information</p>';
+            whyHtml += '<p style="margin-top:0; margin-bottom:12px;">âœ“ Expiry âœ“ Ingredients âœ“ Allergens âœ“ Additives âœ“ Label information</p>';
             
             whyHtml += '<h5 style="color:#0284c7; margin-bottom:4px;">WHAT WE FOUND</h5>';
             whyHtml += '<p style="margin-top:0; margin-bottom:12px;">' + escapeHtml(r.verdict) + '</p>';
@@ -583,7 +583,7 @@ document.addEventListener('DOMContentLoaded', function () {
         y += 6;
         r.notes.forEach(function (n) { 
             if (y > 260) { doc.addPage(); y = 20; } 
-            var lines = doc.splitTextToSize('• ' + n, 174);
+            var lines = doc.splitTextToSize('â€¢ ' + n, 174);
             doc.text(lines, 18, y); 
             y += (lines.length * 4) + 2; 
         }); 
@@ -711,7 +711,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var dec = 'Analysis Complete';
         if (!isNaN(L) && n > 1) {
-            dec = p < alpha ? 'Exceeds Reference Limit (p < α)' : 'Within Reference Limit (p ≥ α)';
+            dec = p < alpha ? 'Exceeds Reference Limit (p < Î±)' : 'Within Reference Limit (p â‰¥ Î±)';
             if (summary) { 
                 summary.textContent = dec; 
                 summary.className = 'badge ' + (p < alpha ? 'badge-risk' : 'badge-safe'); 
@@ -727,8 +727,8 @@ document.addEventListener('DOMContentLoaded', function () {
         var interpretation = 'Reference limit not provided. Cannot determine safety.';
         if (!isNaN(L) && n > 1) {
             interpretation = p < alpha ? 
-                'Statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' > ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' < α = ' + alpha + ').' :
-                'No statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' ≤ ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' ≥ α = ' + alpha + ').';
+                'Statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' > ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' < Î± = ' + alpha + ').' :
+                'No statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' â‰¤ ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' â‰¥ Î± = ' + alpha + ').';
         }
 
         var facility = el('lab_facility') ? el('lab_facility').value.trim() : '';
@@ -741,11 +741,11 @@ document.addEventListener('DOMContentLoaded', function () {
             (testMethod ? '<strong>Test Method / Standard:</strong> ' + escapeHtml(testMethod) : null),
             '<strong>Parameter Evaluated:</strong> ' + escapeHtml(param) + ' (' + escapeHtml(unit) + ')',
             '<strong>User-Entered Measurements:</strong> ' + data.join(', ') + ' ' + escapeHtml(unit),
-            '<strong>Sample Size (n):</strong> ' + n + ' | <strong>Sample Mean (x̄):</strong> ' + mean.toFixed(2) + ' ' + escapeHtml(unit),
+            '<strong>Sample Size (n):</strong> ' + n + ' | <strong>Sample Mean (xÌ„):</strong> ' + mean.toFixed(2) + ' ' + escapeHtml(unit),
             (!isNaN(L) ? '<strong>Reference Threshold Limit (L):</strong> ' + L + ' ' + escapeHtml(unit) + ' <small style="color:#6b7280;">[' + escapeHtml(sourceText) + ']</small>' : '<strong>Reference Threshold Limit:</strong> Reference limit not provided.'),
-            (!isNaN(L) && n > 1 ? '<strong>Statistical Model Used:</strong> ' + (useZ ? 'Z-Test (known σ = ' + sigma + ')' : 'T-Test (sample s = ' + sd.toFixed(2) + ')') : null),
+            (!isNaN(L) && n > 1 ? '<strong>Statistical Model Used:</strong> ' + (useZ ? 'Z-Test (known Ïƒ = ' + sigma + ')' : 'T-Test (sample s = ' + sd.toFixed(2) + ')') : null),
             (!isNaN(L) && n > 1 ? '<strong>Standard Error (SE):</strong> ' + se.toFixed(2) + ' | <strong>Test Statistic (' + (useZ ? 'z' : 't') + '):</strong> ' + z.toFixed(2) : null),
-            (!isNaN(L) && n > 1 ? '<strong>p-value:</strong> ' + p.toFixed(4) + ' (Alpha level α = ' + alpha + ', Confidence Level = ' + Math.round((1 - alpha) * 100) + '%)' : null),
+            (!isNaN(L) && n > 1 ? '<strong>p-value:</strong> ' + p.toFixed(4) + ' (Alpha level Î± = ' + alpha + ', Confidence Level = ' + Math.round((1 - alpha) * 100) + '%)' : null),
             '<strong>Statistical Interpretation:</strong> ' + interpretation,
             (analyst || reviewer ? '<strong>Personnel:</strong> Analyst: ' + escapeHtml(analyst || 'N/A') + ' | Reviewer: ' + escapeHtml(reviewer || 'N/A') : null)
         ];
@@ -949,15 +949,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        doc.text('Statistical Method: ' + (res.useZ ? 'Z-Test (known σ)' : 'One-Sample T-Test (sample s)'), 16, y);
+        doc.text('Statistical Method: ' + (res.useZ ? 'Z-Test (known Ïƒ)' : 'One-Sample T-Test (sample s)'), 16, y);
         doc.text('Sample Size (n): ' + res.n, 120, y);
         y += 6;
-        doc.text('Sample Mean (x̄): ' + res.mean.toFixed(2) + ' ' + res.unit, 16, y);
-        doc.text('Std Dev (s/σ): ' + res.sd.toFixed(2) + ' ' + res.unit, 80, y);
+        doc.text('Sample Mean (xÌ„): ' + res.mean.toFixed(2) + ' ' + res.unit, 16, y);
+        doc.text('Std Dev (s/Ïƒ): ' + res.sd.toFixed(2) + ' ' + res.unit, 80, y);
         doc.text('Std Error (SE): ' + res.se.toFixed(2), 140, y);
         y += 6;
         doc.text('Test Statistic (' + (res.useZ ? 'z' : 't') + '): ' + res.z.toFixed(2), 16, y);
-        doc.text('p-value: ' + res.p.toFixed(4) + ' (α = ' + res.alpha + ')', 80, y);
+        doc.text('p-value: ' + res.p.toFixed(4) + ' (Î± = ' + res.alpha + ')', 80, y);
         y += 6;
 
         doc.setFont('helvetica', 'bold');
@@ -1145,7 +1145,7 @@ async function renderHistory() {
       "Dairy": {
         csvCategory: "Dairy",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 4.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. 4.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 85.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 3", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
@@ -1158,7 +1158,7 @@ async function renderHistory() {
       "Meat & Poultry": {
         csvCategory: "Meat_Poultry",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 2.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. 2.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 72.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 2", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
@@ -1170,7 +1170,7 @@ async function renderHistory() {
       "Seafood": {
         csvCategory: "Seafood",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. -1.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. -1.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 78.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 1", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
@@ -1181,7 +1181,7 @@ async function renderHistory() {
       "Fresh Produce": {
         csvCategory: "Fresh_Produce",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 10.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. 10.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 88.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 3", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
@@ -1192,7 +1192,7 @@ async function renderHistory() {
       "Beverage": {
         csvCategory: "Beverage",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 5.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. 5.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 92.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 10", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
@@ -1204,7 +1204,7 @@ async function renderHistory() {
       "Bakery": {
         csvCategory: "Bakery",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 20.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. 20.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 20.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 2", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
@@ -1215,18 +1215,18 @@ async function renderHistory() {
       "Frozen Food": {
         csvCategory: "Frozen_Food",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. -20.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. -20.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 65.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 20", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
         specific: [
-          { key: "Temp_Deviation_Neg18", label: "Temp Deviation from -18°C", id: "p_temp_deviation", placeholder: "e.g. 1.0", min: -20, max: 30, step: 0.1, icon: "fa-snowflake" }
+          { key: "Temp_Deviation_Neg18", label: "Temp Deviation from -18Â°C", id: "p_temp_deviation", placeholder: "e.g. 1.0", min: -20, max: 30, step: 0.1, icon: "fa-snowflake" }
         ]
       },
       "Baby Food": {
         csvCategory: "Baby_Food",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 4.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. 4.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 80.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 2", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
@@ -1237,7 +1237,7 @@ async function renderHistory() {
       "Packaged Snack": {
         csvCategory: "Packaged_Snack",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 24.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. 24.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 3.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 30", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
@@ -1248,7 +1248,7 @@ async function renderHistory() {
       "Street Food": {
         csvCategory: "Street_Food",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 5.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. 5.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 60.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 0.5", min: 0, max: 365, step: 0.1, icon: "fa-calendar-alt" }
         ],
@@ -1284,433 +1284,19 @@ async function renderHistory() {
       container.innerHTML = html;
     }
 
+    // ML functions now loaded from mlAnalysis.js via window.FSML
+    var ml = window.FSML.init({
+      el: el,
+      showToast: showToast,
+      setButtonLoading: setButtonLoading,
+      clearMLResults: clearMLResults,
+      showMLResult: showMLResult,
+      CATEGORY_SCHEMAS: CATEGORY_SCHEMAS,
+      numVal: numVal,
+      getMlChart: function(){ return mlChart; },
+      setMlChart: function(v){ mlChart = v; }
+    });
 
-      var cat = categoryFilter || (el('mlCategorySelect') ? el('mlCategorySelect').value : 'All');
-      try {
-        var token = localStorage.getItem('fs_token');
-        var headers = {};
-        if (token) headers['Authorization'] = 'Bearer ' + token;
-        var res = await fetch('http://localhost:5000/api/ml/dataset?category=' + encodeURIComponent(cat), { headers: headers });
-        if (res.ok) {
-          var json = await res.json();
-          if (json.data && json.data.length > 0) {
-            return json.data;
-          }
-        }
-      } catch (err) {
-        console.warn('Backend dataset API offline, using fallback parser', err);
-      }
-      return [];
-    }
-
-
-      var means = {}, stds = {};
-      featureKeys.forEach(function (key) {
-                var vals = data.map(function (d) {
-                    var value = d.features ? d.features[key] : d[key];
-                    return Number.isFinite(value) ? value : 0;
-                });
-        var mean = vals.reduce(function (a, b) { return a + b; }, 0) / (vals.length || 1);
-        var std = Math.sqrt(vals.reduce(function (a, x) { return a + (x - mean) * (x - mean); }, 0) / (vals.length || 1)) || 1;
-        means[key] = mean;
-        stds[key] = std;
-      });
-
-      return data.map(function (d) {
-        var normObj = {
-          raw: d,
-          score: d.Risk_Score !== undefined ? d.Risk_Score : (d.score || 0),
-          safe: d.Safety_Label !== undefined ? (d.Safety_Label === 0 ? 1 : 0) : d.safe, // 1 = Safe, 0 = Unsafe for frontend
-          rawSafetyLabel: d.Safety_Label,
-          features: {}
-        };
-        featureKeys.forEach(function (key) {
-                    var rawVal = d.features ? d.features[key] : d[key];
-                    if (!Number.isFinite(rawVal)) rawVal = 0;
-          normObj.features[key] = (rawVal - means[key]) / stds[key];
-        });
-        return normObj;
-      });
-    }
-
-
-            if (!data.length) return [];
-            var firstKeys = Object.keys(data[0].features || {});
-            return firstKeys.filter(function (key) {
-                return data.every(function (row) {
-                    return row.features && Number.isFinite(row.features[key]);
-                });
-            });
-        }
-
-
-    async function runEDA() {
-      clearMLResults();
-      var cat = el('mlCategorySelect') ? el('mlCategorySelect').value : 'All';
-      if (el('currentExplain')) el('currentExplain').textContent = 'Exploratory Data Analysis (' + cat + '): Summary statistics & scatter distribution of dataset samples for selected category.';
-      showMLResult("📊 DATA SUMMARY — Category: " + cat, true);
-      var btn = el('runEDA');
-      setButtonLoading(btn, true, 'Running EDA...');
-      try {
-        var data = await getRealDataset(cat);
-        if (!data || data.length < 3) {
-          showMLResult('⚠️ Not enough dataset samples for ' + cat + '. Ensure dataset is loaded.', true);
-          return;
-        }
-
-        var safeCount = data.filter(function (d) { return d.Safety_Label === 0 || d.safe === 1; }).length;
-        var unsafeCount = data.filter(function (d) { return d.Safety_Label === 1 || d.safe === 0; }).length;
-
-        showMLResult("Category '" + cat + "' has " + data.length + " rows: " + safeCount + " Safe, " + unsafeCount + " Unsafe.\n");
-
-        showMLResult("━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
-        showMLResult("\n📈 AVERAGE VALUES:", true);
-
-        var featKeys = getDatasetFeatureKeys(data);
-        if (featKeys.length < 2) throw new Error('Dataset has no common numeric features for this selection.');
-
-        featKeys.forEach(function (key) {
-          var vals = data.map(function (d) { return d.features ? d.features[key] : (d[key] || 0); });
-          var mean = (vals.reduce(function (a, b) { return a + b; }, 0) / vals.length).toFixed(2);
-          var min = Math.min.apply(null, vals).toFixed(1);
-          var max = Math.max.apply(null, vals).toFixed(1);
-          showMLResult(key + ": Average = " + mean + " | Range = " + min + " to " + max);
-        });
-
-        showMLResult("\n💡 Summary gives quick parameter insight before running ML prediction models.", false);
-
-        // Scatter Chart (Feature 1 vs Feature 2)
-        var ctx = el('mlChart');
-        if (!ctx) return;
-        ctx = ctx.getContext('2d');
-        if (mlChart) mlChart.destroy();
-
-        var xKey = featKeys[0] || 'Temperature_C';
-        var yKey = featKeys[1] || 'Moisture_percent';
-
-        mlChart = new Chart(ctx, {
-          type: 'scatter',
-          data: {
-            datasets: [
-              {
-                label: 'Safe Samples (Label=0)',
-                data: data.filter(function (d) { return d.Safety_Label === 0 || d.safe === 1; }).map(function (d) {
-                  return { x: d.features ? d.features[xKey] : d[xKey], y: d.features ? d.features[yKey] : d[yKey] };
-                }),
-                backgroundColor: '#16a34a',
-                pointRadius: 6
-              },
-              {
-                label: 'Unsafe Samples (Label=1)',
-                data: data.filter(function (d) { return d.Safety_Label === 1 || d.safe === 0; }).map(function (d) {
-                  return { x: d.features ? d.features[xKey] : d[xKey], y: d.features ? d.features[yKey] : d[yKey] };
-                }),
-                backgroundColor: '#dc2626',
-                pointRadius: 6
-              }
-            ]
-          },
-          options: {
-            scales: {
-              x: { title: { display: true, text: xKey } },
-              y: { title: { display: true, text: yKey } }
-            },
-            plugins: {
-              legend: { position: 'top' },
-              title: { display: true, text: cat + ' Dataset: ' + xKey + ' vs ' + yKey }
-            }
-          }
-        });
-            } catch (err) {
-                showMLResult('❌ EDA failed: ' + (err.message || err), true);
-                showToast('EDA failed. Check that the backend is running.', 'error');
-            } finally { setButtonLoading(el('runEDA'), false); }
-    }
-
-
-    async function runLinearRegression() {
-      if (typeof tf === 'undefined') { showToast('TensorFlow.js not loaded', 'error'); return; }
-      clearMLResults();
-      var cat = el('mlCategorySelect') ? el('mlCategorySelect').value : 'All';
-      if (el('currentExplain')) el('currentExplain').textContent = 'Linear Regression (' + cat + '): Learns weights to estimate continuous Risk_Score (0-100) from parameters.';
-      showMLResult("📈 LINEAR REGRESSION — Category: " + cat, true);
-      var btn = el('runLinear');
-      setButtonLoading(btn, true, 'Training...');
-      try {
-        var data = await getRealDataset(cat);
-        if (!data || data.length < 3) {
-          showMLResult('⚠️ Not enough dataset samples for ' + cat + '.', true);
-          return;
-        }
-
-        var featKeys = getDatasetFeatureKeys(data);
-        if (featKeys.length < 2) throw new Error('Dataset has no common numeric features for this selection.');
-        showMLResult("Training Linear model on " + data.length + " rows for features: [" + featKeys.join(', ') + "]\n");
-
-        var normalizedData = normalizeDatasetFeatures(data, featKeys);
-        var xs = tf.tensor2d(normalizedData.map(function (d) {
-          return featKeys.map(function (k) { return d.features[k]; });
-        }));
-        var ys = tf.tensor2d(normalizedData.map(function (d) { return [d.score]; }));
-
-        var model = tf.sequential();
-        model.add(tf.layers.dense({ units: 1, inputShape: [featKeys.length], activation: 'linear' }));
-        model.compile({ loss: 'meanSquaredError', optimizer: tf.train.adam(0.08) });
-
-        var finalLoss = 0;
-        await model.fit(xs, ys, {
-          epochs: 180,
-          shuffle: true,
-          callbacks: { onEpochEnd: function (epoch, logs) { finalLoss = logs.loss; } }
-        });
-
-        showMLResult("\n━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
-        showMLResult("\n✅ RESULT:", true);
-        showMLResult("Average prediction error: ±" + Math.sqrt(finalLoss).toFixed(1) + " points (out of 100)");
-
-        var linearPredictionTensor = model.predict(xs);
-        var linearPredictions = linearPredictionTensor.dataSync();
-        var firstRisk = Math.max(0, Math.min(100, linearPredictions[0]));
-        showMLResult("Dataset sample 1 predicted Risk Score: " + firstRisk.toFixed(1) + "/100 (" + (firstRisk >= 60 ? 'Higher Risk' : (firstRisk >= 30 ? 'Moderate Risk' : 'Low Risk')) + ")", true);
-        linearPredictionTensor.dispose();
-
-        var weights = model.layers[0].getWeights()[0].arraySync().flat();
-
-        showMLResult("\n📌 FEATURE INFLUENCE ON RISK SCORE:", true);
-        var influences = featKeys.map(function (key, idx) {
-          return { name: key, w: weights[idx] };
-        }).sort(function (a, b) { return Math.abs(b.w) - Math.abs(a.w); });
-
-        influences.forEach(function (inf) {
-          var direction = inf.w > 0 ? 'increases risk' : 'decreases risk';
-          showMLResult("  " + inf.name + " — " + direction + " (weight: " + inf.w.toFixed(2) + ")");
-        });
-
-        xs.dispose();
-        ys.dispose();
-        model.dispose();
-            } catch (err) {
-                showMLResult('❌ Linear Regression failed: ' + (err.message || err), true);
-                showToast('Linear Regression failed.', 'error');
-            } finally { setButtonLoading(el('runLinear'), false); }
-    }
-
-
-    async function runLogisticBase(title, l2, l1, btnId) {
-      if (typeof tf === 'undefined') { showToast('TensorFlow.js not loaded', 'error'); return; }
-      clearMLResults();
-      var cat = el('mlCategorySelect') ? el('mlCategorySelect').value : 'All';
-      if (el('currentExplain')) {
-        if (l2) el('currentExplain').textContent = 'Ridge Regression (L2) [' + cat + ']: Classifies Safe/Unsafe with L2 weight regularization.';
-        else if (l1) el('currentExplain').textContent = 'Lasso Regression (L1) [' + cat + ']: Classifies Safe/Unsafe with L1 sparsity regularization.';
-        else el('currentExplain').textContent = 'Logistic Regression [' + cat + ']: Classifies Safe vs Unsafe food samples.';
-      }
-      showMLResult("🧠 " + title + " — Category: " + cat, true);
-      var btn = btnId ? el(btnId) : null;
-      setButtonLoading(btn, true, 'Training...');
-      try {
-        var data = await getRealDataset(cat);
-        if (!data || data.length < 3) {
-          showMLResult('⚠️ Not enough dataset samples for ' + cat + '.', true);
-          return;
-        }
-
-        var featKeys = getDatasetFeatureKeys(data);
-        if (featKeys.length < 2) throw new Error('Dataset has no common numeric features for this selection.');
-        var safeCount = data.filter(function (d) { return d.Safety_Label === 0 || d.safe === 1; }).length;
-        var unsafeCount = data.filter(function (d) { return d.Safety_Label === 1 || d.safe === 0; }).length;
-
-        showMLResult("Training on " + data.length + " samples (" + safeCount + " Safe, " + unsafeCount + " Unsafe)\n");
-
-        var normalizedData = normalizeDatasetFeatures(data, featKeys);
-        var xs = tf.tensor2d(normalizedData.map(function (d) {
-          return featKeys.map(function (k) { return d.features[k]; });
-        }));
-        // Train target: 0 for Safe, 1 for Unsafe
-        var ys = tf.tensor2d(normalizedData.map(function (d) {
-          return [d.rawSafetyLabel !== undefined ? d.rawSafetyLabel : (d.safe === 1 ? 0 : 1)];
-        }));
-
-        var reg = l2 ? tf.regularizers.l2({ l2: l2 }) : (l1 ? tf.regularizers.l1({ l1: l1 }) : null);
-        var model = tf.sequential();
-        model.add(tf.layers.dense({ units: 1, inputShape: [featKeys.length], activation: 'sigmoid', kernelRegularizer: reg }));
-        model.compile({ loss: 'binaryCrossentropy', optimizer: tf.train.adam(0.08), metrics: ['accuracy'] });
-
-        var finalAcc = 0;
-        await model.fit(xs, ys, {
-          epochs: 150,
-          shuffle: true,
-          callbacks: { onEpochEnd: function (epoch, logs) { finalAcc = logs.acc !== undefined ? logs.acc : logs.accuracy; } }
-        });
-
-        showMLResult("\n━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
-        showMLResult("\n✅ RESULT:", true);
-        showMLResult("Model Accuracy: " + (Number(finalAcc) * 100).toFixed(0) + "%");
-
-        var logisticPredictionTensor = model.predict(xs);
-        var logisticProbabilities = logisticPredictionTensor.dataSync();
-        var firstProbability = logisticProbabilities[0];
-        showMLResult("Dataset sample 1 prediction: " + (firstProbability >= 0.5 ? 'UNSAFE' : 'SAFE') + " (Unsafe probability: " + (firstProbability * 100).toFixed(1) + "%)", true);
-        logisticPredictionTensor.dispose();
-
-        var weights = model.layers[0].getWeights()[0].arraySync().flat();
-        showMLResult("\n📌 FEATURE INFLUENCE ON SAFE vs UNSAFE:", true);
-        var influences = featKeys.map(function (key, idx) {
-          return { name: key, w: weights[idx] };
-        }).sort(function (a, b) { return Math.abs(b.w) - Math.abs(a.w); });
-
-        influences.forEach(function (inf) {
-          var direction = inf.w > 0 ? 'higher value → Unsafe signal' : 'higher value → Safe signal';
-          showMLResult("  " + inf.name + " — " + direction);
-        });
-
-        xs.dispose();
-        ys.dispose();
-        model.dispose();
-            } catch (err) {
-                showMLResult('❌ ' + title + ' failed: ' + (err.message || err), true);
-                showToast(title + ' failed.', 'error');
-            } finally { setButtonLoading(btn, false); }
-    }
-
-
-
-
-
-
-    async function showHistograms() {
-      clearMLResults();
-      var cat = el('mlCategorySelect') ? el('mlCategorySelect').value : 'All';
-      if (el('currentExplain')) el('currentExplain').textContent = 'Feature Histograms (' + cat + '): Comparing average values for each parameter between Safe and Unsafe samples.';
-      showMLResult("📊 FEATURE COMPARISON — Category: " + cat, true);
-      var btn = el('runHist');
-      setButtonLoading(btn, true, 'Analyzing...');
-      try {
-        var data = await getRealDataset(cat);
-        if (!data || data.length < 3) {
-          showMLResult('⚠️ Not enough dataset samples for ' + cat + '.', true);
-          return;
-        }
-
-        var safe = data.filter(function (d) { return d.Safety_Label === 0 || d.safe === 1; });
-        var unsafe = data.filter(function (d) { return d.Safety_Label === 1 || d.safe === 0; });
-
-        showMLResult("Comparing " + safe.length + " Safe samples vs " + unsafe.length + " Unsafe samples for '" + cat + "'\n");
-
-        var featKeys = getDatasetFeatureKeys(data);
-        if (featKeys.length < 2) throw new Error('Dataset has no common numeric features for this selection.');
-
-        var safeAvgs = [], unsafeAvgs = [];
-
-        featKeys.forEach(function (key) {
-          var sVals = safe.map(function (d) { return d.features ? d.features[key] : (d[key] || 0); });
-          var uVals = unsafe.map(function (d) { return d.features ? d.features[key] : (d[key] || 0); });
-          var sAvg = sVals.length ? (sVals.reduce(function (a, b) { return a + b; }, 0) / sVals.length) : 0;
-          var uAvg = uVals.length ? (uVals.reduce(function (a, b) { return a + b; }, 0) / uVals.length) : 0;
-          safeAvgs.push(sAvg);
-          unsafeAvgs.push(uAvg);
-
-          showMLResult(key + ":");
-          showMLResult("  Safe Avg:   " + sAvg.toFixed(2));
-          showMLResult("  Unsafe Avg: " + uAvg.toFixed(2));
-        });
-
-        // Chart
-        var ctx = el('mlChart');
-        if (!ctx) return;
-        ctx = ctx.getContext('2d');
-        if (mlChart) mlChart.destroy();
-
-        mlChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: featKeys,
-            datasets: [
-              {
-                label: 'Safe Samples (n=' + safe.length + ')',
-                data: safeAvgs,
-                backgroundColor: '#16a34a',
-                borderColor: '#15803d',
-                borderWidth: 2
-              },
-              {
-                label: 'Unsafe Samples (n=' + unsafe.length + ')',
-                data: unsafeAvgs,
-                backgroundColor: '#dc2626',
-                borderColor: '#b91c1c',
-                borderWidth: 2
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'top' },
-              title: { display: true, text: cat + ': Feature Averages (Safe vs Unsafe)' }
-            },
-            scales: { y: { beginAtZero: true } }
-          }
-        });
-      } finally { setButtonLoading(el('runHist'), false); }
-    }
-
-
-    async function runKnnPredictionLab() {
-      clearMLResults();
-      var catName = el('p_cat') ? el('p_cat').value : (el('mlCategorySelect') ? el('mlCategorySelect').value : 'Dairy');
-      if (catName === 'All') catName = 'Dairy';
-      var schema = CATEGORY_SCHEMAS[catName] || CATEGORY_SCHEMAS['Dairy'];
-
-      var featureMap = {};
-      var missing = [];
-
-      schema.common.concat(schema.specific).forEach(function(f) {
-        var v = numVal(f.id);
-        if (v === null || isNaN(v)) {
-          missing.push(f.label);
-        } else {
-          featureMap[f.key] = v;
-        }
-      });
-
-      if (missing.length > 0) {
-        showToast('Please enter measured value for: ' + missing.join(', '), 'warning');
-        return;
-      }
-
-      if (el('currentExplain')) el('currentExplain').textContent = 'k-Nearest Neighbors (k-NN) [' + catName + ']: Classifies sample safety by finding nearest neighbors in category dataset.';
-      showMLResult("🧠 k-NN PREDICTION — Category: " + catName, true);
-      var btn = el('runKnBtnLab');
-      setButtonLoading(btn, true, 'Predicting...');
-
-      try {
-        var token = localStorage.getItem('fs_token');
-        var headers = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = 'Bearer ' + token;
-
-        var res = await fetch('http://localhost:5000/api/ml/predict', {
-          method: 'POST',
-          headers: headers,
-          body: JSON.stringify({ category: catName, features: featureMap })
-        });
-
-        var json = await res.json();
-        if (res.ok) {
-          showMLResult("\n✅ PREDICTION VERDICT: " + json.prediction.toUpperCase(), true);
-          showMLResult("  Trained on: " + json.trainedOnSamples + " category dataset samples (k=" + json.k + ")");
-          showMLResult("  Features evaluated: " + json.featuresUsed.join(', '));
-          if (el('knn_out')) el('knn_out').textContent = json.prediction + ' (k-NN trained on ' + json.trainedOnSamples + ' ' + catName + ' samples)';
-        } else {
-          showMLResult("❌ Prediction failed: " + (json.message || 'Error occurred'), true);
-        }
-      } catch (err) {
-        console.error('k-NN request failed', err);
-        showMLResult("⚠️ Network error contacting backend prediction endpoint.", true);
-      } finally {
-        setButtonLoading(btn, false);
-      }
-    }
 
     // ============================================================
     //  IMAGE LABEL 
@@ -1770,19 +1356,19 @@ async function renderHistory() {
 
                 var vegScore = p.green + p.yellow + p.cream;
                 var nonVegScore = p.red + p.brown + p.dark;
-                var veg = Math.abs(vegScore - nonVegScore) < 3 ? "Unclear ⚠️" : (vegScore > nonVegScore ? "Likely Veg 🟢" : "Likely Non-Veg 🔴");
+                var veg = Math.abs(vegScore - nonVegScore) < 3 ? "Unclear âš ï¸" : (vegScore > nonVegScore ? "Likely Veg ðŸŸ¢" : "Likely Non-Veg ðŸ”´");
 
                 var colorTotal = p.red + p.green + p.blue + p.yellow + p.orange + p.brown + p.cream;
                 var isFood = colorTotal > 30;
 
                 var checks = [];
-                if (colorTotal > 30) checks.push("✓ Food colors (" + colorTotal.toFixed(0) + "%)"); else checks.push("✗ Low food colors");
-                if (dark > 5 || white > 2) checks.push("✓ Text detected"); else checks.push("⚠ Little text");
-                if (canvas.width > 150) checks.push("✓ Resolution " + canvas.width + "x" + canvas.height); else checks.push("✗ Low resolution");
+                if (colorTotal > 30) checks.push("âœ“ Food colors (" + colorTotal.toFixed(0) + "%)"); else checks.push("âœ— Low food colors");
+                if (dark > 5 || white > 2) checks.push("âœ“ Text detected"); else checks.push("âš  Little text");
+                if (canvas.width > 150) checks.push("âœ“ Resolution " + canvas.width + "x" + canvas.height); else checks.push("âœ— Low resolution");
 
                 resolve({ isFood: isFood, topCat: topCat, secondCat: secondCat, confidence: confidence, veg: veg, checks: checks });
             };
-            img.onerror = function () { resolve({ isFood: false, topCat: "Unknown", secondCat: "Unknown", confidence: 0, veg: "Unknown", checks: ["✗ Invalid image"] }); };
+            img.onerror = function () { resolve({ isFood: false, topCat: "Unknown", secondCat: "Unknown", confidence: 0, veg: "Unknown", checks: ["âœ— Invalid image"] }); };
             img.src = imageDataUrl;
         });
     }
@@ -1929,11 +1515,11 @@ async function renderHistory() {
                         imgRes.style.background = '#f0fdf4';
                         imgRes.style.border = '2px solid #16a34a';
                         if (labelDetails.name || labelDetails.ingredients || product) {
-                            imgRes.innerHTML = '<strong style="color:#15803d;">✅ Information detected from label — Please review and edit extracted information before running analysis:</strong>' + (labelDetails.name ? '<br>📦 Product: <strong>' + escapeHtml(labelDetails.name) + '</strong>' : '') + (labelDetails.category ? '<br>🏷️ Category: <strong>' + escapeHtml(labelDetails.category) + '</strong>' : '') + (labelDetails.ingredients ? '<br>📝 Ingredients: ' + escapeHtml(labelDetails.ingredients) : '') + (product ? '<br>🌐 Additional information matched with Open Food Facts' : '') + '<br><small style="color:#4b5563;">You can make corrections in the form below before performing safety checks.</small>';
+                            imgRes.innerHTML = '<strong style="color:#15803d;">âœ… Information detected from label â€” Please review and edit extracted information before running analysis:</strong>' + (labelDetails.name ? '<br>ðŸ“¦ Product: <strong>' + escapeHtml(labelDetails.name) + '</strong>' : '') + (labelDetails.category ? '<br>ðŸ·ï¸ Category: <strong>' + escapeHtml(labelDetails.category) + '</strong>' : '') + (labelDetails.ingredients ? '<br>ðŸ“ Ingredients: ' + escapeHtml(labelDetails.ingredients) : '') + (product ? '<br>ðŸŒ Additional information matched with Open Food Facts' : '') + '<br><small style="color:#4b5563;">You can make corrections in the form below before performing safety checks.</small>';
                         } else {
                             imgRes.style.background = '#fffbeb';
                             imgRes.style.borderColor = '#d97706';
-                            imgRes.innerHTML = '<strong style="color:#b45309;">⚠️ Text could not be read from this image</strong><br><small>No dummy product information was added. Upload a clear, front-facing label photo with visible product text.</small>';
+                            imgRes.innerHTML = '<strong style="color:#b45309;">âš ï¸ Text could not be read from this image</strong><br><small>No dummy product information was added. Upload a clear, front-facing label photo with visible product text.</small>';
                         }
                     }
 
@@ -1949,7 +1535,7 @@ async function renderHistory() {
                         imgRes.style.display = 'block';
                         imgRes.style.background = '#f0fdf4';
                         imgRes.style.border = '2px solid #16a34a';
-                        imgRes.innerHTML = '<strong style="color:#b45309;">⚠️ Text could not be read from this image</strong><br><small>No dummy product information was added. Upload a clear, front-facing label photo with visible product text.</small>';
+                        imgRes.innerHTML = '<strong style="color:#b45309;">âš ï¸ Text could not be read from this image</strong><br><small>No dummy product information was added. Upload a clear, front-facing label photo with visible product text.</small>';
                     }
                 });
             };
@@ -1979,10 +1565,10 @@ function fetchProductFromAPI(barcode) {
             return response.json();
         })
         .then(function (data) {
-            console.log("📦 API Response:", data);
+            console.log("ðŸ“¦ API Response:", data);
             
             if (data.status === 0 || !data.product) {
-                resultDiv.innerHTML = '<div style="padding:15px; background:#fef2f2; border:2px solid #dc2626; border-radius:8px; color:#b91c1c; text-align:center;"><strong>❌ Product Not Found</strong><br><small>Barcode ' + barcode + ' not in database. Try another or enter manually.</small></div>';
+                resultDiv.innerHTML = '<div style="padding:15px; background:#fef2f2; border:2px solid #dc2626; border-radius:8px; color:#b91c1c; text-align:center;"><strong>âŒ Product Not Found</strong><br><small>Barcode ' + barcode + ' not in database. Try another or enter manually.</small></div>';
                 return;
             }
             
@@ -2079,35 +1665,35 @@ function fetchProductFromAPI(barcode) {
             
             // Nutrition table
             html += '<div style="margin-top:15px; background:white; border-radius:8px; padding:12px; border:1px solid #e5e7eb;">';
-            html += '<div style="font-weight:600; color:#374151; margin-bottom:8px;">📊 Nutrition (per 100g):</div>';
+            html += '<div style="font-weight:600; color:#374151; margin-bottom:8px;">ðŸ“Š Nutrition (per 100g):</div>';
             html += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px; font-size:0.85rem;">';
             
-            html += '<div>🔥 Energy: <strong>' + (kcal ? kcal + ' kcal' : 'Data unavailable') + '</strong></div>';
-            html += '<div>🧈 Fat: <strong>' + (fat ? fat + ' g' : 'Data unavailable') + '</strong></div>';
-            html += '<div>⛔ Sat Fat: <strong>' + (sat ? sat + ' g' : 'Data unavailable') + '</strong></div>';
-            html += '<div>⚠️ Trans Fat: <strong>' + (trans ? trans + ' g' : 'Data unavailable') + '</strong></div>';
-            html += '<div>🍞 Carbs: <strong>' + (carbs ? carbs + ' g' : 'Data unavailable') + '</strong></div>';
-            html += '<div>🍬 Sugar: <strong>' + (sugar ? sugar + ' g' : 'Data unavailable') + '</strong></div>';
-            html += '<div>💪 Protein: <strong>' + (protein ? protein + ' g' : 'Data unavailable') + '</strong></div>';
-            html += '<div>🧂 Sodium: <strong>' + (sodium ? sodium + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>ðŸ”¥ Energy: <strong>' + (kcal ? kcal + ' kcal' : 'Data unavailable') + '</strong></div>';
+            html += '<div>ðŸ§ˆ Fat: <strong>' + (fat ? fat + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>â›” Sat Fat: <strong>' + (sat ? sat + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>âš ï¸ Trans Fat: <strong>' + (trans ? trans + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>ðŸž Carbs: <strong>' + (carbs ? carbs + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>ðŸ¬ Sugar: <strong>' + (sugar ? sugar + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>ðŸ’ª Protein: <strong>' + (protein ? protein + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>ðŸ§‚ Sodium: <strong>' + (sodium ? sodium + ' g' : 'Data unavailable') + '</strong></div>';
             
             html += '</div></div>';
             
             // Ingredients & Allergens
             html += '<div style="margin-top:10px; background:white; border-radius:8px; padding:12px; border:1px solid #e5e7eb;">';
-            html += '<div style="font-weight:600; color:#374151; margin-bottom:4px;">📝 Ingredients:</div>';
+            html += '<div style="font-weight:600; color:#374151; margin-bottom:4px;">ðŸ“ Ingredients:</div>';
             html += '<div style="font-size:0.8rem; color:#4b5563; max-height:60px; overflow-y:auto;">' + (ingredients ? escapeHtml(ingredients) : '<span style="color:#dc2626;">Data unavailable</span>') + '</div>';
             html += '</div>';
             
             if (allergens) {
                 html += '<div style="margin-top:8px; padding:8px 12px; background:#fef2f2; border-radius:6px; font-size:0.85rem; color:#b91c1c;">';
-                html += '⚠️ Allergens: ' + escapeHtml(allergens.replace(/,/g, ', '));
+                html += 'âš ï¸ Allergens: ' + escapeHtml(allergens.replace(/,/g, ', '));
                 html += '</div>';
             }
             
             if (additives) {
                 html += '<div style="margin-top:6px; padding:8px 12px; background:#fffbeb; border-radius:6px; font-size:0.85rem; color:#92400e;">';
-                html += '🧪 Additives: ' + escapeHtml(additives.replace(/,/g, ', '));
+                html += 'ðŸ§ª Additives: ' + escapeHtml(additives.replace(/,/g, ', '));
                 html += '</div>';
             }
             
@@ -2124,7 +1710,7 @@ function fetchProductFromAPI(barcode) {
             
             // Data source
             html += '<div style="margin-top:10px; text-align:center; font-size:0.75rem; color:#6b7280; font-weight:600;">';
-            html += 'Data Source: Open Food Facts (openfoodfacts.org) — Open Database';
+            html += 'Data Source: Open Food Facts (openfoodfacts.org) â€” Open Database';
             html += '</div>';
             
             html += '</div>';
@@ -2134,7 +1720,7 @@ function fetchProductFromAPI(barcode) {
         })
         .catch(function (err) {
             console.error("API Error:", err);
-            resultDiv.innerHTML = '<div style="padding:15px; background:#fffbeb; border:2px solid #f59e0b; border-radius:8px; color:#92400e; text-align:center;"><strong>⚠️ Product information could not be retrieved from the barcode database.</strong><br><small>You can enter the product details manually below or upload a product label photo.</small></div>';
+            resultDiv.innerHTML = '<div style="padding:15px; background:#fffbeb; border:2px solid #f59e0b; border-radius:8px; color:#92400e; text-align:center;"><strong>âš ï¸ Product information could not be retrieved from the barcode database.</strong><br><small>You can enter the product details manually below or upload a product label photo.</small></div>';
         });
 }
 
@@ -2172,9 +1758,9 @@ window.autoFillFromBarcode = function(name, category, ingredients, origin, kcal,
     var stepHtml = '<div style="margin-bottom:20px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:16px;">';
     stepHtml += '<h4 style="color:#15803d; font-size:0.95rem; margin-bottom:10px;"><i class="fas fa-barcode"></i> Barcode Retrieval Flow Status</h4>';
     stepHtml += '<div style="display:flex; flex-wrap:wrap; gap:8px; font-size:0.82rem; margin-bottom:10px;">';
-    stepHtml += '<span class="badge" style="background:#dcfce7; color:#15803d;">✓ STEP 1: Product Found</span>';
-    stepHtml += '<span class="badge" style="background:#dcfce7; color:#15803d;">✓ STEP 2: Details Loaded</span>';
-    stepHtml += '<span class="badge" style="background:#dcfce7; color:#15803d;">✓ STEP 3: Form Updated</span>';
+    stepHtml += '<span class="badge" style="background:#dcfce7; color:#15803d;">âœ“ STEP 1: Product Found</span>';
+    stepHtml += '<span class="badge" style="background:#dcfce7; color:#15803d;">âœ“ STEP 2: Details Loaded</span>';
+    stepHtml += '<span class="badge" style="background:#dcfce7; color:#15803d;">âœ“ STEP 3: Form Updated</span>';
     stepHtml += '<span class="badge" style="background:#e0f2fe; color:#0369a1;">STEP 4: Ready for Safety Check</span>';
     stepHtml += '<span class="badge" style="background:' + (missing.length ? '#fef3c7' : '#dcfce7') + '; color:' + (missing.length ? '#92400e' : '#15803d') + ';">STEP 5: ' + (missing.length ? 'Missing Info Identified' : 'Info Complete') + '</span>';
     stepHtml += '<span class="badge" style="background:#faf5ff; color:#6d28d9;">STEP 6: Lab Parameters Mapped</span>';
@@ -2182,11 +1768,11 @@ window.autoFillFromBarcode = function(name, category, ingredients, origin, kcal,
     
     if (missing.length > 0) {
         stepHtml += '<div style="font-size:0.85rem; color:#92400e; background:#fffbeb; padding:10px; border-radius:6px; border-left:4px solid #f59e0b;">';
-        stepHtml += '⚠️ <strong>Some product information was unavailable in the Open Food Facts database</strong> (' + escapeHtml(missing.join(', ')) + '). Missing data is not treated as proof of safety. Please fill in missing details before running screening.';
+        stepHtml += 'âš ï¸ <strong>Some product information was unavailable in the Open Food Facts database</strong> (' + escapeHtml(missing.join(', ')) + '). Missing data is not treated as proof of safety. Please fill in missing details before running screening.';
         stepHtml += '</div>';
     } else {
         stepHtml += '<div style="font-size:0.85rem; color:#15803d; background:#ffffff; padding:8px 12px; border-radius:6px;">';
-        stepHtml += '✅ Available product metadata loaded successfully. Click "Run Safety Checks" below to perform consumer screening.';
+        stepHtml += 'âœ… Available product metadata loaded successfully. Click "Run Safety Checks" below to perform consumer screening.';
         stepHtml += '</div>';
     }
     stepHtml += '</div>';
@@ -2251,7 +1837,7 @@ function startCameraScan() {
             var resultDiv = el('barcodeResult');
             if (resultDiv) {
                 resultDiv.style.display = 'block';
-                resultDiv.innerHTML = '<div style="padding:15px; background:#fffbeb; border:2px solid #f59e0b; border-radius:8px; color:#92400e; text-align:center;"><strong>📷 Camera not available</strong><br><small>Error: ' + err.message + '</small><br><br><strong>Alternatives:</strong><br>• Upload barcode image<br>• Type barcode number manually</div>';
+                resultDiv.innerHTML = '<div style="padding:15px; background:#fffbeb; border:2px solid #f59e0b; border-radius:8px; color:#92400e; text-align:center;"><strong>ðŸ“· Camera not available</strong><br><small>Error: ' + err.message + '</small><br><br><strong>Alternatives:</strong><br>â€¢ Upload barcode image<br>â€¢ Type barcode number manually</div>';
             }
             return;
         }
@@ -2272,7 +1858,7 @@ function startCameraScan() {
             var resultDiv = el('barcodeResult');
             if (resultDiv) {
                 resultDiv.style.display = 'block';
-                resultDiv.innerHTML = '<div style="padding:15px; background:#dbeafe; border-radius:8px; text-align:center;">✅ Barcode Detected: <strong style="font-size:1.2rem; color:#1e40af;">' + barcode + '</strong><br>Format: ' + result.codeResult.format + '</div>';
+                resultDiv.innerHTML = '<div style="padding:15px; background:#dbeafe; border-radius:8px; text-align:center;">âœ… Barcode Detected: <strong style="font-size:1.2rem; color:#1e40af;">' + barcode + '</strong><br>Format: ' + result.codeResult.format + '</div>';
             }
             
             // Fetch product data
@@ -2300,7 +1886,7 @@ function scanBarcodeFromFile(file) {
     var resultDiv = el('barcodeResult');
     if (resultDiv) {
         resultDiv.style.display = 'block';
-        resultDiv.innerHTML = '<div style="padding:15px; background:#dbeafe; border-radius:8px; text-align:center;">⏳ Scanning barcode from image...</div>';
+        resultDiv.innerHTML = '<div style="padding:15px; background:#dbeafe; border-radius:8px; text-align:center;">â³ Scanning barcode from image...</div>';
     }
     
     var reader = new FileReader();
@@ -2318,7 +1904,7 @@ function scanBarcodeFromFile(file) {
                 var barcode = result.codeResult.code;
                 
                 if (resultDiv) {
-                    resultDiv.innerHTML = '<div style="padding:15px; background:#dbeafe; border-radius:8px; text-align:center;">✅ Barcode Found: <strong style="font-size:1.2rem; color:#1e40af;">' + barcode + '</strong><br>Format: ' + result.codeResult.format + '</div>';
+                    resultDiv.innerHTML = '<div style="padding:15px; background:#dbeafe; border-radius:8px; text-align:center;">âœ… Barcode Found: <strong style="font-size:1.2rem; color:#1e40af;">' + barcode + '</strong><br>Format: ' + result.codeResult.format + '</div>';
                 }
                 
                 setTimeout(function() {
@@ -2326,13 +1912,13 @@ function scanBarcodeFromFile(file) {
                 }, 500);
             } else {
                 if (resultDiv) {
-                    resultDiv.innerHTML = '<div style="padding:15px; background:#fef2f2; border:2px solid #dc2626; border-radius:8px; color:#b91c1c; text-align:center;"><strong>❌ No Barcode Found</strong><br><small>Make sure the barcode is clear and centered in the image.</small><br><br>Supported: EAN-13, EAN-8, UPC-A, UPC-E, Code-128, Code-39</div>';
+                    resultDiv.innerHTML = '<div style="padding:15px; background:#fef2f2; border:2px solid #dc2626; border-radius:8px; color:#b91c1c; text-align:center;"><strong>âŒ No Barcode Found</strong><br><small>Make sure the barcode is clear and centered in the image.</small><br><br>Supported: EAN-13, EAN-8, UPC-A, UPC-E, Code-128, Code-39</div>';
                 }
             }
         }, function(err) {
             console.error("Scan Error:", err);
             if (resultDiv) {
-                resultDiv.innerHTML = '<div style="padding:15px; background:#fef2f2; border:2px solid #dc2626; border-radius:8px; color:#b91c1c; text-align:center;"><strong>❌ Scan Failed</strong><br><small>' + (err.message || 'Could not read barcode from image') + '</small></div>';
+                resultDiv.innerHTML = '<div style="padding:15px; background:#fef2f2; border:2px solid #dc2626; border-radius:8px; color:#b91c1c; text-align:center;"><strong>âŒ Scan Failed</strong><br><small>' + (err.message || 'Could not read barcode from image') + '</small></div>';
             }
         });
     };
@@ -2582,7 +2168,7 @@ function showCSVBatchAnalysis(rows) {
     // 1. Summary Dashboard (KPIs)
     html += '<div style="background:#fff; padding:20px; border-radius:12px; box-shadow:var(--shadow); margin-bottom:20px; border:1px solid var(--border);">';
     html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">';
-    html += '<h3 style="margin:0; color:var(--text-dark);">📊 Batch Consumer Screening Analysis Report</h3>';
+    html += '<h3 style="margin:0; color:var(--text-dark);">ðŸ“Š Batch Consumer Screening Analysis Report</h3>';
     
     html += '<button id="btn-download-batch" class="btn btn-primary" style="padding:8px 16px; font-size:0.9rem;"><i class="fas fa-download"></i> Download Results CSV</button>';
     
@@ -2596,7 +2182,7 @@ function showCSVBatchAnalysis(rows) {
     html += '</div>';
     
     html += '<div style="margin-top:15px; font-size:0.85rem; color:var(--text-light); background:#f8fafc; padding:10px 14px; border-radius:6px; border-left:4px solid var(--primary);">';
-    html += '📌 <strong>Consumer Screening Analysis:</strong> This batch report is based on provided data entries only. It does not replace physical laboratory testing.';
+    html += 'ðŸ“Œ <strong>Consumer Screening Analysis:</strong> This batch report is based on provided data entries only. It does not replace physical laboratory testing.';
     html += '</div>';
     html += '</div>';
 
@@ -2669,12 +2255,12 @@ if (el('p_ing')) {
         var foundE = (text.match(/e\s?\d{3}/gi) || []).map(function(x) { return x.toUpperCase().replace(/\s/g, ''); });
         
         if (foundAllergens.length === 0 && foundHarmful.length === 0 && foundE.length === 0) {
-            alertDiv.innerHTML = '<span style="color:#059669;">✅ No immediate risks found in typed ingredients.</span>';
+            alertDiv.innerHTML = '<span style="color:#059669;">âœ… No immediate risks found in typed ingredients.</span>';
         } else {
             var html = '';
-            if (foundAllergens.length) html += '<span style="color:#d97706;">⚠️ Allergens: ' + foundAllergens.join(', ') + '</span><br>';
-            if (foundHarmful.length) html += '<span style="color:#dc2626;">🚨 Harmful: ' + foundHarmful.join(', ') + '</span><br>';
-            if (foundE.length) html += '<span style="color:#7c3aed;">🧪 Additives (E-Numbers): ' + foundE.join(', ') + '</span>';
+            if (foundAllergens.length) html += '<span style="color:#d97706;">âš ï¸ Allergens: ' + foundAllergens.join(', ') + '</span><br>';
+            if (foundHarmful.length) html += '<span style="color:#dc2626;">ðŸš¨ Harmful: ' + foundHarmful.join(', ') + '</span><br>';
+            if (foundE.length) html += '<span style="color:#7c3aed;">ðŸ§ª Additives (E-Numbers): ' + foundE.join(', ') + '</span>';
             alertDiv.innerHTML = html;
         }
     });
@@ -2696,10 +2282,10 @@ if (el('p_ing')) {
 
     if (el('clearBtn')) el('clearBtn').addEventListener('click', function () {
         ['p_name', 'p_exp', 'p_ing', 'p_origin', 'n_kcal', 'n_sugar', 'n_sodium', 'n_sat', 'n_trans', 't_min', 't_max', 'fssai', 'lab_data', 'lab_limit', 'lab_sigma'].forEach(function (id) { if (el(id)) { el(id).value = ''; el(id).classList.remove('invalid'); } });
-        ['k_overall', 'k_exp', 'k_add', 'k_all', 'k_origin', 'knn_out', 'lab_n', 'lab_mean', 'lab_sd'].forEach(function (id) { if (el(id)) el(id).textContent = '—'; });
+        ['k_overall', 'k_exp', 'k_add', 'k_all', 'k_origin', 'knn_out', 'lab_n', 'lab_mean', 'lab_sd'].forEach(function (id) { if (el(id)) el(id).textContent = 'â€”'; });
         if (el('bullets')) el('bullets').innerHTML = '';
-        if (el('verdict')) { el('verdict').textContent = '—'; el('verdict').className = 'badge'; }
-        if (el('lab_summary')) { el('lab_summary').textContent = '—'; el('lab_summary').className = 'badge'; }
+        if (el('verdict')) { el('verdict').textContent = 'â€”'; el('verdict').className = 'badge'; }
+        if (el('lab_summary')) { el('lab_summary').textContent = 'â€”'; el('lab_summary').className = 'badge'; }
         if (el('lab_out')) el('lab_out').innerHTML = '';
         if (el('fopWarnings')) el('fopWarnings').style.display = 'none';
         if (el('imagePreview')) el('imagePreview').innerHTML = '';
@@ -2753,7 +2339,7 @@ async function executeKnnPrediction(triggerBtn) {
             return;
         }
 
-        var sampleNote = data.trainedOnSamples < 20 ? ' ⚠ Experimental' : '';
+        var sampleNote = data.trainedOnSamples < 20 ? ' âš  Experimental' : '';
         if (el('knn_out')) {
             el('knn_out').innerText = data.prediction + ' (trained on ' + data.trainedOnSamples + ' real samples, k=' + data.k + ')' + sampleNote;
         }
@@ -2876,7 +2462,7 @@ var categoryLabParameters = {
     { group: "Chemical & Heavy Metals", items: ["Calcium Carbide / Acetylene Ripening Residues", "Lead", "Cadmium"] },
     { group: "Residue Testing", items: ["Multi-residue Pesticides", "Fungicide Residues", "Herbicides"] },
     { group: "Toxin Testing", items: ["Patulin (in apple products)", "Solanine (in damaged potatoes)"] },
-    { group: "Physical & Quality", items: ["Moisture Content", "Brix (°Bx) / Total Soluble Solids", "Physical Defects / Rot", "Foreign Matter"] },
+    { group: "Physical & Quality", items: ["Moisture Content", "Brix (Â°Bx) / Total Soluble Solids", "Physical Defects / Rot", "Foreign Matter"] },
     { group: "Composition / Nutrition", items: ["Vitamin C / Ascorbic Acid", "Sugars", "Acidity"] },
     { group: "Adulteration Testing", items: ["Malachite Green Dye Check", "Copper Sulphate Brightening Check", "Wax Coating Verification"] }
   ],
@@ -2903,7 +2489,7 @@ var categoryLabParameters = {
     { group: "Chemical & Heavy Metals", items: ["Arsenic", "Lead", "Cadmium", "BPA Migration", "Bromated Vegetable Oil"] },
     { group: "Residue Testing", items: ["Pesticide Residues"] },
     { group: "Toxin Testing", items: ["Patulin (Fruit Juices)"] },
-    { group: "Physical & Quality", items: ["Brix (°Bx) / Sugar Content", "pH / Acidity", "Turbidity / Clarity", "Carbonation Level"] },
+    { group: "Physical & Quality", items: ["Brix (Â°Bx) / Sugar Content", "pH / Acidity", "Turbidity / Clarity", "Carbonation Level"] },
     { group: "Composition / Nutrition", items: ["Fruit Juice Content (%)", "Added Sugar", "Caffeine Content", "Sodium / Potassium"] },
     { group: "Adulteration Testing", items: ["Synthetic Sweetener Adulteration", "Artificial Dye Check", "Diluted Juice Ratio Check"] }
   ],
@@ -2948,7 +2534,7 @@ function renderCategoryLabParamsGuide(category) {
         html += '</h5>';
         html += '<ul style="list-style:none; padding:0; margin:0; font-size:0.83rem; color:#475569; line-height:1.6;">';
         grp.items.forEach(function(item) {
-            html += '<li style="padding:2px 0;">• ' + escapeHtml(item) + '</li>';
+            html += '<li style="padding:2px 0;">â€¢ ' + escapeHtml(item) + '</li>';
         });
         html += '</ul>';
         html += '</div>';
@@ -2978,7 +2564,6 @@ if (el('processCsvBtn')) el('processCsvBtn').addEventListener('click', function 
     
     if (el('exportCSV')) el('exportCSV').addEventListener('click', exportHistoryCSV);
     if (el('clearHistory')) el('clearHistory').addEventListener('click', clearHistory);
-    var ml = window.FSML.init({ el, showToast, setButtonLoading, clearMLResults, showMLResult, CATEGORY_SCHEMAS, numVal, getMlChart: function(){ return mlChart; }, setMlChart: function(v){ mlChart = v; } });
     if (el('runEDA')) el('runEDA').addEventListener('click', ml.runEDA);
     if (el('runLinear')) el('runLinear').addEventListener('click', ml.runLinearRegression);
     if (el('runLogistic')) el('runLogistic').addEventListener('click', ml.runLogistic);
@@ -2989,9 +2574,9 @@ if (el('processCsvBtn')) el('processCsvBtn').addEventListener('click', function 
 
     if (el('verifyFssai')) el('verifyFssai').addEventListener('click', function () {
         var n = el('fssai') ? el('fssai').value.trim() : '', s = el('fssaiStatus'); if (!s) return;
-        if (!n) s.innerHTML = '<span style="color:#dc2626;">❌ Enter FSSAI number</span>';
-        else if (!/^\d{14}$/.test(n)) s.innerHTML = '<span style="color:#dc2626;">❌ 14 numeric digits required</span>';
-        else s.innerHTML = '<span style="color:#16a34a;">✅ Valid 14-digit format (Format check only — not official FSSAI registry verification)</span>';
+        if (!n) s.innerHTML = '<span style="color:#dc2626;">âŒ Enter FSSAI number</span>';
+        else if (!/^\d{14}$/.test(n)) s.innerHTML = '<span style="color:#dc2626;">âŒ 14 numeric digits required</span>';
+        else s.innerHTML = '<span style="color:#16a34a;">âœ… Valid 14-digit format (Format check only â€” not official FSSAI registry verification)</span>';
     });
 
     document.querySelectorAll('a[href^="#"]').forEach(function (a) { a.addEventListener('click', function (e) { e.preventDefault(); var t = document.querySelector(this.getAttribute('href')); if (t) t.scrollIntoView({ behavior: 'smooth' }); }); });
@@ -3047,11 +2632,11 @@ if (el('processCsvBtn')) el('processCsvBtn').addEventListener('click', function 
     }
     // Disease Warning on Category Select & Consumer Proxy Update
     var diseaseInfo = {
-        "Meat & Poultry": "⚠️ High risk of Salmonella, E. coli if not cooked above 75°C.",
-        "Seafood": "⚠️ Risk of Mercury, Vibrio bacteria. Ensure proper refrigeration.",
-        "Dairy": "⚠️ Listeria & E. coli risk if kept above 5°C.",
-        "Street Food": "⚠️ High risk of food poisoning, unhygienic water usage.",
-        "Baby Food": "⚠️ Strictly check for added preservatives and heavy metals."
+        "Meat & Poultry": "âš ï¸ High risk of Salmonella, E. coli if not cooked above 75Â°C.",
+        "Seafood": "âš ï¸ Risk of Mercury, Vibrio bacteria. Ensure proper refrigeration.",
+        "Dairy": "âš ï¸ Listeria & E. coli risk if kept above 5Â°C.",
+        "Street Food": "âš ï¸ High risk of food poisoning, unhygienic water usage.",
+        "Baby Food": "âš ï¸ Strictly check for added preservatives and heavy metals."
     };
     if (el('p_cat')) {
         el('p_cat').addEventListener('change', function() {
@@ -3101,11 +2686,11 @@ if (el('processCsvBtn')) el('processCsvBtn').addEventListener('click', function 
     initRiskChart();
     initLabChart();
     var adulterantData = {
-    "milk_water": { name: "Milk - Water Check", method: "Put a drop of milk on a polished slanted surface. Pure milk flows slowly leaving a white trail. Adulterated milk flows immediately without leaving a mark.", warning: "⚠️ If it flows fast, water is mixed." },
-    "milk_starch": { name: "Milk - Starch Check", method: "Boil 2-3 ml of milk, cool it, and add 2-3 drops of Iodine solution.", warning: "⚠️ If it turns Blue-Black, starch is present." },
-    "oil_argemone": { name: "Oil - Argemone Oil Check", method: "Take oil in a test tube, add concentrated Nitric Acid (HNO3) and shake gently.", warning: "⚠️ If reddish/brown color appears, Argemone oil (highly toxic) is present." },
-    "honey_water": { name: "Honey - Water/Sugar Check", method: "Drop honey in a glass of water. Pure honey settles at the bottom forming a lump. Adulterated honey dissolves instantly.", warning: "⚠️ If it dissolves immediately, it has added water or sugar syrup." },
-    "spice_wood": { name: "Spices - Wood Dust/Dye Check", method: "Take a small amount of spice in water. Artificial colored spices will immediately release color into the water.", warning: "⚠️ If water turns colored quickly, artificial dyes or sawdust is present." }
+    "milk_water": { name: "Milk - Water Check", method: "Put a drop of milk on a polished slanted surface. Pure milk flows slowly leaving a white trail. Adulterated milk flows immediately without leaving a mark.", warning: "âš ï¸ If it flows fast, water is mixed." },
+    "milk_starch": { name: "Milk - Starch Check", method: "Boil 2-3 ml of milk, cool it, and add 2-3 drops of Iodine solution.", warning: "âš ï¸ If it turns Blue-Black, starch is present." },
+    "oil_argemone": { name: "Oil - Argemone Oil Check", method: "Take oil in a test tube, add concentrated Nitric Acid (HNO3) and shake gently.", warning: "âš ï¸ If reddish/brown color appears, Argemone oil (highly toxic) is present." },
+    "honey_water": { name: "Honey - Water/Sugar Check", method: "Drop honey in a glass of water. Pure honey settles at the bottom forming a lump. Adulterated honey dissolves instantly.", warning: "âš ï¸ If it dissolves immediately, it has added water or sugar syrup." },
+    "spice_wood": { name: "Spices - Wood Dust/Dye Check", method: "Take a small amount of spice in water. Artificial colored spices will immediately release color into the water.", warning: "âš ï¸ If water turns colored quickly, artificial dyes or sawdust is present." }
 };
 
 if(el('adulterant_test')) {
@@ -3116,9 +2701,9 @@ if(el('adulterant_test')) {
         resDiv.style.display = 'block';
         // Parse method into steps (split on periods)
         var methodSteps = d.method.split(/(?<=\.\s)/).map(function(s){ return s.trim(); }).filter(Boolean);
-        var warnSteps = d.warning.replace(/^⚠️?\s*/,'').split(/(?<=\.\s)/).map(function(s){ return s.trim(); }).filter(Boolean);
+        var warnSteps = d.warning.replace(/^âš ï¸?\s*/,'').split(/(?<=\.\s)/).map(function(s){ return s.trim(); }).filter(Boolean);
         resDiv.innerHTML = '<div class="adulteration-result-card">'
-            + '<div class="adulterant-header"><i class="fas fa-vial" style="color:var(--primary);"></i><strong>🧪 ' + escapeHtml(d.name) + '</strong></div>'
+            + '<div class="adulterant-header"><i class="fas fa-vial" style="color:var(--primary);"></i><strong>ðŸ§ª ' + escapeHtml(d.name) + '</strong></div>'
             + '<div class="adulterant-section"><div class="adulterant-section-title procedure-title"><i class="fas fa-list-ol"></i> Procedure</div>'
             + '<ul class="adulterant-steps procedure-steps">'
             + methodSteps.map(function(s){ return '<li>' + escapeHtml(s) + '</li>'; }).join('')
@@ -3151,7 +2736,7 @@ if(el('adulterant_test')) {
             if (labBtn) labBtn.classList.remove('active');
             if (labExtras) labExtras.style.display = 'none';
             if (knnBtn) knnBtn.style.display = 'none';
-            if (modeDesc) modeDesc.textContent = 'Consumer Mode — Barcode scanning, nutrition label analysis & observable safety questionnaire. No lab instruments required.';
+            if (modeDesc) modeDesc.textContent = 'Consumer Mode â€” Barcode scanning, nutrition label analysis & observable safety questionnaire. No lab instruments required.';
             var currentCat = el('p_cat') ? el('p_cat').value : 'Packaged Snack';
             renderDynamicQuestions(currentCat);
         } else {
@@ -3159,7 +2744,7 @@ if(el('adulterant_test')) {
             if (consumerBtn) consumerBtn.classList.remove('active');
             if (labExtras) labExtras.style.display = 'block';
             if (knnBtn) knnBtn.style.display = '';
-            if (modeDesc) modeDesc.textContent = 'Lab / Inspector Mode — Enter measured pH, moisture, and temperature values obtained with appropriate instruments.';
+            if (modeDesc) modeDesc.textContent = 'Lab / Inspector Mode â€” Enter measured pH, moisture, and temperature values obtained with appropriate instruments.';
             var pSection = el('proxyQuestionnaireSection');
             if (pSection) pSection.style.display = 'none';
             var cCard = el('consumerResultCard');
@@ -3187,7 +2772,7 @@ if(el('adulterant_test')) {
 
         // categoryProxyConfig loaded from categoryProxyConfig.js (script tag in HTML)
         if (typeof categoryProxyConfig === 'undefined') {
-            section.innerHTML = '<div style="padding:12px; background:#fef2f2; border-radius:8px; color:#b91c1c; margin-top:16px;">⚠ Category proxy config not loaded. Check that categoryProxyConfig.js is included.</div>';
+            section.innerHTML = '<div style="padding:12px; background:#fef2f2; border-radius:8px; color:#b91c1c; margin-top:16px;">âš  Category proxy config not loaded. Check that categoryProxyConfig.js is included.</div>';
             section.style.display = 'block';
             return;
         }
@@ -3199,7 +2784,7 @@ if(el('adulterant_test')) {
         }
 
         var html = '<div class="proxy-question-card">';
-        html += '<div class="card-header"><i class="fas fa-clipboard-list" style="color:var(--primary);"></i><h3>Consumer Safety Questionnaire — ' + escapeHtml(category) + '</h3></div>';
+        html += '<div class="card-header"><i class="fas fa-clipboard-list" style="color:var(--primary);"></i><h3>Consumer Safety Questionnaire â€” ' + escapeHtml(category) + '</h3></div>';
         html += '<p style="font-size:0.85rem; color:var(--text-light); margin-bottom:16px;">Answer based on what you can observe or know. No instruments needed.</p>';
 
         config.questions.forEach(function(q) {
@@ -3211,8 +2796,8 @@ if(el('adulterant_test')) {
 
             if (q.type === 'yesno') {
                 html += '<div class="proxy-yesno-group">';
-                html += '<button type="button" class="proxy-yesno-btn" id="pq-' + q.id + '-yes" data-qid="' + q.id + '" data-val="yes" onclick="proxyYesNoSelect(this)">✅ Yes</button>';
-                html += '<button type="button" class="proxy-yesno-btn" id="pq-' + q.id + '-no" data-qid="' + q.id + '" data-val="no" onclick="proxyYesNoSelect(this)">❌ No</button>';
+                html += '<button type="button" class="proxy-yesno-btn" id="pq-' + q.id + '-yes" data-qid="' + q.id + '" data-val="yes" onclick="proxyYesNoSelect(this)">âœ… Yes</button>';
+                html += '<button type="button" class="proxy-yesno-btn" id="pq-' + q.id + '-no" data-qid="' + q.id + '" data-val="no" onclick="proxyYesNoSelect(this)">âŒ No</button>';
                 html += '<input type="hidden" id="pq-' + q.id + '" data-qid="' + q.id + '" value="">';
                 html += '</div>';
             } else if (q.type === 'date') {
@@ -3360,7 +2945,7 @@ if(el('adulterant_test')) {
             var axisClass = axisClasses[axisKey] || '';
             breakdownHtml += '<div class="proxy-breakdown-item ' + axisClass + '">';
             breakdownHtml += '<div class="axis-name">' + escapeHtml(axisLabel) + '</div>';
-            breakdownHtml += '<div class="axis-value">' + (breakdown[qid] > 0 ? '⚠ Risk: ' + breakdown[qid] : '✓ OK') + '</div>';
+            breakdownHtml += '<div class="axis-value">' + (breakdown[qid] > 0 ? 'âš  Risk: ' + breakdown[qid] : 'âœ“ OK') + '</div>';
             breakdownHtml += '</div>';
         });
         breakdownHtml += '</div>';
@@ -3411,7 +2996,7 @@ if(el('adulterant_test')) {
         html += '<ul>';
         html += '<li>This is a consumer-level screening result based on provided information only.</li>';
         html += '<li>It does not replace laboratory testing or official food-safety inspection.</li>';
-        html += '<li>If the product shows spoilage, damaged packaging, or unusual smell / appearance — do not consume it regardless of the score.</li>';
+        html += '<li>If the product shows spoilage, damaged packaging, or unusual smell / appearance â€” do not consume it regardless of the score.</li>';
         html += '<li>Laboratory testing is recommended for regulatory compliance or when in doubt.</li>';
         html += '</ul></div>';
 
@@ -3423,7 +3008,7 @@ if(el('adulterant_test')) {
     }
 
     // ============================================================
-    //  BARCODE → CATEGORY → QUESTIONNAIRE TRIGGER
+    //  BARCODE â†’ CATEGORY â†’ QUESTIONNAIRE TRIGGER
     //  After autoFillFromBarcode() sets the category, show questionnaire
     // ============================================================
     var _origAutoFill = window.autoFillFromBarcode;
