@@ -1284,7 +1284,7 @@ async function renderHistory() {
       container.innerHTML = html;
     }
 
-    async function getRealDataset(categoryFilter) {
+
       var cat = categoryFilter || (el('mlCategorySelect') ? el('mlCategorySelect').value : 'All');
       try {
         var token = localStorage.getItem('fs_token');
@@ -1303,7 +1303,7 @@ async function renderHistory() {
       return [];
     }
 
-    function normalizeDatasetFeatures(data, featureKeys) {
+
       var means = {}, stds = {};
       featureKeys.forEach(function (key) {
                 var vals = data.map(function (d) {
@@ -1333,7 +1333,7 @@ async function renderHistory() {
       });
     }
 
-        function getDatasetFeatureKeys(data) {
+
             if (!data.length) return [];
             var firstKeys = Object.keys(data[0].features || {});
             return firstKeys.filter(function (key) {
@@ -1343,7 +1343,7 @@ async function renderHistory() {
             });
         }
 
-    // ===== EDA - Full Calculation Visible =====
+
     async function runEDA() {
       clearMLResults();
       var cat = el('mlCategorySelect') ? el('mlCategorySelect').value : 'All';
@@ -1427,7 +1427,7 @@ async function renderHistory() {
             } finally { setButtonLoading(el('runEDA'), false); }
     }
 
-    // ===== LINEAR REGRESSION =====
+
     async function runLinearRegression() {
       if (typeof tf === 'undefined') { showToast('TensorFlow.js not loaded', 'error'); return; }
       clearMLResults();
@@ -1495,7 +1495,7 @@ async function renderHistory() {
             } finally { setButtonLoading(el('runLinear'), false); }
     }
 
-    // ===== LOGISTIC REGRESSION (Logistic, Ridge L2, Lasso L1) =====
+
     async function runLogisticBase(title, l2, l1, btnId) {
       if (typeof tf === 'undefined') { showToast('TensorFlow.js not loaded', 'error'); return; }
       clearMLResults();
@@ -1573,11 +1573,11 @@ async function renderHistory() {
             } finally { setButtonLoading(btn, false); }
     }
 
-    async function runLogistic() { await runLogisticBase("LOGISTIC REGRESSION", 0, 0, 'runLogistic'); }
-    async function runRidge() { await runLogisticBase("RIDGE REGRESSION (L2)", 0.01, 0, 'runRidge'); }
-    async function runLasso() { await runLogisticBase("LASSO REGRESSION (L1)", 0, 0.01, 'runLasso'); }
 
-    // ===== HISTOGRAMS =====
+
+
+
+
     async function showHistograms() {
       clearMLResults();
       var cat = el('mlCategorySelect') ? el('mlCategorySelect').value : 'All';
@@ -1655,7 +1655,7 @@ async function renderHistory() {
       } finally { setButtonLoading(el('runHist'), false); }
     }
 
-    // ===== k-NN PREDICTION (LAB MODE) =====
+
     async function runKnnPredictionLab() {
       clearMLResults();
       var catName = el('p_cat') ? el('p_cat').value : (el('mlCategorySelect') ? el('mlCategorySelect').value : 'Dairy');
@@ -2978,13 +2978,14 @@ if (el('processCsvBtn')) el('processCsvBtn').addEventListener('click', function 
     
     if (el('exportCSV')) el('exportCSV').addEventListener('click', exportHistoryCSV);
     if (el('clearHistory')) el('clearHistory').addEventListener('click', clearHistory);
-    if (el('runEDA')) el('runEDA').addEventListener('click', runEDA);
-    if (el('runLinear')) el('runLinear').addEventListener('click', runLinearRegression);
-    if (el('runLogistic')) el('runLogistic').addEventListener('click', runLogistic);
-    if (el('runRidge')) el('runRidge').addEventListener('click', runRidge);
-    if (el('runLasso')) el('runLasso').addEventListener('click', runLasso);
-    if (el('runHist')) el('runHist').addEventListener('click', showHistograms);
-    if (el('runKnBtnLab')) el('runKnBtnLab').addEventListener('click', runKnnPredictionLab);
+    var ml = window.FSML.init({ el, showToast, setButtonLoading, clearMLResults, showMLResult, CATEGORY_SCHEMAS, numVal, getMlChart: function(){ return mlChart; }, setMlChart: function(v){ mlChart = v; } });
+    if (el('runEDA')) el('runEDA').addEventListener('click', ml.runEDA);
+    if (el('runLinear')) el('runLinear').addEventListener('click', ml.runLinearRegression);
+    if (el('runLogistic')) el('runLogistic').addEventListener('click', ml.runLogistic);
+    if (el('runRidge')) el('runRidge').addEventListener('click', ml.runRidge);
+    if (el('runLasso')) el('runLasso').addEventListener('click', ml.runLasso);
+    if (el('runHist')) el('runHist').addEventListener('click', ml.showHistograms);
+    if (el('runKnBtnLab')) el('runKnBtnLab').addEventListener('click', ml.runKnnPredictionLab);
 
     if (el('verifyFssai')) el('verifyFssai').addEventListener('click', function () {
         var n = el('fssai') ? el('fssai').value.trim() : '', s = el('fssaiStatus'); if (!s) return;
