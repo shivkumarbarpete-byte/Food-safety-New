@@ -1,4 +1,4 @@
-﻿
+
 
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ============================================================
     //  BUTTON LOADING HELPER
     //  Usage: setButtonLoading(btn, true, 'Saving...')
-    //         setButtonLoading(btn, false)  â€” restores original
+    //         setButtonLoading(btn, false)  — restores original
     // ============================================================
     function setButtonLoading(btn, isLoading, loadingText) {
         if (!btn) return;
@@ -149,18 +149,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function parseCSVNums(s) { var n = s.split(/[,\s]+/).map(function (x) { return Number(x); }).filter(function (x) { return !isNaN(x); }); return n.length >= 2 ? n : []; }
 
-    // nutritionTraffic: display levels ONLY â€” does NOT contribute to score.
+    // nutritionTraffic: display levels ONLY — does NOT contribute to score.
     // Thresholds are UK/EU FSA 'traffic light' per-100g reference values.
     function nutritionTraffic(p) {
         var out = {};
-        if (p.sugar == null) out.sugar = { level: 'NA', text: 'â€”' };
+        if (p.sugar == null) out.sugar = { level: 'NA', text: '—' };
         else { var l = p.sugar > 22.5 ? 'high' : (p.sugar > 5 ? 'med' : 'low'); out.sugar = { level: l, text: p.sugar + ' g/100g' }; }
-        if (p.sodium == null) out.sodium = { level: 'NA', text: 'â€”' };
+        if (p.sodium == null) out.sodium = { level: 'NA', text: '—' };
         else { var l = p.sodium > 800 ? 'high' : (p.sodium > 300 ? 'med' : 'low'); out.sodium = { level: l, text: p.sodium + ' mg/100g' }; }
         // Sat fat: >10g/100g = high, >5g/100g = med (FSA reference)
-        if (p.sat == null) out.sat = { level: 'NA', text: 'â€”' };
+        if (p.sat == null) out.sat = { level: 'NA', text: '—' };
         else { var l = p.sat > 10 ? 'high' : (p.sat > 5 ? 'med' : 'low'); out.sat = { level: l, text: p.sat + ' g/100g' }; }
-        if (p.trans == null) out.trans = { level: 'NA', text: 'â€”' };
+        if (p.trans == null) out.trans = { level: 'NA', text: '—' };
         else { var l = p.trans > 2 ? 'high' : (p.trans > 0.5 ? 'med' : 'low'); out.trans = { level: l, text: p.trans + ' g/100g' }; }
         return out;
     }
@@ -175,24 +175,24 @@ document.addEventListener('DOMContentLoaded', function () {
         if (sugar !== null) {
             if (kcal) {
                 var e = (sugar * 4 / kcal) * 100;
-                if (e > 20) w.push("HIGH SUGAR âš ï¸");
+                if (e > 20) w.push("HIGH SUGAR ⚠️");
                 else if (e > 10) w.push("MEDIUM SUGAR");
             } else {
-                if (sugar > 22.5) w.push("HIGH SUGAR âš ï¸");
+                if (sugar > 22.5) w.push("HIGH SUGAR ⚠️");
                 else if (sugar > 10) w.push("MEDIUM SUGAR");
             }
         }
         if (sodium !== null) {
-            if (sodium > 1000) w.push("VERY HIGH SODIUM âš ï¸");
+            if (sodium > 1000) w.push("VERY HIGH SODIUM ⚠️");
             else if (sodium > 600) w.push("MEDIUM SODIUM");
         }
         if (sat !== null) {
             if (kcal) {
                 var e = (sat * 9 / kcal) * 100;
-                if (e > 25) w.push("HIGH SATURATED FAT âš ï¸");
+                if (e > 25) w.push("HIGH SATURATED FAT ⚠️");
                 else if (e > 12) w.push("MEDIUM SATURATED FAT");
             } else {
-                if (sat > 10) w.push("HIGH SATURATED FAT âš ï¸");
+                if (sat > 10) w.push("HIGH SATURATED FAT ⚠️");
                 else if (sat > 5) w.push("MEDIUM SATURATED FAT");
             }
         }
@@ -294,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (fopW.length) {
             notes.push('FOP: ' + fopW.join(' | '));
             fopW.forEach(function(w) {
-                var pen = w.includes('âš ï¸') ? 8 : 3;
+                var pen = w.includes('⚠️') ? 8 : 3;
                 score += pen;
                 nutScorePenalty += pen;
             });
@@ -328,22 +328,22 @@ document.addEventListener('DOMContentLoaded', function () {
             verdict = 'Insufficient Information for Screening Assessment';
             badge = 'badge-warn';
             score = 0;
-            notes.push("âš ï¸ Insufficient product information provided for screening assessment.");
+            notes.push("⚠️ Insufficient product information provided for screening assessment.");
         } else if (score <= 30) {
             riskLevelState = 'LOW CONCERN';
             verdict = 'No obvious issue found in the available product information.';
             badge = 'badge-safe';
-            notes.push("âœ… No obvious issue found in available product information.");
+            notes.push("✅ No obvious issue found in available product information.");
         } else if (score >= 70) {
             riskLevelState = 'HIGH CONCERN';
             verdict = 'Potential issue detected in the available product information.';
             badge = 'badge-risk';
-            notes.push("âš ï¸ Potential issue detected in available product information.");
+            notes.push("⚠️ Potential issue detected in available product information.");
         } else {
             riskLevelState = 'MODERATE CONCERN';
             verdict = 'Some information requires attention.';
             badge = 'badge-warn';
-            notes.push("âš ï¸ Some information requires attention.");
+            notes.push("⚠️ Some information requires attention.");
         }
 
         var breakdown = {
@@ -388,6 +388,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function runChecks() {
+        var _runBtn = el('runBtn');
+        setButtonLoading(_runBtn, true, 'Evaluating...');
+        showToast('Evaluating safety risk score...', 'info', 2000);
+        try {
         var r = analyze();
         if (el('k_overall')) el('k_overall').textContent = r.riskLevelState;
         if (el('k_exp')) el('k_exp').textContent = r.expStatus;
@@ -402,7 +406,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (el('inputWarningBanner')) {
             if (r.missingFields && r.missingFields.length > 0) {
                 el('inputWarningBanner').style.display = 'block';
-                el('inputWarningBanner').innerHTML = 'âš ï¸ <strong>Input Data Warning:</strong> Data unavailable or out of range for [' + escapeHtml(r.missingFields.join(', ')) + ']. Assessment accuracy depends on the quality and completeness of the input data.';
+                el('inputWarningBanner').innerHTML = '⚠️ <strong>Input Data Warning:</strong> Data unavailable or out of range for [' + escapeHtml(r.missingFields.join(', ')) + ']. Assessment accuracy depends on the quality and completeness of the input data.';
             } else {
                 el('inputWarningBanner').style.display = 'none';
             }
@@ -410,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var ul = el('bullets'); if (ul) { ul.innerHTML = ''; r.notes.forEach(function (n) { var li = document.createElement('li'); li.innerHTML = '<i class="fas fa-info-circle"></i> ' + n; ul.appendChild(li); }); }
         var v = el('verdict'); if (v) { v.textContent = r.verdict; v.className = 'badge ' + r.badge; }
-        var fd = el('fopWarnings'); if (fd) { if (r.fopWarnings.length) { fd.innerHTML = 'ðŸš¨ ' + r.fopWarnings.join(' â€¢ '); fd.style.display = 'block'; } else fd.style.display = 'none'; }
+        var fd = el('fopWarnings'); if (fd) { if (r.fopWarnings.length) { fd.innerHTML = '🚨 ' + r.fopWarnings.join(' â€¢ '); fd.style.display = 'block'; } else fd.style.display = 'none'; }
 
         // Render "Why was this result given?" breakdown box
         var whyBox = el('resultWhyBox');
@@ -448,6 +452,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (riskChart) { riskChart.data.labels = Object.keys(r.breakdown); riskChart.data.datasets[0].data = Object.values(r.breakdown); riskChart.update(); }
+
+        showToast('Safety check complete: ' + r.verdict, r.score > 60 ? 'error' : (r.score > 30 ? 'warning' : 'success'));
+        } catch (err) {
+            showToast('Safety check failed: ' + (err.message || err), 'error');
+        } finally {
+            setButtonLoading(_runBtn, false);
+        }
     }
 
     async function saveReview() {
@@ -1356,7 +1367,7 @@ async function renderHistory() {
 
                 var vegScore = p.green + p.yellow + p.cream;
                 var nonVegScore = p.red + p.brown + p.dark;
-                var veg = Math.abs(vegScore - nonVegScore) < 3 ? "Unclear âš ï¸" : (vegScore > nonVegScore ? "Likely Veg ðŸŸ¢" : "Likely Non-Veg ðŸ”´");
+                var veg = Math.abs(vegScore - nonVegScore) < 3 ? "Unclear ⚠️" : (vegScore > nonVegScore ? "Likely Veg ðŸŸ¢" : "Likely Non-Veg ðŸ”´");
 
                 var colorTotal = p.red + p.green + p.blue + p.yellow + p.orange + p.brown + p.cream;
                 var isFood = colorTotal > 30;
@@ -1515,11 +1526,11 @@ async function renderHistory() {
                         imgRes.style.background = '#f0fdf4';
                         imgRes.style.border = '2px solid #16a34a';
                         if (labelDetails.name || labelDetails.ingredients || product) {
-                            imgRes.innerHTML = '<strong style="color:#15803d;">âœ… Information detected from label â€” Please review and edit extracted information before running analysis:</strong>' + (labelDetails.name ? '<br>ðŸ“¦ Product: <strong>' + escapeHtml(labelDetails.name) + '</strong>' : '') + (labelDetails.category ? '<br>ðŸ·ï¸ Category: <strong>' + escapeHtml(labelDetails.category) + '</strong>' : '') + (labelDetails.ingredients ? '<br>ðŸ“ Ingredients: ' + escapeHtml(labelDetails.ingredients) : '') + (product ? '<br>ðŸŒ Additional information matched with Open Food Facts' : '') + '<br><small style="color:#4b5563;">You can make corrections in the form below before performing safety checks.</small>';
+                            imgRes.innerHTML = '<strong style="color:#15803d;">✅ Information detected from label — Please review and edit extracted information before running analysis:</strong>' + (labelDetails.name ? '<br>📦 Product: <strong>' + escapeHtml(labelDetails.name) + '</strong>' : '') + (labelDetails.category ? '<br>🏷️ Category: <strong>' + escapeHtml(labelDetails.category) + '</strong>' : '') + (labelDetails.ingredients ? '<br>📝 Ingredients: ' + escapeHtml(labelDetails.ingredients) : '') + (product ? '<br>🌐 Additional information matched with Open Food Facts' : '') + '<br><small style="color:#4b5563;">You can make corrections in the form below before performing safety checks.</small>';
                         } else {
                             imgRes.style.background = '#fffbeb';
                             imgRes.style.borderColor = '#d97706';
-                            imgRes.innerHTML = '<strong style="color:#b45309;">âš ï¸ Text could not be read from this image</strong><br><small>No dummy product information was added. Upload a clear, front-facing label photo with visible product text.</small>';
+                            imgRes.innerHTML = '<strong style="color:#b45309;">⚠️ Text could not be read from this image</strong><br><small>No dummy product information was added. Upload a clear, front-facing label photo with visible product text.</small>';
                         }
                     }
 
@@ -1535,7 +1546,7 @@ async function renderHistory() {
                         imgRes.style.display = 'block';
                         imgRes.style.background = '#f0fdf4';
                         imgRes.style.border = '2px solid #16a34a';
-                        imgRes.innerHTML = '<strong style="color:#b45309;">âš ï¸ Text could not be read from this image</strong><br><small>No dummy product information was added. Upload a clear, front-facing label photo with visible product text.</small>';
+                        imgRes.innerHTML = '<strong style="color:#b45309;">⚠️ Text could not be read from this image</strong><br><small>No dummy product information was added. Upload a clear, front-facing label photo with visible product text.</small>';
                     }
                 });
             };
@@ -1565,7 +1576,7 @@ function fetchProductFromAPI(barcode) {
             return response.json();
         })
         .then(function (data) {
-            console.log("ðŸ“¦ API Response:", data);
+            console.log("📦 API Response:", data);
             
             if (data.status === 0 || !data.product) {
                 resultDiv.innerHTML = '<div style="padding:15px; background:#fef2f2; border:2px solid #dc2626; border-radius:8px; color:#b91c1c; text-align:center;"><strong>âŒ Product Not Found</strong><br><small>Barcode ' + barcode + ' not in database. Try another or enter manually.</small></div>';
@@ -1665,35 +1676,35 @@ function fetchProductFromAPI(barcode) {
             
             // Nutrition table
             html += '<div style="margin-top:15px; background:white; border-radius:8px; padding:12px; border:1px solid #e5e7eb;">';
-            html += '<div style="font-weight:600; color:#374151; margin-bottom:8px;">ðŸ“Š Nutrition (per 100g):</div>';
+            html += '<div style="font-weight:600; color:#374151; margin-bottom:8px;">📊 Nutrition (per 100g):</div>';
             html += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px; font-size:0.85rem;">';
             
-            html += '<div>ðŸ”¥ Energy: <strong>' + (kcal ? kcal + ' kcal' : 'Data unavailable') + '</strong></div>';
-            html += '<div>ðŸ§ˆ Fat: <strong>' + (fat ? fat + ' g' : 'Data unavailable') + '</strong></div>';
-            html += '<div>â›” Sat Fat: <strong>' + (sat ? sat + ' g' : 'Data unavailable') + '</strong></div>';
-            html += '<div>âš ï¸ Trans Fat: <strong>' + (trans ? trans + ' g' : 'Data unavailable') + '</strong></div>';
-            html += '<div>ðŸž Carbs: <strong>' + (carbs ? carbs + ' g' : 'Data unavailable') + '</strong></div>';
-            html += '<div>ðŸ¬ Sugar: <strong>' + (sugar ? sugar + ' g' : 'Data unavailable') + '</strong></div>';
-            html += '<div>ðŸ’ª Protein: <strong>' + (protein ? protein + ' g' : 'Data unavailable') + '</strong></div>';
-            html += '<div>ðŸ§‚ Sodium: <strong>' + (sodium ? sodium + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>🔥 Energy: <strong>' + (kcal ? kcal + ' kcal' : 'Data unavailable') + '</strong></div>';
+            html += '<div>🧈 Fat: <strong>' + (fat ? fat + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>⛔ Sat Fat: <strong>' + (sat ? sat + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>⚠️ Trans Fat: <strong>' + (trans ? trans + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>🍞 Carbs: <strong>' + (carbs ? carbs + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>🍬 Sugar: <strong>' + (sugar ? sugar + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>💪 Protein: <strong>' + (protein ? protein + ' g' : 'Data unavailable') + '</strong></div>';
+            html += '<div>🧂 Sodium: <strong>' + (sodium ? sodium + ' g' : 'Data unavailable') + '</strong></div>';
             
             html += '</div></div>';
             
             // Ingredients & Allergens
             html += '<div style="margin-top:10px; background:white; border-radius:8px; padding:12px; border:1px solid #e5e7eb;">';
-            html += '<div style="font-weight:600; color:#374151; margin-bottom:4px;">ðŸ“ Ingredients:</div>';
+            html += '<div style="font-weight:600; color:#374151; margin-bottom:4px;">📝 Ingredients:</div>';
             html += '<div style="font-size:0.8rem; color:#4b5563; max-height:60px; overflow-y:auto;">' + (ingredients ? escapeHtml(ingredients) : '<span style="color:#dc2626;">Data unavailable</span>') + '</div>';
             html += '</div>';
             
             if (allergens) {
                 html += '<div style="margin-top:8px; padding:8px 12px; background:#fef2f2; border-radius:6px; font-size:0.85rem; color:#b91c1c;">';
-                html += 'âš ï¸ Allergens: ' + escapeHtml(allergens.replace(/,/g, ', '));
+                html += '⚠️ Allergens: ' + escapeHtml(allergens.replace(/,/g, ', '));
                 html += '</div>';
             }
             
             if (additives) {
                 html += '<div style="margin-top:6px; padding:8px 12px; background:#fffbeb; border-radius:6px; font-size:0.85rem; color:#92400e;">';
-                html += 'ðŸ§ª Additives: ' + escapeHtml(additives.replace(/,/g, ', '));
+                html += '🧪 Additives: ' + escapeHtml(additives.replace(/,/g, ', '));
                 html += '</div>';
             }
             
@@ -1710,7 +1721,7 @@ function fetchProductFromAPI(barcode) {
             
             // Data source
             html += '<div style="margin-top:10px; text-align:center; font-size:0.75rem; color:#6b7280; font-weight:600;">';
-            html += 'Data Source: Open Food Facts (openfoodfacts.org) â€” Open Database';
+            html += 'Data Source: Open Food Facts (openfoodfacts.org) — Open Database';
             html += '</div>';
             
             html += '</div>';
@@ -1720,7 +1731,7 @@ function fetchProductFromAPI(barcode) {
         })
         .catch(function (err) {
             console.error("API Error:", err);
-            resultDiv.innerHTML = '<div style="padding:15px; background:#fffbeb; border:2px solid #f59e0b; border-radius:8px; color:#92400e; text-align:center;"><strong>âš ï¸ Product information could not be retrieved from the barcode database.</strong><br><small>You can enter the product details manually below or upload a product label photo.</small></div>';
+            resultDiv.innerHTML = '<div style="padding:15px; background:#fffbeb; border:2px solid #f59e0b; border-radius:8px; color:#92400e; text-align:center;"><strong>⚠️ Product information could not be retrieved from the barcode database.</strong><br><small>You can enter the product details manually below or upload a product label photo.</small></div>';
         });
 }
 
@@ -1768,11 +1779,11 @@ window.autoFillFromBarcode = function(name, category, ingredients, origin, kcal,
     
     if (missing.length > 0) {
         stepHtml += '<div style="font-size:0.85rem; color:#92400e; background:#fffbeb; padding:10px; border-radius:6px; border-left:4px solid #f59e0b;">';
-        stepHtml += 'âš ï¸ <strong>Some product information was unavailable in the Open Food Facts database</strong> (' + escapeHtml(missing.join(', ')) + '). Missing data is not treated as proof of safety. Please fill in missing details before running screening.';
+        stepHtml += '⚠️ <strong>Some product information was unavailable in the Open Food Facts database</strong> (' + escapeHtml(missing.join(', ')) + '). Missing data is not treated as proof of safety. Please fill in missing details before running screening.';
         stepHtml += '</div>';
     } else {
         stepHtml += '<div style="font-size:0.85rem; color:#15803d; background:#ffffff; padding:8px 12px; border-radius:6px;">';
-        stepHtml += 'âœ… Available product metadata loaded successfully. Click "Run Safety Checks" below to perform consumer screening.';
+        stepHtml += '✅ Available product metadata loaded successfully. Click "Run Safety Checks" below to perform consumer screening.';
         stepHtml += '</div>';
     }
     stepHtml += '</div>';
@@ -1858,7 +1869,7 @@ function startCameraScan() {
             var resultDiv = el('barcodeResult');
             if (resultDiv) {
                 resultDiv.style.display = 'block';
-                resultDiv.innerHTML = '<div style="padding:15px; background:#dbeafe; border-radius:8px; text-align:center;">âœ… Barcode Detected: <strong style="font-size:1.2rem; color:#1e40af;">' + barcode + '</strong><br>Format: ' + result.codeResult.format + '</div>';
+                resultDiv.innerHTML = '<div style="padding:15px; background:#dbeafe; border-radius:8px; text-align:center;">✅ Barcode Detected: <strong style="font-size:1.2rem; color:#1e40af;">' + barcode + '</strong><br>Format: ' + result.codeResult.format + '</div>';
             }
             
             // Fetch product data
@@ -1904,7 +1915,7 @@ function scanBarcodeFromFile(file) {
                 var barcode = result.codeResult.code;
                 
                 if (resultDiv) {
-                    resultDiv.innerHTML = '<div style="padding:15px; background:#dbeafe; border-radius:8px; text-align:center;">âœ… Barcode Found: <strong style="font-size:1.2rem; color:#1e40af;">' + barcode + '</strong><br>Format: ' + result.codeResult.format + '</div>';
+                    resultDiv.innerHTML = '<div style="padding:15px; background:#dbeafe; border-radius:8px; text-align:center;">✅ Barcode Found: <strong style="font-size:1.2rem; color:#1e40af;">' + barcode + '</strong><br>Format: ' + result.codeResult.format + '</div>';
                 }
                 
                 setTimeout(function() {
@@ -2168,7 +2179,7 @@ function showCSVBatchAnalysis(rows) {
     // 1. Summary Dashboard (KPIs)
     html += '<div style="background:#fff; padding:20px; border-radius:12px; box-shadow:var(--shadow); margin-bottom:20px; border:1px solid var(--border);">';
     html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">';
-    html += '<h3 style="margin:0; color:var(--text-dark);">ðŸ“Š Batch Consumer Screening Analysis Report</h3>';
+    html += '<h3 style="margin:0; color:var(--text-dark);">📊 Batch Consumer Screening Analysis Report</h3>';
     
     html += '<button id="btn-download-batch" class="btn btn-primary" style="padding:8px 16px; font-size:0.9rem;"><i class="fas fa-download"></i> Download Results CSV</button>';
     
@@ -2255,12 +2266,12 @@ if (el('p_ing')) {
         var foundE = (text.match(/e\s?\d{3}/gi) || []).map(function(x) { return x.toUpperCase().replace(/\s/g, ''); });
         
         if (foundAllergens.length === 0 && foundHarmful.length === 0 && foundE.length === 0) {
-            alertDiv.innerHTML = '<span style="color:#059669;">âœ… No immediate risks found in typed ingredients.</span>';
+            alertDiv.innerHTML = '<span style="color:#059669;">✅ No immediate risks found in typed ingredients.</span>';
         } else {
             var html = '';
-            if (foundAllergens.length) html += '<span style="color:#d97706;">âš ï¸ Allergens: ' + foundAllergens.join(', ') + '</span><br>';
-            if (foundHarmful.length) html += '<span style="color:#dc2626;">ðŸš¨ Harmful: ' + foundHarmful.join(', ') + '</span><br>';
-            if (foundE.length) html += '<span style="color:#7c3aed;">ðŸ§ª Additives (E-Numbers): ' + foundE.join(', ') + '</span>';
+            if (foundAllergens.length) html += '<span style="color:#d97706;">⚠️ Allergens: ' + foundAllergens.join(', ') + '</span><br>';
+            if (foundHarmful.length) html += '<span style="color:#dc2626;">🚨 Harmful: ' + foundHarmful.join(', ') + '</span><br>';
+            if (foundE.length) html += '<span style="color:#7c3aed;">🧪 Additives (E-Numbers): ' + foundE.join(', ') + '</span>';
             alertDiv.innerHTML = html;
         }
     });
@@ -2268,6 +2279,10 @@ if (el('p_ing')) {
     if (el('downloadPdf')) el('downloadPdf').addEventListener('click', downloadPDF);
 
     if (el('demoBtn')) el('demoBtn').addEventListener('click', function () {
+        var btn = el('demoBtn');
+        setButtonLoading(btn, true, 'Loading Demo...');
+        showToast('Loading demo product data...', 'info', 2000);
+        try {
         if (el('p_name')) el('p_name').value = 'Classic Salted Chips';
         if (el('p_cat')) el('p_cat').value = 'Packaged Snack';
         if (el('p_exp')) el('p_exp').value = todayISO();
@@ -2278,14 +2293,20 @@ if (el('p_ing')) {
         if (el('n_sodium')) el('n_sodium').value = 580;
         if (el('fssai')) el('fssai').value = '12345678901234';
         validateInputs(); runChecks();
+        showToast('Demo product loaded & safety check complete!', 'success');
+        } catch (err) {
+            showToast('Demo loading failed: ' + (err.message || err), 'error');
+        } finally {
+            setButtonLoading(btn, false);
+        }
     });
 
     if (el('clearBtn')) el('clearBtn').addEventListener('click', function () {
         ['p_name', 'p_exp', 'p_ing', 'p_origin', 'n_kcal', 'n_sugar', 'n_sodium', 'n_sat', 'n_trans', 't_min', 't_max', 'fssai', 'lab_data', 'lab_limit', 'lab_sigma'].forEach(function (id) { if (el(id)) { el(id).value = ''; el(id).classList.remove('invalid'); } });
-        ['k_overall', 'k_exp', 'k_add', 'k_all', 'k_origin', 'knn_out', 'lab_n', 'lab_mean', 'lab_sd'].forEach(function (id) { if (el(id)) el(id).textContent = 'â€”'; });
+        ['k_overall', 'k_exp', 'k_add', 'k_all', 'k_origin', 'knn_out', 'lab_n', 'lab_mean', 'lab_sd'].forEach(function (id) { if (el(id)) el(id).textContent = '—'; });
         if (el('bullets')) el('bullets').innerHTML = '';
-        if (el('verdict')) { el('verdict').textContent = 'â€”'; el('verdict').className = 'badge'; }
-        if (el('lab_summary')) { el('lab_summary').textContent = 'â€”'; el('lab_summary').className = 'badge'; }
+        if (el('verdict')) { el('verdict').textContent = '—'; el('verdict').className = 'badge'; }
+        if (el('lab_summary')) { el('lab_summary').textContent = '—'; el('lab_summary').className = 'badge'; }
         if (el('lab_out')) el('lab_out').innerHTML = '';
         if (el('fopWarnings')) el('fopWarnings').style.display = 'none';
         if (el('imagePreview')) el('imagePreview').innerHTML = '';
@@ -2576,7 +2597,7 @@ if (el('processCsvBtn')) el('processCsvBtn').addEventListener('click', function 
         var n = el('fssai') ? el('fssai').value.trim() : '', s = el('fssaiStatus'); if (!s) return;
         if (!n) s.innerHTML = '<span style="color:#dc2626;">âŒ Enter FSSAI number</span>';
         else if (!/^\d{14}$/.test(n)) s.innerHTML = '<span style="color:#dc2626;">âŒ 14 numeric digits required</span>';
-        else s.innerHTML = '<span style="color:#16a34a;">âœ… Valid 14-digit format (Format check only â€” not official FSSAI registry verification)</span>';
+        else s.innerHTML = '<span style="color:#16a34a;">✅ Valid 14-digit format (Format check only — not official FSSAI registry verification)</span>';
     });
 
     document.querySelectorAll('a[href^="#"]').forEach(function (a) { a.addEventListener('click', function (e) { e.preventDefault(); var t = document.querySelector(this.getAttribute('href')); if (t) t.scrollIntoView({ behavior: 'smooth' }); }); });
@@ -2632,11 +2653,11 @@ if (el('processCsvBtn')) el('processCsvBtn').addEventListener('click', function 
     }
     // Disease Warning on Category Select & Consumer Proxy Update
     var diseaseInfo = {
-        "Meat & Poultry": "âš ï¸ High risk of Salmonella, E. coli if not cooked above 75Â°C.",
-        "Seafood": "âš ï¸ Risk of Mercury, Vibrio bacteria. Ensure proper refrigeration.",
-        "Dairy": "âš ï¸ Listeria & E. coli risk if kept above 5Â°C.",
-        "Street Food": "âš ï¸ High risk of food poisoning, unhygienic water usage.",
-        "Baby Food": "âš ï¸ Strictly check for added preservatives and heavy metals."
+        "Meat & Poultry": "⚠️ High risk of Salmonella, E. coli if not cooked above 75Â°C.",
+        "Seafood": "⚠️ Risk of Mercury, Vibrio bacteria. Ensure proper refrigeration.",
+        "Dairy": "⚠️ Listeria & E. coli risk if kept above 5Â°C.",
+        "Street Food": "⚠️ High risk of food poisoning, unhygienic water usage.",
+        "Baby Food": "⚠️ Strictly check for added preservatives and heavy metals."
     };
     if (el('p_cat')) {
         el('p_cat').addEventListener('change', function() {
@@ -2686,11 +2707,11 @@ if (el('processCsvBtn')) el('processCsvBtn').addEventListener('click', function 
     initRiskChart();
     initLabChart();
     var adulterantData = {
-    "milk_water": { name: "Milk - Water Check", method: "Put a drop of milk on a polished slanted surface. Pure milk flows slowly leaving a white trail. Adulterated milk flows immediately without leaving a mark.", warning: "âš ï¸ If it flows fast, water is mixed." },
-    "milk_starch": { name: "Milk - Starch Check", method: "Boil 2-3 ml of milk, cool it, and add 2-3 drops of Iodine solution.", warning: "âš ï¸ If it turns Blue-Black, starch is present." },
-    "oil_argemone": { name: "Oil - Argemone Oil Check", method: "Take oil in a test tube, add concentrated Nitric Acid (HNO3) and shake gently.", warning: "âš ï¸ If reddish/brown color appears, Argemone oil (highly toxic) is present." },
-    "honey_water": { name: "Honey - Water/Sugar Check", method: "Drop honey in a glass of water. Pure honey settles at the bottom forming a lump. Adulterated honey dissolves instantly.", warning: "âš ï¸ If it dissolves immediately, it has added water or sugar syrup." },
-    "spice_wood": { name: "Spices - Wood Dust/Dye Check", method: "Take a small amount of spice in water. Artificial colored spices will immediately release color into the water.", warning: "âš ï¸ If water turns colored quickly, artificial dyes or sawdust is present." }
+    "milk_water": { name: "Milk - Water Check", method: "Put a drop of milk on a polished slanted surface. Pure milk flows slowly leaving a white trail. Adulterated milk flows immediately without leaving a mark.", warning: "⚠️ If it flows fast, water is mixed." },
+    "milk_starch": { name: "Milk - Starch Check", method: "Boil 2-3 ml of milk, cool it, and add 2-3 drops of Iodine solution.", warning: "⚠️ If it turns Blue-Black, starch is present." },
+    "oil_argemone": { name: "Oil - Argemone Oil Check", method: "Take oil in a test tube, add concentrated Nitric Acid (HNO3) and shake gently.", warning: "⚠️ If reddish/brown color appears, Argemone oil (highly toxic) is present." },
+    "honey_water": { name: "Honey - Water/Sugar Check", method: "Drop honey in a glass of water. Pure honey settles at the bottom forming a lump. Adulterated honey dissolves instantly.", warning: "⚠️ If it dissolves immediately, it has added water or sugar syrup." },
+    "spice_wood": { name: "Spices - Wood Dust/Dye Check", method: "Take a small amount of spice in water. Artificial colored spices will immediately release color into the water.", warning: "⚠️ If water turns colored quickly, artificial dyes or sawdust is present." }
 };
 
 if(el('adulterant_test')) {
@@ -2701,9 +2722,9 @@ if(el('adulterant_test')) {
         resDiv.style.display = 'block';
         // Parse method into steps (split on periods)
         var methodSteps = d.method.split(/(?<=\.\s)/).map(function(s){ return s.trim(); }).filter(Boolean);
-        var warnSteps = d.warning.replace(/^âš ï¸?\s*/,'').split(/(?<=\.\s)/).map(function(s){ return s.trim(); }).filter(Boolean);
+        var warnSteps = d.warning.replace(/^⚠️?\s*/,'').split(/(?<=\.\s)/).map(function(s){ return s.trim(); }).filter(Boolean);
         resDiv.innerHTML = '<div class="adulteration-result-card">'
-            + '<div class="adulterant-header"><i class="fas fa-vial" style="color:var(--primary);"></i><strong>ðŸ§ª ' + escapeHtml(d.name) + '</strong></div>'
+            + '<div class="adulterant-header"><i class="fas fa-vial" style="color:var(--primary);"></i><strong>🧪 ' + escapeHtml(d.name) + '</strong></div>'
             + '<div class="adulterant-section"><div class="adulterant-section-title procedure-title"><i class="fas fa-list-ol"></i> Procedure</div>'
             + '<ul class="adulterant-steps procedure-steps">'
             + methodSteps.map(function(s){ return '<li>' + escapeHtml(s) + '</li>'; }).join('')
@@ -2736,7 +2757,7 @@ if(el('adulterant_test')) {
             if (labBtn) labBtn.classList.remove('active');
             if (labExtras) labExtras.style.display = 'none';
             if (knnBtn) knnBtn.style.display = 'none';
-            if (modeDesc) modeDesc.textContent = 'Consumer Mode â€” Barcode scanning, nutrition label analysis & observable safety questionnaire. No lab instruments required.';
+            if (modeDesc) modeDesc.textContent = 'Consumer Mode — Barcode scanning, nutrition label analysis & observable safety questionnaire. No lab instruments required.';
             var currentCat = el('p_cat') ? el('p_cat').value : 'Packaged Snack';
             renderDynamicQuestions(currentCat);
         } else {
@@ -2744,7 +2765,7 @@ if(el('adulterant_test')) {
             if (consumerBtn) consumerBtn.classList.remove('active');
             if (labExtras) labExtras.style.display = 'block';
             if (knnBtn) knnBtn.style.display = '';
-            if (modeDesc) modeDesc.textContent = 'Lab / Inspector Mode â€” Enter measured pH, moisture, and temperature values obtained with appropriate instruments.';
+            if (modeDesc) modeDesc.textContent = 'Lab / Inspector Mode — Enter measured pH, moisture, and temperature values obtained with appropriate instruments.';
             var pSection = el('proxyQuestionnaireSection');
             if (pSection) pSection.style.display = 'none';
             var cCard = el('consumerResultCard');
@@ -2784,7 +2805,7 @@ if(el('adulterant_test')) {
         }
 
         var html = '<div class="proxy-question-card">';
-        html += '<div class="card-header"><i class="fas fa-clipboard-list" style="color:var(--primary);"></i><h3>Consumer Safety Questionnaire â€” ' + escapeHtml(category) + '</h3></div>';
+        html += '<div class="card-header"><i class="fas fa-clipboard-list" style="color:var(--primary);"></i><h3>Consumer Safety Questionnaire — ' + escapeHtml(category) + '</h3></div>';
         html += '<p style="font-size:0.85rem; color:var(--text-light); margin-bottom:16px;">Answer based on what you can observe or know. No instruments needed.</p>';
 
         config.questions.forEach(function(q) {
@@ -2796,7 +2817,7 @@ if(el('adulterant_test')) {
 
             if (q.type === 'yesno') {
                 html += '<div class="proxy-yesno-group">';
-                html += '<button type="button" class="proxy-yesno-btn" id="pq-' + q.id + '-yes" data-qid="' + q.id + '" data-val="yes" onclick="proxyYesNoSelect(this)">âœ… Yes</button>';
+                html += '<button type="button" class="proxy-yesno-btn" id="pq-' + q.id + '-yes" data-qid="' + q.id + '" data-val="yes" onclick="proxyYesNoSelect(this)">✅ Yes</button>';
                 html += '<button type="button" class="proxy-yesno-btn" id="pq-' + q.id + '-no" data-qid="' + q.id + '" data-val="no" onclick="proxyYesNoSelect(this)">âŒ No</button>';
                 html += '<input type="hidden" id="pq-' + q.id + '" data-qid="' + q.id + '" value="">';
                 html += '</div>';
@@ -2899,10 +2920,19 @@ if(el('adulterant_test')) {
             return;
         }
 
+        var btn = el('submitProxyCheck');
+        setButtonLoading(btn, true, 'Evaluating...');
+        showToast('Evaluating consumer safety screening...', 'info', 2000);
+        try {
         var result = computeProxyRiskScore(category, collected.answers);
         displayConsumerResultCard(category, result);
-        showToast('Consumer Safety Screening completed: ' + result.verdict, 'success');
+        showToast('Consumer Safety Screening completed: ' + result.verdict, result.verdict.includes('High') ? 'error' : (result.verdict.includes('Moderate') ? 'warning' : 'success'));
         return result;
+        } catch (err) {
+            showToast('Consumer safety check failed: ' + (err.message || err), 'error');
+        } finally {
+            setButtonLoading(btn, false);
+        }
     }
     window.submitConsumerSafetyCheck = submitConsumerSafetyCheck;
 
@@ -2996,7 +3026,7 @@ if(el('adulterant_test')) {
         html += '<ul>';
         html += '<li>This is a consumer-level screening result based on provided information only.</li>';
         html += '<li>It does not replace laboratory testing or official food-safety inspection.</li>';
-        html += '<li>If the product shows spoilage, damaged packaging, or unusual smell / appearance â€” do not consume it regardless of the score.</li>';
+        html += '<li>If the product shows spoilage, damaged packaging, or unusual smell / appearance — do not consume it regardless of the score.</li>';
         html += '<li>Laboratory testing is recommended for regulatory compliance or when in doubt.</li>';
         html += '</ul></div>';
 
