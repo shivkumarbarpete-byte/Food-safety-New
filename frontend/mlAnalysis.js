@@ -1,8 +1,9 @@
 /* ============================================================
-   mlAnalysis.js
+   mlAnalysis.js  (thin client version)
    ------------------------------------------------------------
-   Standalone Machine Learning Analysis module for Food Safety.
-   Copied from frontend/script.js to decouple ML analysis routines.
+   Saara ML (split, scaling, training, metrics) Python backend
+   mein hota hai. Ye file sirf /api/ml/* ko call karti hai aur
+   result dikhati hai.
    ============================================================ */
 
 if (typeof window === 'undefined') {
@@ -22,362 +23,281 @@ window.FSML = {
     var getMlChart = helpers.getMlChart;
     var setMlChart = helpers.setMlChart;
 
-    async function getRealDataset(categoryFilter) {
-      var cat = categoryFilter || (el('mlCategorySelect') ? el('mlCategorySelect').value : 'All');
-      try {
-        var token = localStorage.getItem('fs_token');
-        var headers = {};
-        if (token) headers['Authorization'] = 'Bearer ' + token;
-        var res = await fetch('http://localhost:5000/api/ml/dataset?category=' + encodeURIComponent(cat), { headers: headers });
-        if (res.ok) {
-          var json = await res.json();
-          if (json.data && json.data.length > 0) {
-            return json.data;
-          }
-        }
-      } catch (err) {
-        console.warn('Backend dataset API offline, using fallback parser', err);
+    var API_BASE = 'http://localhost:5000/api/ml';
+    var LINE = "━━━━━━━━━━━━━━━━━━━━━━━━━━";
+
+    // ---------- Chhote helpers ----------
+
+    function selectedCategory() {
+      return el('mlCategorySelect') ? el('mlCategorySelect').value : 'All';
+    }
+
+    function setExplain(text) {
+      if (el('currentExplain')) el('currentExplain').textContent = text;
+    }
+
+    // Number ko safely format karta hai (null/undefined par '-')
+    function num(v, digits) {
+      return (typeof v === 'number' && isFinite(v)) ? v.toFixed(digits === undefined ? 2 : digits) : '-';
+    }
+
+    // 0-1 fraction ko % mein badalta hai (agar backend pehle se % de to bhi chalega)
+    function pct(v, digits) {
+      if (typeof v !== 'number' || !isFinite(v)) return '-';
+      var p = v <= 1 ? v * 100 : v;
+      return p.toFixed(digits === undefined ? 1 : digits) + '%';
+    }
+
+    // Backend ko call: token lagata hai, error ko readable Error banata hai
+    async function callApi(method, path, opts) {
+      opts = opts || {};
+      var headers = {};
+      var token = localStorage.getItem('fs_token');
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+
+      var url = API_BASE + path;
+      if (opts.query) {
+        url += '?' + Object.keys(opts.query).map(function (k) {
+          return encodeURIComponent(k) + '=' + encodeURIComponent(opts.query[k]);
+        }).join('&');
       }
-      return [];
+
+      var init = { method: method, headers: headers };
+      if (opts.body) {
+        headers['Content-Type'] = 'application/json';
+        init.body = JSON.stringify(opts.body);
+      }
+
+      var res;
+      try {
+        res = await fetch(url, init);
+      } catch (netErr) {
+        throw new Error('Backend (port 5000) se connect nahi ho paya. Node server chal raha hai?');
+      }
+
+      var json = null;
+      try { json = await res.json(); } catch (e) { /* body JSON nahi tha */ }
+
+      if (!res.ok) {
+        throw new Error((json && json.message) || ('Server error (HTTP ' + res.status + ')'));
+      }
+      return json;
     }
 
-    function normalizeDatasetFeatures(data, featureKeys) {
-      var means = {}, stds = {};
-      featureKeys.forEach(function (key) {
-        var vals = data.map(function (d) {
-          var value = d.features ? d.features[key] : d[key];
-          return Number.isFinite(value) ? value : 0;
-        });
-        var mean = vals.reduce(function (a, b) { return a + b; }, 0) / (vals.length || 1);
-        var std = Math.sqrt(vals.reduce(function (a, x) { return a + (x - mean) * (x - mean); }, 0) / (vals.length || 1)) || 1;
-        means[key] = mean;
-        stds[key] = std;
-      });
+    // Purana chart hatao, naya banao, store karo
+    function renderChart(config) {
+      var canvas = el('mlChart');
+      if (!canvas) return;
+      if (getMlChart && getMlChart()) getMlChart().destroy();
+      var chart = new Chart(canvas.getContext('2d'), config);
+      if (setMlChart) setMlChart(chart);
+    }
 
-      return data.map(function (d) {
-        var normObj = {
-          raw: d,
-          score: d.Risk_Score !== undefined ? d.Risk_Score : (d.score || 0),
-          safe: d.Safety_Label !== undefined ? (d.Safety_Label === 0 ? 1 : 0) : d.safe, // 1 = Safe, 0 = Unsafe for frontend
-          rawSafetyLabel: d.Safety_Label,
-          features: {}
-        };
-        featureKeys.forEach(function (key) {
-          var rawVal = d.features ? d.features[key] : d[key];
-          if (!Number.isFinite(rawVal)) rawVal = 0;
-          normObj.features[key] = (rawVal - means[key]) / stds[key];
-        });
-        return normObj;
+    function showSyntheticNote() {
+      showMLResult("\nℹ️ Note: dataset synthetic (nakli) hai, isliye accuracy bahut high aa sakti hai. Ye ML pipeline ka demo hai.", false);
+    }
+
+    function showInfluence(list) {
+      (list || []).slice().sort(function (a, b) {
+        return Math.abs(b.weight) - Math.abs(a.weight);
+      }).forEach(function (f) {
+        showMLResult("  " + f.feature + " — " + f.effect + " (weight: " + num(f.weight) + ")");
       });
     }
 
-    function getDatasetFeatureKeys(data) {
-      if (!data.length) return [];
-      var firstKeys = Object.keys(data[0].features || {});
-      return firstKeys.filter(function (key) {
-        return data.every(function (row) {
-          return row.features && Number.isFinite(row.features[key]);
-        });
-      });
-    }
-
-    // ===== EDA - Full Calculation Visible =====
+    // ===== EDA =====
     async function runEDA() {
       clearMLResults();
-      var cat = el('mlCategorySelect') ? el('mlCategorySelect').value : 'All';
-      if (el('currentExplain')) el('currentExplain').textContent = 'Exploratory Data Analysis (' + cat + '): Summary statistics & scatter distribution of dataset samples for selected category.';
+      var cat = selectedCategory();
+      setExplain('Exploratory Data Analysis (' + cat + '): Summary statistics & scatter distribution of dataset samples for selected category.');
       showMLResult("📊 DATA SUMMARY — Category: " + cat, true);
       var btn = el('runEDA');
       setButtonLoading(btn, true, 'Running EDA...');
       try {
-        var data = await getRealDataset(cat);
-        if (!data || data.length < 3) {
-          showMLResult('⚠️ Not enough dataset samples for ' + cat + '. Ensure dataset is loaded.', true);
-          return;
-        }
+        var r = await callApi('GET', '/eda', { query: { category: cat } });
 
-        var safeCount = data.filter(function (d) { return d.Safety_Label === 0 || d.safe === 1; }).length;
-        var unsafeCount = data.filter(function (d) { return d.Safety_Label === 1 || d.safe === 0; }).length;
-
-        showMLResult("Category '" + cat + "' has " + data.length + " rows: " + safeCount + " Safe, " + unsafeCount + " Unsafe.\n");
-
-        showMLResult("━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
-        showMLResult("\n📈 AVERAGE VALUES:", true);
-
-        var featKeys = getDatasetFeatureKeys(data);
-        if (featKeys.length < 2) throw new Error('Dataset has no common numeric features for this selection.');
-
-        featKeys.forEach(function (key) {
-          var vals = data.map(function (d) { return d.features ? d.features[key] : (d[key] || 0); });
-          var mean = (vals.reduce(function (a, b) { return a + b; }, 0) / vals.length).toFixed(2);
-          var min = Math.min.apply(null, vals).toFixed(1);
-          var max = Math.max.apply(null, vals).toFixed(1);
-          showMLResult(key + ": Average = " + mean + " | Range = " + min + " to " + max);
+        showMLResult("Category '" + r.category + "' has " + r.n_rows + " rows: " + r.n_safe + " Safe, " + r.n_unsafe + " Unsafe.\n");
+        showMLResult(LINE, false);
+        showMLResult("\n📈 FEATURE STATISTICS:", true);
+        r.feature_stats.forEach(function (s) {
+          showMLResult(s.feature + ": Mean = " + num(s.mean) + " | Std = " + num(s.std) +
+            " | Range = " + num(s.min, 1) + " to " + num(s.max, 1));
         });
-
         showMLResult("\n💡 Summary gives quick parameter insight before running ML prediction models.", false);
 
-        // Scatter Chart (Feature 1 vs Feature 2)
-        var ctx = el('mlChart');
-        if (!ctx) return;
-        ctx = ctx.getContext('2d');
-        if (getMlChart && getMlChart()) getMlChart().destroy();
-
-        var xKey = featKeys[0] || 'Temperature_C';
-        var yKey = featKeys[1] || 'Moisture_percent';
-
-        var chart = new Chart(ctx, {
-          type: 'scatter',
-          data: {
-            datasets: [
-              {
-                label: 'Safe Samples (Label=0)',
-                data: data.filter(function (d) { return d.Safety_Label === 0 || d.safe === 1; }).map(function (d) {
-                  return { x: d.features ? d.features[xKey] : d[xKey], y: d.features ? d.features[yKey] : d[yKey] };
-                }),
-                backgroundColor: '#16a34a',
-                pointRadius: 6
-              },
-              {
-                label: 'Unsafe Samples (Label=1)',
-                data: data.filter(function (d) { return d.Safety_Label === 1 || d.safe === 0; }).map(function (d) {
-                  return { x: d.features ? d.features[xKey] : d[xKey], y: d.features ? d.features[yKey] : d[yKey] };
-                }),
-                backgroundColor: '#dc2626',
-                pointRadius: 6
-              }
-            ]
-          },
-          options: {
-            scales: {
-              x: { title: { display: true, text: xKey } },
-              y: { title: { display: true, text: yKey } }
+        var sc = r.scatter;
+        if (sc && sc.safe_points) {
+          renderChart({
+            type: 'scatter',
+            data: {
+              datasets: [
+                { label: 'Safe Samples (Label=0)', data: sc.safe_points, backgroundColor: '#16a34a', pointRadius: 6 },
+                { label: 'Unsafe Samples (Label=1)', data: sc.unsafe_points, backgroundColor: '#dc2626', pointRadius: 6 }
+              ]
             },
-            plugins: {
-              legend: { position: 'top' },
-              title: { display: true, text: cat + ' Dataset: ' + xKey + ' vs ' + yKey }
+            options: {
+              scales: {
+                x: { title: { display: true, text: sc.x_feature } },
+                y: { title: { display: true, text: sc.y_feature } }
+              },
+              plugins: {
+                legend: { position: 'top' },
+                title: { display: true, text: r.category + ' Dataset: ' + sc.x_feature + ' vs ' + sc.y_feature }
+              }
             }
-          }
-        });
-        if (setMlChart) setMlChart(chart);
+          });
+        }
       } catch (err) {
         showMLResult('❌ EDA failed: ' + (err.message || err), true);
         showToast('EDA failed. Check that the backend is running.', 'error');
-      } finally { setButtonLoading(el('runEDA'), false); }
+      } finally { setButtonLoading(btn, false); }
     }
 
     // ===== LINEAR REGRESSION =====
     async function runLinearRegression() {
-      if (typeof tf === 'undefined') { showToast('TensorFlow.js not loaded', 'error'); return; }
       clearMLResults();
-      var cat = el('mlCategorySelect') ? el('mlCategorySelect').value : 'All';
-      if (el('currentExplain')) el('currentExplain').textContent = 'Linear Regression (' + cat + '): Learns weights to estimate continuous Risk_Score (0-100) from parameters.';
+      var cat = selectedCategory();
+      setExplain('Linear Regression (' + cat + '): Learns weights to estimate continuous Risk_Score (0-100) from parameters. Test metrics unseen 20% data par naape jaate hain.');
       showMLResult("📈 LINEAR REGRESSION — Category: " + cat, true);
       var btn = el('runLinear');
       setButtonLoading(btn, true, 'Training...');
       try {
-        var data = await getRealDataset(cat);
-        if (!data || data.length < 3) {
-          showMLResult('⚠️ Not enough dataset samples for ' + cat + '.', true);
-          return;
+        var r = await callApi('POST', '/linear', { body: { category: cat } });
+
+        showMLResult("Features: [" + r.features.join(', ') + "]");
+        showMLResult("Total " + r.n_total + " rows → Train: " + r.n_train + ", Test: " + r.n_test + "\n");
+        showMLResult(LINE, false);
+        showMLResult("\n✅ RESULT (error points mein, out of 100):", true);
+        showMLResult("Train RMSE: ±" + num(r.metrics.train_rmse));
+        showMLResult("Test RMSE:  ±" + num(r.metrics.test_rmse));
+        showMLResult("Test MAE:   ±" + num(r.metrics.test_mae));
+        showMLResult("Test R²:    " + num(r.metrics.test_r2, 3), true);
+
+        var sp = r.sample_prediction;
+        if (sp) {
+          showMLResult("\n🔎 Sample (test set): actual risk " + num(sp.actual_risk, 1) +
+            " → predicted " + num(sp.predicted_risk, 1) + "/100 (" + sp.level + ")");
         }
 
-        var featKeys = getDatasetFeatureKeys(data);
-        if (featKeys.length < 2) throw new Error('Dataset has no common numeric features for this selection.');
-        showMLResult("Training Linear model on " + data.length + " rows for features: [" + featKeys.join(', ') + "]\n");
-
-        var normalizedData = normalizeDatasetFeatures(data, featKeys);
-        var xs = tf.tensor2d(normalizedData.map(function (d) {
-          return featKeys.map(function (k) { return d.features[k]; });
-        }));
-        var ys = tf.tensor2d(normalizedData.map(function (d) { return [d.score]; }));
-
-        var model = tf.sequential();
-        model.add(tf.layers.dense({ units: 1, inputShape: [featKeys.length], activation: 'linear' }));
-        model.compile({ loss: 'meanSquaredError', optimizer: tf.train.adam(0.08) });
-
-        var finalLoss = 0;
-        await model.fit(xs, ys, {
-          epochs: 180,
-          shuffle: true,
-          callbacks: { onEpochEnd: function (epoch, logs) { finalLoss = logs.loss; } }
-        });
-
-        showMLResult("\n━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
-        showMLResult("\n✅ RESULT:", true);
-        showMLResult("Average prediction error: ±" + Math.sqrt(finalLoss).toFixed(1) + " points (out of 100)");
-
-        var linearPredictionTensor = model.predict(xs);
-        var linearPredictions = linearPredictionTensor.dataSync();
-        var firstRisk = Math.max(0, Math.min(100, linearPredictions[0]));
-        showMLResult("Dataset sample 1 predicted Risk Score: " + firstRisk.toFixed(1) + "/100 (" + (firstRisk >= 60 ? 'Higher Risk' : (firstRisk >= 30 ? 'Moderate Risk' : 'Low Risk')) + ")", true);
-        linearPredictionTensor.dispose();
-
-        var weights = model.layers[0].getWeights()[0].arraySync().flat();
-
         showMLResult("\n📌 FEATURE INFLUENCE ON RISK SCORE:", true);
-        var influences = featKeys.map(function (key, idx) {
-          return { name: key, w: weights[idx] };
-        }).sort(function (a, b) { return Math.abs(b.w) - Math.abs(a.w); });
-
-        influences.forEach(function (inf) {
-          var direction = inf.w > 0 ? 'increases risk' : 'decreases risk';
-          showMLResult("  " + inf.name + " — " + direction + " (weight: " + inf.w.toFixed(2) + ")");
-        });
-
-        xs.dispose();
-        ys.dispose();
-        model.dispose();
+        showInfluence(r.feature_influence);
+        showSyntheticNote();
       } catch (err) {
         showMLResult('❌ Linear Regression failed: ' + (err.message || err), true);
         showToast('Linear Regression failed.', 'error');
-      } finally { setButtonLoading(el('runLinear'), false); }
+      } finally { setButtonLoading(btn, false); }
     }
 
-    // ===== LOGISTIC REGRESSION (Logistic, Ridge L2, Lasso L1) =====
-    async function runLogisticBase(title, l2, l1, btnId) {
-      if (typeof tf === 'undefined') { showToast('TensorFlow.js not loaded', 'error'); return; }
+    // ===== LOGISTIC / RIDGE / LASSO =====
+    async function runLogisticBase(title, kind, btnId) {
       clearMLResults();
-      var cat = el('mlCategorySelect') ? el('mlCategorySelect').value : 'All';
-      if (el('currentExplain')) {
-        if (l2) el('currentExplain').textContent = 'Ridge Regression (L2) [' + cat + ']: Classifies Safe/Unsafe with L2 weight regularization.';
-        else if (l1) el('currentExplain').textContent = 'Lasso Regression (L1) [' + cat + ']: Classifies Safe/Unsafe with L1 sparsity regularization.';
-        else el('currentExplain').textContent = 'Logistic Regression [' + cat + ']: Classifies Safe vs Unsafe food samples.';
-      }
+      var cat = selectedCategory();
+      if (kind === 'ridge') setExplain('Ridge Regression (L2) [' + cat + ']: Classifies Safe/Unsafe with L2 weight regularization.');
+      else if (kind === 'lasso') setExplain('Lasso Regression (L1) [' + cat + ']: Classifies Safe/Unsafe with L1 sparsity regularization.');
+      else setExplain('Logistic Regression [' + cat + ']: Classifies Safe vs Unsafe food samples.');
+
       showMLResult("🧠 " + title + " — Category: " + cat, true);
       var btn = btnId ? el(btnId) : null;
       setButtonLoading(btn, true, 'Training...');
       try {
-        var data = await getRealDataset(cat);
-        if (!data || data.length < 3) {
-          showMLResult('⚠️ Not enough dataset samples for ' + cat + '.', true);
-          return;
+        var r = await callApi('POST', '/logistic', { body: { category: cat, kind: kind } });
+
+        showMLResult("Features: [" + r.features.join(', ') + "]");
+        showMLResult("Total " + r.n_total + " samples (" + r.n_safe + " Safe, " + r.n_unsafe + " Unsafe)");
+        showMLResult("Train: " + r.n_train + ", Test: " + r.n_test + "\n");
+        showMLResult(LINE, false);
+
+        var m = r.metrics;
+        showMLResult("\n✅ RESULT:", true);
+        showMLResult("Train Accuracy: " + pct(m.train_accuracy));
+        showMLResult("Test Accuracy:  " + pct(m.test_accuracy), true);
+        showMLResult("Precision: " + pct(m.precision) + " | Recall: " + pct(m.recall) + " | F1: " + pct(m.f1));
+
+        var cm = r.confusion_matrix;
+        showMLResult("\n🧮 CONFUSION MATRIX (test set):", true);
+        showMLResult("  Safe ko Safe bola (TN):     " + cm.tn);
+        showMLResult("  Safe ko Unsafe bola (FP):   " + cm.fp);
+        showMLResult("  Unsafe ko Safe bola (FN):   " + cm.fn + "   ← sabse khatarnak galti");
+        showMLResult("  Unsafe ko Unsafe bola (TP): " + cm.tp);
+
+        var sp = r.sample_prediction;
+        if (sp) {
+          showMLResult("\n🔎 Sample (test set): actual = " + sp.actual + ", predicted = " + sp.predicted +
+            " (Unsafe probability: " + pct(sp.unsafe_probability) + ")");
         }
 
-        var featKeys = getDatasetFeatureKeys(data);
-        if (featKeys.length < 2) throw new Error('Dataset has no common numeric features for this selection.');
-        var safeCount = data.filter(function (d) { return d.Safety_Label === 0 || d.safe === 1; }).length;
-        var unsafeCount = data.filter(function (d) { return d.Safety_Label === 1 || d.safe === 0; }).length;
-
-        showMLResult("Training on " + data.length + " samples (" + safeCount + " Safe, " + unsafeCount + " Unsafe)\n");
-
-        var normalizedData = normalizeDatasetFeatures(data, featKeys);
-        var xs = tf.tensor2d(normalizedData.map(function (d) {
-          return featKeys.map(function (k) { return d.features[k]; });
-        }));
-        // Train target: 0 for Safe, 1 for Unsafe
-        var ys = tf.tensor2d(normalizedData.map(function (d) {
-          return [d.rawSafetyLabel !== undefined ? d.rawSafetyLabel : (d.safe === 1 ? 0 : 1)];
-        }));
-
-        var reg = l2 ? tf.regularizers.l2({ l2: l2 }) : (l1 ? tf.regularizers.l1({ l1: l1 }) : null);
-        var model = tf.sequential();
-        model.add(tf.layers.dense({ units: 1, inputShape: [featKeys.length], activation: 'sigmoid', kernelRegularizer: reg }));
-        model.compile({ loss: 'binaryCrossentropy', optimizer: tf.train.adam(0.08), metrics: ['accuracy'] });
-
-        var finalAcc = 0;
-        await model.fit(xs, ys, {
-          epochs: 150,
-          shuffle: true,
-          callbacks: { onEpochEnd: function (epoch, logs) { finalAcc = logs.acc !== undefined ? logs.acc : logs.accuracy; } }
-        });
-
-        showMLResult("\n━━━━━━━━━━━━━━━━━━━━━━━━━━", false);
-        showMLResult("\n✅ RESULT:", true);
-        showMLResult("Model Accuracy: " + (Number(finalAcc) * 100).toFixed(0) + "%");
-
-        var logisticPredictionTensor = model.predict(xs);
-        var logisticProbabilities = logisticPredictionTensor.dataSync();
-        var firstProbability = logisticProbabilities[0];
-        showMLResult("Dataset sample 1 prediction: " + (firstProbability >= 0.5 ? 'UNSAFE' : 'SAFE') + " (Unsafe probability: " + (firstProbability * 100).toFixed(1) + "%)", true);
-        logisticPredictionTensor.dispose();
-
-        var weights = model.layers[0].getWeights()[0].arraySync().flat();
         showMLResult("\n📌 FEATURE INFLUENCE ON SAFE vs UNSAFE:", true);
-        var influences = featKeys.map(function (key, idx) {
-          return { name: key, w: weights[idx] };
-        }).sort(function (a, b) { return Math.abs(b.w) - Math.abs(a.w); });
+        showInfluence(r.feature_influence);
+        if (r.zero_weight_features && r.zero_weight_features.length) {
+          showMLResult("\n🧹 Zero weight wale features (model ne ignore kiye): " + r.zero_weight_features.join(', '));
+        }
+        showSyntheticNote();
 
-        influences.forEach(function (inf) {
-          var direction = inf.w > 0 ? 'higher value → Unsafe signal' : 'higher value → Safe signal';
-          showMLResult("  " + inf.name + " — " + direction);
+        renderChart({
+          type: 'bar',
+          data: {
+            labels: ['Train Accuracy', 'Test Accuracy'],
+            datasets: [{
+              label: title,
+              data: [
+                m.train_accuracy <= 1 ? m.train_accuracy * 100 : m.train_accuracy,
+                m.test_accuracy <= 1 ? m.test_accuracy * 100 : m.test_accuracy
+              ],
+              backgroundColor: ['#2563eb', '#16a34a']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              title: { display: true, text: cat + ': ' + title + ' — Train vs Test Accuracy (%)' }
+            },
+            scales: { y: { beginAtZero: true, max: 100 } }
+          }
         });
-
-        xs.dispose();
-        ys.dispose();
-        model.dispose();
       } catch (err) {
         showMLResult('❌ ' + title + ' failed: ' + (err.message || err), true);
         showToast(title + ' failed.', 'error');
       } finally { setButtonLoading(btn, false); }
     }
 
-    async function runLogistic() { await runLogisticBase("LOGISTIC REGRESSION", 0, 0, 'runLogistic'); }
-    async function runRidge() { await runLogisticBase("RIDGE REGRESSION (L2)", 0.01, 0, 'runRidge'); }
-    async function runLasso() { await runLogisticBase("LASSO REGRESSION (L1)", 0, 0.01, 'runLasso'); }
+    async function runLogistic() { await runLogisticBase("LOGISTIC REGRESSION", 'logistic', 'runLogistic'); }
+    async function runRidge() { await runLogisticBase("RIDGE REGRESSION (L2)", 'ridge', 'runRidge'); }
+    async function runLasso() { await runLogisticBase("LASSO REGRESSION (L1)", 'lasso', 'runLasso'); }
 
     // ===== HISTOGRAMS =====
     async function showHistograms() {
       clearMLResults();
-      var cat = el('mlCategorySelect') ? el('mlCategorySelect').value : 'All';
-      if (el('currentExplain')) el('currentExplain').textContent = 'Feature Histograms (' + cat + '): Comparing average values for each parameter between Safe and Unsafe samples.';
+      var cat = selectedCategory();
+      setExplain('Feature Histograms (' + cat + '): Comparing average values for each parameter between Safe and Unsafe samples.');
       showMLResult("📊 FEATURE COMPARISON — Category: " + cat, true);
       var btn = el('runHist');
       setButtonLoading(btn, true, 'Analyzing...');
       try {
-        var data = await getRealDataset(cat);
-        if (!data || data.length < 3) {
-          showMLResult('⚠️ Not enough dataset samples for ' + cat + '.', true);
-          return;
-        }
+        var r = await callApi('GET', '/histograms', { query: { category: cat } });
 
-        var safe = data.filter(function (d) { return d.Safety_Label === 0 || d.safe === 1; });
-        var unsafe = data.filter(function (d) { return d.Safety_Label === 1 || d.safe === 0; });
-
-        showMLResult("Comparing " + safe.length + " Safe samples vs " + unsafe.length + " Unsafe samples for '" + cat + "'\n");
-
-        var featKeys = getDatasetFeatureKeys(data);
-        if (featKeys.length < 2) throw new Error('Dataset has no common numeric features for this selection.');
-
-        var safeAvgs = [], unsafeAvgs = [];
-
-        featKeys.forEach(function (key) {
-          var sVals = safe.map(function (d) { return d.features ? d.features[key] : (d[key] || 0); });
-          var uVals = unsafe.map(function (d) { return d.features ? d.features[key] : (d[key] || 0); });
-          var sAvg = sVals.length ? (sVals.reduce(function (a, b) { return a + b; }, 0) / sVals.length) : 0;
-          var uAvg = uVals.length ? (uVals.reduce(function (a, b) { return a + b; }, 0) / uVals.length) : 0;
-          safeAvgs.push(sAvg);
-          unsafeAvgs.push(uAvg);
-
-          showMLResult(key + ":");
-          showMLResult("  Safe Avg:   " + sAvg.toFixed(2));
-          showMLResult("  Unsafe Avg: " + uAvg.toFixed(2));
+        showMLResult("Comparing " + r.n_safe + " Safe samples vs " + r.n_unsafe + " Unsafe samples for '" + r.category + "'\n");
+        r.comparison.forEach(function (c) {
+          showMLResult(c.feature + ":");
+          showMLResult("  Safe Avg:   " + num(c.safe_avg));
+          showMLResult("  Unsafe Avg: " + num(c.unsafe_avg));
         });
 
-        // Chart
-        var ctx = el('mlChart');
-        if (!ctx) return;
-        ctx = ctx.getContext('2d');
-        if (getMlChart && getMlChart()) getMlChart().destroy();
-
-        var chart = new Chart(ctx, {
+        renderChart({
           type: 'bar',
           data: {
-            labels: featKeys,
+            labels: r.comparison.map(function (c) { return c.feature; }),
             datasets: [
               {
-                label: 'Safe Samples (n=' + safe.length + ')',
-                data: safeAvgs,
-                backgroundColor: '#16a34a',
-                borderColor: '#15803d',
-                borderWidth: 2
+                label: 'Safe Samples (n=' + r.n_safe + ')',
+                data: r.comparison.map(function (c) { return c.safe_avg; }),
+                backgroundColor: '#16a34a', borderColor: '#15803d', borderWidth: 2
               },
               {
-                label: 'Unsafe Samples (n=' + unsafe.length + ')',
-                data: unsafeAvgs,
-                backgroundColor: '#dc2626',
-                borderColor: '#b91c1c',
-                borderWidth: 2
+                label: 'Unsafe Samples (n=' + r.n_unsafe + ')',
+                data: r.comparison.map(function (c) { return c.unsafe_avg; }),
+                backgroundColor: '#dc2626', borderColor: '#b91c1c', borderWidth: 2
               }
             ]
           },
@@ -386,13 +306,15 @@ window.FSML = {
             maintainAspectRatio: false,
             plugins: {
               legend: { position: 'top' },
-              title: { display: true, text: cat + ': Feature Averages (Safe vs Unsafe)' }
+              title: { display: true, text: r.category + ': Feature Averages (Safe vs Unsafe)' }
             },
             scales: { y: { beginAtZero: true } }
           }
         });
-        if (setMlChart) setMlChart(chart);
-      } finally { setButtonLoading(el('runHist'), false); }
+      } catch (err) {
+        showMLResult('❌ Histogram failed: ' + (err.message || err), true);
+        showToast('Histogram failed.', 'error');
+      } finally { setButtonLoading(btn, false); }
     }
 
     // ===== k-NN PREDICTION (LAB MODE) =====
@@ -405,7 +327,7 @@ window.FSML = {
       var featureMap = {};
       var missing = [];
 
-      schema.common.concat(schema.specific).forEach(function(f) {
+      schema.common.concat(schema.specific).forEach(function (f) {
         var v = numVal(f.id);
         if (v === null || isNaN(v)) {
           missing.push(f.label);
@@ -419,34 +341,39 @@ window.FSML = {
         return;
       }
 
-      if (el('currentExplain')) el('currentExplain').textContent = 'k-Nearest Neighbors (k-NN) [' + catName + ']: Classifies sample safety by finding nearest neighbors in category dataset.';
+      setExplain('k-Nearest Neighbors (k-NN) [' + catName + ']: Classifies sample safety by finding nearest neighbors in category dataset.');
       showMLResult("🧠 k-NN PREDICTION — Category: " + catName, true);
       var btn = el('runKnBtnLab');
       setButtonLoading(btn, true, 'Predicting...');
 
       try {
-        var token = localStorage.getItem('fs_token');
-        var headers = { 'Content-Type': 'application/json' };
-        if (token) headers['Authorization'] = 'Bearer ' + token;
+        var json = await callApi('POST', '/predict', { body: { category: catName, features: featureMap } });
 
-        var res = await fetch('http://localhost:5000/api/ml/predict', {
-          method: 'POST',
-          headers: headers,
-          body: JSON.stringify({ category: catName, features: featureMap })
-        });
-
-        var json = await res.json();
-        if (res.ok) {
-          showMLResult("\n✅ PREDICTION VERDICT: " + json.prediction.toUpperCase(), true);
-          showMLResult("  Trained on: " + json.trainedOnSamples + " category dataset samples (k=" + json.k + ")");
-          showMLResult("  Features evaluated: " + json.featuresUsed.join(', '));
-          if (el('knn_out')) el('knn_out').textContent = json.prediction + ' (k-NN trained on ' + json.trainedOnSamples + ' ' + catName + ' samples)';
-        } else {
-          showMLResult("❌ Prediction failed: " + (json.message || 'Error occurred'), true);
+        showMLResult("\n✅ PREDICTION VERDICT: " + String(json.prediction).toUpperCase(), true);
+        if (typeof json.unsafeProbability === 'number') {
+          showMLResult("  Unsafe probability: " + pct(json.unsafeProbability));
         }
+        showMLResult("  Trained on: " + json.trainedOnSamples + " category dataset samples (k=" + json.k + ")");
+        showMLResult("  Features evaluated: " + json.featuresUsed.join(', '));
+
+        if (json.neighbors && json.neighbors.length) {
+          showMLResult("\n👥 NEAREST NEIGHBORS:", true);
+          json.neighbors.forEach(function (n, i) {
+            showMLResult("  #" + (i + 1) + ": label = " + n.label + ", distance = " + num(n.distance, 3));
+          });
+        }
+
+        if (json.evaluation) {
+          var ev = json.evaluation;
+          showMLResult("\n🎯 MODEL CHECK (k-NN, " + ev.n_train + " train / " + ev.n_test + " test):", true);
+          showMLResult("  Train Accuracy: " + pct(ev.train_accuracy));
+          showMLResult("  Test Accuracy:  " + pct(ev.test_accuracy));
+        }
+
+        if (el('knn_out')) el('knn_out').textContent = json.prediction + ' (k-NN trained on ' + json.trainedOnSamples + ' ' + catName + ' samples)';
       } catch (err) {
         console.error('k-NN request failed', err);
-        showMLResult("⚠️ Network error contacting backend prediction endpoint.", true);
+        showMLResult("❌ Prediction failed: " + (err.message || err), true);
       } finally {
         setButtonLoading(btn, false);
       }

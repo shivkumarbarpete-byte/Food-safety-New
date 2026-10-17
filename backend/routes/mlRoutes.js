@@ -1,8 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { predict, getDataset } = require('../controllers/mlController');
+const { getDataset, eda, histograms, linear, logistic, predict } = require('../controllers/mlController');
 
-router.get('/dataset', getDataset);
-router.post('/predict', predict);
+router.get('/dataset', getDataset);        // purana (JS loader)
+router.get('/eda', eda);                   // -> Python
+router.get('/histograms', histograms);     // -> Python
+router.post('/linear', linear);            // -> Python
+router.post('/logistic', logistic);        // -> Python (Logistic / Ridge / Lasso)
+router.post('/predict', predict);          // -> Python k-NN (ya purana legacy path)
 
 module.exports = router;
