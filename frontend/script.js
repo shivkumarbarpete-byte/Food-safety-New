@@ -470,7 +470,7 @@ document.addEventListener('DOMContentLoaded', function () {
     try {
         // In Consumer Mode, pH/moisture/temperature are not measured; send null.
         var isConsumer = (window.currentMode === 'consumer');
-        var res = await fetch('http://localhost:5000/api/reviews', {
+        var res = await fetch((window.API_BASE || 'http://localhost:5000') + '/api/reviews', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1041,7 +1041,7 @@ async function renderHistory() {
     }
 
     try {
-        var res = await fetch('http://localhost:5000/api/reviews', {
+        var res = await fetch((window.API_BASE || 'http://localhost:5000') + '/api/reviews', {
             headers: { 'Authorization': 'Bearer ' + token }
         });
         var arr = await res.json();
@@ -1072,7 +1072,7 @@ async function renderHistory() {
     var btn = el('exportCSV');
     setButtonLoading(btn, true, 'Exporting...');
     try {
-        var res = await fetch('http://localhost:5000/api/reviews', {
+        var res = await fetch((window.API_BASE || 'http://localhost:5000') + '/api/reviews', {
             headers: { 'Authorization': 'Bearer ' + token }
         });
         var a = await res.json();
@@ -1103,7 +1103,7 @@ async function renderHistory() {
     var btn = el('clearHistory');
     setButtonLoading(btn, true, 'Clearing...');
     try {
-        var res = await fetch('http://localhost:5000/api/reviews', {
+        var res = await fetch((window.API_BASE || 'http://localhost:5000') + '/api/reviews', {
             method: 'DELETE',
             headers: { 'Authorization': 'Bearer ' + token }
         });
@@ -2340,7 +2340,7 @@ async function executeKnnPrediction(triggerBtn) {
     if (el('knn_out')) el('knn_out').innerText = 'Predicting...';
     setButtonLoading(btn, true, 'Predicting...');
     try {
-        var res = await fetch('http://localhost:5000/api/ml/predict', {
+        var res = await fetch((window.API_BASE || 'http://localhost:5000') + '/api/ml/predict', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -3090,7 +3090,7 @@ window.downloadBatchCSV = function() {
 }); // END
 // ==================== AUTH MODAL LOGIC ====================
 (function () {
-  const API_BASE = 'http://localhost:5000/api';
+  const API_BASE = (window.API_BASE || 'http://localhost:5000') + '/api';
 
   const authModal = document.getElementById('authModal');
   const loginBtn = document.getElementById('loginBtn');

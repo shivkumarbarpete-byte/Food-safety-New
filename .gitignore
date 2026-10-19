@@ -1,9 +1,19 @@
-backend/node_modules/
-backend/.env
-frontend/node_modules/
-.env
-node_modules/node_modules/
-.env
+# --- Node ---
+node_modules/
+npm-debug.log*
+
+# --- Python ---
 venv/
 __pycache__/
 *.pyc
+*.pyo
+
+# --- Environment secrets (never commit these) ---
+.env
+.env.*
+!.env.example
+
+# --- Editor / OS ---
+.vscode/
+.DS_Store
+Thumbs.db

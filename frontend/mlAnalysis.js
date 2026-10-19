@@ -23,7 +23,7 @@ window.FSML = {
     var getMlChart = helpers.getMlChart;
     var setMlChart = helpers.setMlChart;
 
-    var API_BASE = 'http://localhost:5000/api/ml';
+    var API_BASE = (window.API_BASE || 'http://localhost:5000') + '/api/ml';
     var LINE = "━━━━━━━━━━━━━━━━━━━━━━━━━━";
 
     // ---------- Chhote helpers ----------

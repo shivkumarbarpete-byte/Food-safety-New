@@ -14,14 +14,20 @@
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <!-- jsPDF -->
-   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+  <!-- TensorFlow.js removed: ML logic is now handled by the Python FastAPI backend -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <!-- Barcode Scanner Library -->
 <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2/dist/quagga.min.js"></script>
   <!-- OCR for product-label text extraction -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  
-  
+
+  <!-- Shared backend base URL — change this one line for any deployment -->
+  <script>
+    window.API_BASE = (function () {
+      var stored = localStorage.getItem('fs_api_base');
+      return stored || 'http://localhost:5000';
+    }());
+  </script>
 </head>
 <body>
   <!-- Header -->
