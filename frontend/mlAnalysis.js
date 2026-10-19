@@ -370,7 +370,11 @@ window.FSML = {
           showMLResult("  Test Accuracy:  " + pct(ev.test_accuracy));
         }
 
-        if (el('knn_out')) el('knn_out').textContent = json.prediction + ' (k-NN trained on ' + json.trainedOnSamples + ' ' + catName + ' samples)';
+        if (el('knn_out')) {
+          var pText = (typeof json.unsafeProbability === 'number') ? pct(json.unsafeProbability) : 'N/A';
+          var aText = (json.evaluation && typeof json.evaluation.test_accuracy === 'number') ? pct(json.evaluation.test_accuracy) : 'N/A';
+          el('knn_out').textContent = json.prediction + ' | Unsafe Prob: ' + pText + ' | Test Acc: ' + aText + ' (k=' + json.k + ', trained on ' + json.trainedOnSamples + ' ' + catName + ' samples)';
+        }
       } catch (err) {
         console.error('k-NN request failed', err);
         showMLResult("❌ Prediction failed: " + (err.message || err), true);

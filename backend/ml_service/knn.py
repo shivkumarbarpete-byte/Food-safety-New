@@ -117,6 +117,182 @@ def predict_knn(category, feature_map, k=DEFAULT_K):
     }
 
 
+def _extract_feature_val(f_map, key):
+    """Case-insensitive and synonym lookup for CSV column names."""
+    if key in f_map:
+        return f_map[key]
+    k_lower = key.lower()
+    for k, v in f_map.items():
+        if str(k).lower() == k_lower:
+            return v
+    synonyms = {
+        "temperature_c": ["temp", "temperature", "temp_c", "measured_temp", "p_temp"],
+        "moisture_percent": ["moisture", "moisture_%", "moisture_pct", "humidity", "p_moisture"],
+        "storage_days": ["storage", "days", "storagedays", "shelf_days", "p_storage_days"],
+        "ph": ["measured_ph", "p_ph"],
+        "fat_percent": ["fat", "fat_%", "fatpercent", "p_fat_percent"],
+        "titratable_acidity": ["acidity", "titratableacidity", "p_titratable_acidity"],
+        "color_score": ["color", "colorscore", "p_color_score"],
+        "tvbn_level": ["tvbn", "tvbnlevel", "p_tvbn_level"],
+        "ripeness_index": ["ripeness", "ripenessindex", "p_ripeness_index"],
+        "sugar_content_percent": ["sugar", "sugar_%", "sugarpercent", "p_sugar_content_percent"],
+        "mold_risk_index": ["mold", "mold_risk", "moldrisk", "p_mold_risk_index"],
+        "temp_deviation_neg18": ["temp_dev", "temp_deviation", "p_temp_deviation_neg18"],
+        "oil_rancidity_index": ["rancidity", "oil_rancidity", "p_oil_rancidity_index"],
+        "hygiene_score": ["hygiene", "hygienescore", "p_hygiene_score"]
+    }
+    for syn in synonyms.get(k_lower, []):
+        for k, v in f_map.items():
+            if str(k).lower().strip() == syn:
+                return v
+    return None
+
+
+def predict_knn_batch(category, rows, k=DEFAULT_K):
+    """
+    Ek saath poori CSV ya batch of rows ko classify karta hai.
+    Scaler aur k-NN model category dataset par sirf EK baar fit hota hai.
+    """
+    cat = normalize_category(category or "Dairy")
+    df = load_category_dataset(cat)
+    if len(df) < MIN_ROWS:
+        raise ValueError(f"Not enough training data for category '{category}'. Found {len(df)} samples.")
+
+    feature_keys = get_feature_keys(cat)
+
+    # 1. Fit scaler and k-NN once
+    X_train = df[feature_keys].to_numpy(dtype=float)
+    y_train = df["Safety_Label"].to_numpy(dtype=int)
+    k_final = max(1, min(k, len(y_train)))
+
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    knn = KNeighborsClassifier(n_neighbors=k_final)
+    knn.fit(X_train_scaled, y_train)
+
+    parsed_rows = []
+    valid_vectors = []
+    valid_indices = []
+
+    for idx, row in enumerate(rows):
+        if not isinstance(row, dict):
+            parsed_rows.append({
+                "row_index": idx + 1,
+                "name": f"Row #{idx + 1}",
+                "status": "error",
+                "verdict": "ERROR",
+                "confidence": None,
+                "unsafe_probability": None,
+                "nearest_distance": None,
+                "error": "Row data is not an object"
+            })
+            continue
+
+        f_map = row.get("features", row) if isinstance(row.get("features"), dict) else row
+        row_name = (
+            row.get("name")
+            or row.get("product_name")
+            or row.get("Product Name")
+            or row.get("Product")
+            or row.get("Name")
+            or f"Row #{idx + 1}"
+        )
+
+        vector = []
+        missing_errors = []
+        for key in feature_keys:
+            val = _extract_feature_val(f_map, key)
+            if val is None or str(val).strip() == "":
+                missing_errors.append(f"Missing '{key}'")
+                continue
+            try:
+                num = float(val)
+                if not np.isfinite(num):
+                    missing_errors.append(f"'{key}' must be finite")
+                    continue
+                vector.append(num)
+            except (TypeError, ValueError):
+                missing_errors.append(f"Invalid '{key}' ({val!r})")
+
+        if missing_errors:
+            parsed_rows.append({
+                "row_index": idx + 1,
+                "name": str(row_name),
+                "status": "error",
+                "verdict": "ERROR",
+                "confidence": None,
+                "unsafe_probability": None,
+                "nearest_distance": None,
+                "error": "; ".join(missing_errors)
+            })
+            continue
+
+        valid_indices.append(len(parsed_rows))
+        valid_vectors.append(vector)
+        parsed_rows.append({
+            "row_index": idx + 1,
+            "name": str(row_name),
+            "status": "ok",
+            "prediction": None,
+            "verdict": None,
+            "confidence": None,
+            "unsafe_probability": None,
+            "nearest_distance": None,
+            "error": None
+        })
+
+    # Predict all valid rows together
+    safe_count = 0
+    unsafe_count = 0
+    error_count = len(parsed_rows) - len(valid_vectors)
+    confidences = []
+
+    if valid_vectors:
+        X_batch = np.array(valid_vectors, dtype=float)
+        X_batch_scaled = scaler.transform(X_batch)
+        preds = knn.predict(X_batch_scaled)
+        probs = knn.predict_proba(X_batch_scaled)
+        distances, _ = knn.kneighbors(X_batch_scaled)
+
+        unsafe_idx = list(knn.classes_).index(1) if 1 in knn.classes_ else -1
+
+        for i, target_idx in enumerate(valid_indices):
+            pred = int(preds[i])
+            unsafe_prob = float(probs[i][unsafe_idx]) if unsafe_idx >= 0 else 0.0
+            conf = (1.0 - unsafe_prob) if pred == 0 else unsafe_prob
+            confidences.append(conf)
+            nearest_dist = float(round(distances[i][0], 3))
+            verdict_str = "SAFE" if pred == 0 else "UNSAFE"
+
+            if pred == 0:
+                safe_count += 1
+            else:
+                unsafe_count += 1
+
+            parsed_rows[target_idx]["prediction"] = pred
+            parsed_rows[target_idx]["verdict"] = verdict_str
+            parsed_rows[target_idx]["confidence"] = round(conf, 4)
+            parsed_rows[target_idx]["unsafe_probability"] = round(unsafe_prob, 4)
+            parsed_rows[target_idx]["nearest_distance"] = nearest_dist
+
+    avg_conf = round(float(np.mean(confidences)), 4) if confidences else 0.0
+    results = parsed_rows
+
+    return {
+        "category": cat,
+        "total": len(rows),
+        "safe_count": safe_count,
+        "unsafe_count": unsafe_count,
+        "error_count": error_count,
+        "avg_confidence": avg_conf,
+        "features_used": feature_keys,
+        "trained_on": len(df),
+        "k": k_final,
+        "results": results,
+        "disclaimer": "Predictions come from a model trained on the synthetic dataset."
+    }
+
+
 if __name__ == "__main__":
     import json
 

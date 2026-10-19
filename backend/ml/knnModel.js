@@ -38,25 +38,4 @@ async function trainAndPredictCategory(category, inputFeatureMap) {
   };
 }
 
-// Backwards compatibility function for [pH, moisture, temperature, catCode]
-async function trainAndPredict(inputArray, userId) {
-  const pH = inputArray[0];
-  const moisture = inputArray[1];
-  const temp = inputArray[2];
-
-  const dataset = loadCategoryDataset('All');
-  const trainingSet = dataset.map(r => [r.pH || 7.0, r.moisture || 50, r.temperature || 25]);
-  const labels = dataset.map(r => r.Safety_Label);
-
-  const k = Math.min(5, dataset.length);
-  const model = new knn(trainingSet, labels, { k });
-  const prediction = model.predict([[pH, moisture, temp]]);
-
-  return {
-    prediction: prediction[0],
-    trainedOn: dataset.length,
-    k: k
-  };
-}
-
-module.exports = { trainAndPredictCategory, trainAndPredict };
+module.exports = { trainAndPredictCategory };

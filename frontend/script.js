@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (pH !== null && (pH < 0 || pH > 14)) missingFields.push('Invalid pH (0-14)');
             if (moisture !== null && (moisture < 0 || moisture > 100)) missingFields.push('Invalid Moisture (0-100%)');
-            if (temperature !== null && (temperature < -50 || temperature > 150)) missingFields.push('Invalid Temp (-50 to 150Â°C)');
+            if (temperature !== null && (temperature < -50 || temperature > 150)) missingFields.push('Invalid Temp (-50 to 150°C)');
         }
 
         var sugar = numVal('n_sugar'), sodium = numVal('n_sodium'), sat = numVal('n_sat'), trans = numVal('n_trans'), kcal = numVal('n_kcal');
@@ -325,23 +325,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (isInsufficient) {
             riskLevelState = 'INSUFFICIENT INFORMATION';
-            verdict = 'Insufficient Information for Screening Assessment';
+            verdict = 'Insufficient Information — Please enter product name, expiry date, or ingredients.';
             badge = 'badge-warn';
             score = 0;
             notes.push("⚠️ Insufficient product information provided for screening assessment.");
-        } else if (score <= 30) {
-            riskLevelState = 'LOW CONCERN';
-            verdict = 'No obvious issue found in the available product information.';
+        } else if (score <= 40) {
+            riskLevelState = 'SAFE (LOW RISK)';
+            verdict = 'Safe — No obvious issue found in available product information.';
             badge = 'badge-safe';
             notes.push("✅ No obvious issue found in available product information.");
         } else if (score >= 70) {
-            riskLevelState = 'HIGH CONCERN';
-            verdict = 'Potential issue detected in the available product information.';
+            riskLevelState = 'UNSAFE (HIGH RISK)';
+            verdict = 'Unsafe — Potential issue detected in available product information.';
             badge = 'badge-risk';
             notes.push("⚠️ Potential issue detected in available product information.");
         } else {
-            riskLevelState = 'MODERATE CONCERN';
-            verdict = 'Some information requires attention.';
+            riskLevelState = 'CAUTION (MODERATE RISK)';
+            verdict = 'Caution — Some information requires attention.';
             badge = 'badge-warn';
             notes.push("⚠️ Some information requires attention.");
         }
@@ -413,15 +413,21 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         var ul = el('bullets'); if (ul) { ul.innerHTML = ''; r.notes.forEach(function (n) { var li = document.createElement('li'); li.innerHTML = '<i class="fas fa-info-circle"></i> ' + n; ul.appendChild(li); }); }
-        var v = el('verdict'); if (v) { v.textContent = r.verdict; v.className = 'badge ' + r.badge; }
-        var fd = el('fopWarnings'); if (fd) { if (r.fopWarnings.length) { fd.innerHTML = '🚨 ' + r.fopWarnings.join(' â€¢ '); fd.style.display = 'block'; } else fd.style.display = 'none'; }
+        var v = el('verdict');
+        if (v) {
+            var labelText = (r.score <= 40 ? 'SAFE' : (r.score >= 70 ? 'UNSAFE' : 'CAUTION'));
+            if (r.riskLevelState === 'INSUFFICIENT INFORMATION') labelText = 'INSUFFICIENT INFO';
+            v.innerHTML = '<strong>' + labelText + '</strong> (Risk Score: ' + r.score + '/100) — ' + escapeHtml(r.verdict);
+            v.className = 'badge ' + r.badge;
+        }
+        var fd = el('fopWarnings'); if (fd) { if (r.fopWarnings.length) { fd.innerHTML = '🚨 ' + r.fopWarnings.join(' • '); fd.style.display = 'block'; } else fd.style.display = 'none'; }
 
         // Render "Why was this result given?" breakdown box
         var whyBox = el('resultWhyBox');
         if (whyBox) {
             var whyHtml = '<div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px 16px; margin-top:12px; font-size: 0.9rem; color: #334155;">';
             whyHtml += '<h5 style="color:#0284c7; margin-bottom:4px;">WHAT WE CHECKED</h5>';
-            whyHtml += '<p style="margin-top:0; margin-bottom:12px;">âœ“ Expiry âœ“ Ingredients âœ“ Allergens âœ“ Additives âœ“ Label information</p>';
+            whyHtml += '<p style="margin-top:0; margin-bottom:12px;">✓ Expiry ✓ Ingredients ✓ Allergens ✓ Additives ✓ Label information</p>';
             
             whyHtml += '<h5 style="color:#0284c7; margin-bottom:4px;">WHAT WE FOUND</h5>';
             whyHtml += '<p style="margin-top:0; margin-bottom:12px;">' + escapeHtml(r.verdict) + '</p>';
@@ -452,6 +458,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (riskChart) { riskChart.data.labels = Object.keys(r.breakdown); riskChart.data.datasets[0].data = Object.values(r.breakdown); riskChart.update(); }
+
+        var resCard = el('results-section-card');
+        if (resCard) {
+            resCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
 
         showToast('Safety check complete: ' + r.verdict, r.score > 60 ? 'error' : (r.score > 30 ? 'warning' : 'success'));
         } catch (err) {
@@ -594,7 +605,7 @@ document.addEventListener('DOMContentLoaded', function () {
         y += 6;
         r.notes.forEach(function (n) { 
             if (y > 260) { doc.addPage(); y = 20; } 
-            var lines = doc.splitTextToSize('â€¢ ' + n, 174);
+            var lines = doc.splitTextToSize('• ' + n, 174);
             doc.text(lines, 18, y); 
             y += (lines.length * 4) + 2; 
         }); 
@@ -722,7 +733,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         var dec = 'Analysis Complete';
         if (!isNaN(L) && n > 1) {
-            dec = p < alpha ? 'Exceeds Reference Limit (p < Î±)' : 'Within Reference Limit (p â‰¥ Î±)';
+            dec = p < alpha ? 'Exceeds Reference Limit (p < α)' : 'Within Reference Limit (p ≥ α)';
             if (summary) { 
                 summary.textContent = dec; 
                 summary.className = 'badge ' + (p < alpha ? 'badge-risk' : 'badge-safe'); 
@@ -738,8 +749,8 @@ document.addEventListener('DOMContentLoaded', function () {
         var interpretation = 'Reference limit not provided. Cannot determine safety.';
         if (!isNaN(L) && n > 1) {
             interpretation = p < alpha ? 
-                'Statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' > ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' < Î± = ' + alpha + ').' :
-                'No statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' â‰¤ ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' â‰¥ Î± = ' + alpha + ').';
+                'Statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' > ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' < α = ' + alpha + ').' :
+                'No statistically significant evidence that sample mean exceeds reference limit (' + escapeHtml(param) + ' ≤ ' + L + ' ' + escapeHtml(unit) + ', p = ' + p.toFixed(4) + ' ≥ α = ' + alpha + ').';
         }
 
         var facility = el('lab_facility') ? el('lab_facility').value.trim() : '';
@@ -752,11 +763,11 @@ document.addEventListener('DOMContentLoaded', function () {
             (testMethod ? '<strong>Test Method / Standard:</strong> ' + escapeHtml(testMethod) : null),
             '<strong>Parameter Evaluated:</strong> ' + escapeHtml(param) + ' (' + escapeHtml(unit) + ')',
             '<strong>User-Entered Measurements:</strong> ' + data.join(', ') + ' ' + escapeHtml(unit),
-            '<strong>Sample Size (n):</strong> ' + n + ' | <strong>Sample Mean (xÌ„):</strong> ' + mean.toFixed(2) + ' ' + escapeHtml(unit),
+            '<strong>Sample Size (n):</strong> ' + n + ' | <strong>Sample Mean (x̄):</strong> ' + mean.toFixed(2) + ' ' + escapeHtml(unit),
             (!isNaN(L) ? '<strong>Reference Threshold Limit (L):</strong> ' + L + ' ' + escapeHtml(unit) + ' <small style="color:#6b7280;">[' + escapeHtml(sourceText) + ']</small>' : '<strong>Reference Threshold Limit:</strong> Reference limit not provided.'),
-            (!isNaN(L) && n > 1 ? '<strong>Statistical Model Used:</strong> ' + (useZ ? 'Z-Test (known Ïƒ = ' + sigma + ')' : 'T-Test (sample s = ' + sd.toFixed(2) + ')') : null),
+            (!isNaN(L) && n > 1 ? '<strong>Statistical Model Used:</strong> ' + (useZ ? 'Z-Test (known σ = ' + sigma + ')' : 'T-Test (sample s = ' + sd.toFixed(2) + ')') : null),
             (!isNaN(L) && n > 1 ? '<strong>Standard Error (SE):</strong> ' + se.toFixed(2) + ' | <strong>Test Statistic (' + (useZ ? 'z' : 't') + '):</strong> ' + z.toFixed(2) : null),
-            (!isNaN(L) && n > 1 ? '<strong>p-value:</strong> ' + p.toFixed(4) + ' (Alpha level Î± = ' + alpha + ', Confidence Level = ' + Math.round((1 - alpha) * 100) + '%)' : null),
+            (!isNaN(L) && n > 1 ? '<strong>p-value:</strong> ' + p.toFixed(4) + ' (Alpha level α = ' + alpha + ', Confidence Level = ' + Math.round((1 - alpha) * 100) + '%)' : null),
             '<strong>Statistical Interpretation:</strong> ' + interpretation,
             (analyst || reviewer ? '<strong>Personnel:</strong> Analyst: ' + escapeHtml(analyst || 'N/A') + ' | Reviewer: ' + escapeHtml(reviewer || 'N/A') : null)
         ];
@@ -960,15 +971,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
-        doc.text('Statistical Method: ' + (res.useZ ? 'Z-Test (known Ïƒ)' : 'One-Sample T-Test (sample s)'), 16, y);
+        doc.text('Statistical Method: ' + (res.useZ ? 'Z-Test (known σ)' : 'One-Sample T-Test (sample s)'), 16, y);
         doc.text('Sample Size (n): ' + res.n, 120, y);
         y += 6;
-        doc.text('Sample Mean (xÌ„): ' + res.mean.toFixed(2) + ' ' + res.unit, 16, y);
-        doc.text('Std Dev (s/Ïƒ): ' + res.sd.toFixed(2) + ' ' + res.unit, 80, y);
+        doc.text('Sample Mean (x̄): ' + res.mean.toFixed(2) + ' ' + res.unit, 16, y);
+        doc.text('Std Dev (s/σ): ' + res.sd.toFixed(2) + ' ' + res.unit, 80, y);
         doc.text('Std Error (SE): ' + res.se.toFixed(2), 140, y);
         y += 6;
         doc.text('Test Statistic (' + (res.useZ ? 'z' : 't') + '): ' + res.z.toFixed(2), 16, y);
-        doc.text('p-value: ' + res.p.toFixed(4) + ' (Î± = ' + res.alpha + ')', 80, y);
+        doc.text('p-value: ' + res.p.toFixed(4) + ' (α = ' + res.alpha + ')', 80, y);
         y += 6;
 
         doc.setFont('helvetica', 'bold');
@@ -1156,7 +1167,7 @@ async function renderHistory() {
       "Dairy": {
         csvCategory: "Dairy",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. 4.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 4.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 85.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 3", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
@@ -1169,7 +1180,7 @@ async function renderHistory() {
       "Meat & Poultry": {
         csvCategory: "Meat_Poultry",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. 2.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 2.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 72.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 2", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
@@ -1181,7 +1192,7 @@ async function renderHistory() {
       "Seafood": {
         csvCategory: "Seafood",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. -1.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. -1.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 78.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 1", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
@@ -1192,7 +1203,7 @@ async function renderHistory() {
       "Fresh Produce": {
         csvCategory: "Fresh_Produce",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. 10.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 10.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 88.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 3", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
@@ -1203,7 +1214,7 @@ async function renderHistory() {
       "Beverage": {
         csvCategory: "Beverage",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. 5.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 5.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 92.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 10", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
@@ -1215,7 +1226,7 @@ async function renderHistory() {
       "Bakery": {
         csvCategory: "Bakery",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. 20.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 20.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 20.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 2", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
@@ -1226,18 +1237,18 @@ async function renderHistory() {
       "Frozen Food": {
         csvCategory: "Frozen_Food",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. -20.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. -20.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 65.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 20", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
         specific: [
-          { key: "Temp_Deviation_Neg18", label: "Temp Deviation from -18Â°C", id: "p_temp_deviation", placeholder: "e.g. 1.0", min: -20, max: 30, step: 0.1, icon: "fa-snowflake" }
+          { key: "Temp_Deviation_Neg18", label: "Temp Deviation from -18°C", id: "p_temp_deviation", placeholder: "e.g. 1.0", min: -20, max: 30, step: 0.1, icon: "fa-snowflake" }
         ]
       },
       "Baby Food": {
         csvCategory: "Baby_Food",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. 4.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 4.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 80.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 2", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
@@ -1248,7 +1259,7 @@ async function renderHistory() {
       "Packaged Snack": {
         csvCategory: "Packaged_Snack",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. 24.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 24.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 3.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 30", min: 0, max: 365, step: 1, icon: "fa-calendar-alt" }
         ],
@@ -1259,7 +1270,7 @@ async function renderHistory() {
       "Street Food": {
         csvCategory: "Street_Food",
         common: [
-          { key: "Temperature_C", label: "Measured Temp (Â°C)", id: "p_temp", placeholder: "e.g. 5.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
+          { key: "Temperature_C", label: "Measured Temp (°C)", id: "p_temp", placeholder: "e.g. 5.0", min: -50, max: 150, step: 0.1, icon: "fa-thermometer-half" },
           { key: "Moisture_percent", label: "Measured Moisture (%)", id: "p_moisture", placeholder: "e.g. 60.0", min: 0, max: 100, step: 0.1, icon: "fa-tint" },
           { key: "Storage_Days", label: "Storage Days", id: "p_storage_days", placeholder: "e.g. 0.5", min: 0, max: 365, step: 0.1, icon: "fa-calendar-alt" }
         ],
@@ -1367,19 +1378,19 @@ async function renderHistory() {
 
                 var vegScore = p.green + p.yellow + p.cream;
                 var nonVegScore = p.red + p.brown + p.dark;
-                var veg = Math.abs(vegScore - nonVegScore) < 3 ? "Unclear ⚠️" : (vegScore > nonVegScore ? "Likely Veg ðŸŸ¢" : "Likely Non-Veg ðŸ”´");
+                var veg = Math.abs(vegScore - nonVegScore) < 3 ? "Unclear ⚠️" : (vegScore > nonVegScore ? "Likely Veg 🟢" : "Likely Non-Veg 🔴");
 
                 var colorTotal = p.red + p.green + p.blue + p.yellow + p.orange + p.brown + p.cream;
                 var isFood = colorTotal > 30;
 
                 var checks = [];
-                if (colorTotal > 30) checks.push("âœ“ Food colors (" + colorTotal.toFixed(0) + "%)"); else checks.push("âœ— Low food colors");
-                if (dark > 5 || white > 2) checks.push("âœ“ Text detected"); else checks.push("âš  Little text");
-                if (canvas.width > 150) checks.push("âœ“ Resolution " + canvas.width + "x" + canvas.height); else checks.push("âœ— Low resolution");
+                if (colorTotal > 30) checks.push("✓ Food colors (" + colorTotal.toFixed(0) + "%)"); else checks.push("✗ Low food colors");
+                if (dark > 5 || white > 2) checks.push("✓ Text detected"); else checks.push("⚠️ Little text");
+                if (canvas.width > 150) checks.push("✓ Resolution " + canvas.width + "x" + canvas.height); else checks.push("✗ Low resolution");
 
                 resolve({ isFood: isFood, topCat: topCat, secondCat: secondCat, confidence: confidence, veg: veg, checks: checks });
             };
-            img.onerror = function () { resolve({ isFood: false, topCat: "Unknown", secondCat: "Unknown", confidence: 0, veg: "Unknown", checks: ["âœ— Invalid image"] }); };
+            img.onerror = function () { resolve({ isFood: false, topCat: "Unknown", secondCat: "Unknown", confidence: 0, veg: "Unknown", checks: ["✗ Invalid image"] }); };
             img.src = imageDataUrl;
         });
     }
@@ -1715,7 +1726,7 @@ function fetchProductFromAPI(barcode) {
 
             // Auto-fill button
             html += '<div style="margin-top:15px; text-align:center;">';
-            html += '<button onclick="autoFillFromBarcode(\'' + escapeHtml(name).replace(/'/g, "\\'") + '\',\'' + ourCategory + '\',\'' + escapeHtml(ingredients).replace(/'/g, "\\'") + '\',\'' + origin + '\',' + (kcal || 0) + ',' + (sugar || 0) + ',' + (sodium ? sodium * 1000 : 0) + ',' + (sat || 0) + ',' + (trans || 0) + ',\'' + (expDateFormatted !== 'Data unavailable' ? expDateFormatted : '') + '\')" class="btn" style="background:#16a34a; color:white; padding:12px 30px; font-size:1rem; border-radius:8px; border:none; cursor:pointer;">';
+            html += '<button id="autoFillBarcodeBtn" type="button" class="btn" style="background:#16a34a; color:white; padding:12px 30px; font-size:1rem; border-radius:8px; border:none; cursor:pointer;">';
             html += '<i class="fas fa-magic"></i> Auto-Fill Form with This Data</button>';
             html += '</div>';
             
@@ -1727,6 +1738,31 @@ function fetchProductFromAPI(barcode) {
             html += '</div>';
             
             resultDiv.innerHTML = html;
+
+            // Store product data securely in a global object
+            window.lastBarcodeProduct = {
+                name: name,
+                category: ourCategory,
+                ingredients: ingredients,
+                origin: origin,
+                kcal: kcal || 0,
+                sugar: sugar || 0,
+                sodium: (sodium ? sodium * 1000 : 0),
+                sat: sat || 0,
+                trans: trans || 0,
+                expDate: (expDateFormatted !== 'Data unavailable' ? expDateFormatted : '')
+            };
+
+            // Attach robust click listener without inline HTML string arguments
+            var autoFillBtn = el('autoFillBarcodeBtn');
+            if (autoFillBtn) {
+                autoFillBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    if (window.lastBarcodeProduct) {
+                        window.autoFillFromBarcode(window.lastBarcodeProduct);
+                    }
+                });
+            }
             return data;
         })
         .catch(function (err) {
@@ -1736,27 +1772,58 @@ function fetchProductFromAPI(barcode) {
 }
 
 
-// --- Auto-fill form from barcode data ---
-// This function needs to be global for onclick to work
-window.autoFillFromBarcode = function(name, category, ingredients, origin, kcal, sugar, sodium, sat, trans, expDate) {
+// --- Unified Auto-fill form from barcode data ---
+// Accepts either an object (e.g. window.lastBarcodeProduct) or individual parameters
+window.autoFillFromBarcode = function(pData, category, ingredients, origin, kcal, sugar, sodium, sat, trans, expDate) {
+    var data = (pData && typeof pData === 'object') ? pData : {
+        name: pData,
+        category: category,
+        ingredients: ingredients,
+        origin: origin,
+        kcal: kcal,
+        sugar: sugar,
+        sodium: sodium,
+        sat: sat,
+        trans: trans,
+        expDate: expDate
+    };
+
     window.lastDataOrigin = 'Retrieved from Open Food Facts API';
-    if (el('p_name')) el('p_name').value = name;
-    if (el('p_cat')) el('p_cat').value = category;
-    if (el('p_ing')) el('p_ing').value = ingredients;
-    if (el('p_origin')) el('p_origin').value = origin;
-    if (el('p_exp')) el('p_exp').value = expDate || '';
+
+    if (el('p_name')) el('p_name').value = data.name || '';
+    if (el('p_cat')) el('p_cat').value = data.category || 'Packaged Snack';
+    if (el('p_ing')) el('p_ing').value = data.ingredients || '';
+    if (el('p_origin')) el('p_origin').value = data.origin || 'India';
+
+    if (el('p_exp')) {
+        var formattedDate = '';
+        var exp = data.expDate;
+        if (exp) {
+            if (/^\d{4}-\d{2}-\d{2}$/.test(exp)) {
+                formattedDate = exp;
+            } else {
+                var parsedDate = new Date(exp);
+                if (!isNaN(parsedDate.getTime())) {
+                    formattedDate = parsedDate.toISOString().split('T')[0];
+                } else {
+                    formattedDate = exp;
+                }
+            }
+        }
+        el('p_exp').value = formattedDate;
+    }
     
-    if (kcal && el('n_kcal')) el('n_kcal').value = Math.round(kcal);
-    if (sugar && el('n_sugar')) el('n_sugar').value = parseFloat(sugar).toFixed(1);
-    if (sodium && el('n_sodium')) el('n_sodium').value = Math.round(sodium);
-    if (sat && el('n_sat')) el('n_sat').value = parseFloat(sat).toFixed(1);
-    if (trans && el('n_trans')) el('n_trans').value = parseFloat(trans).toFixed(1);
+    if (data.kcal && el('n_kcal')) el('n_kcal').value = Math.round(data.kcal);
+    if (data.sugar && el('n_sugar')) el('n_sugar').value = parseFloat(data.sugar).toFixed(1);
+    if (data.sodium && el('n_sodium')) el('n_sodium').value = Math.round(data.sodium);
+    if (data.sat && el('n_sat')) el('n_sat').value = parseFloat(data.sat).toFixed(1);
+    if (data.trans && el('n_trans')) el('n_trans').value = parseFloat(data.trans).toFixed(1);
     
     // Check missing fields for explicit warning
     var missing = [];
-    if (!expDate) missing.push('Expiry Date');
-    if (!ingredients) missing.push('Ingredients List');
-    if (!sugar && !sodium) missing.push('Nutrition Details');
+    if (!data.expDate) missing.push('Expiry Date');
+    if (!data.ingredients) missing.push('Ingredients List');
+    if (!data.sugar && !data.sodium) missing.push('Nutrition Details');
 
     var barcodeStepBanner = el('barcodeStepBanner');
     if (!barcodeStepBanner) {
@@ -1769,9 +1836,9 @@ window.autoFillFromBarcode = function(name, category, ingredients, origin, kcal,
     var stepHtml = '<div style="margin-bottom:20px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:16px;">';
     stepHtml += '<h4 style="color:#15803d; font-size:0.95rem; margin-bottom:10px;"><i class="fas fa-barcode"></i> Barcode Retrieval Flow Status</h4>';
     stepHtml += '<div style="display:flex; flex-wrap:wrap; gap:8px; font-size:0.82rem; margin-bottom:10px;">';
-    stepHtml += '<span class="badge" style="background:#dcfce7; color:#15803d;">âœ“ STEP 1: Product Found</span>';
-    stepHtml += '<span class="badge" style="background:#dcfce7; color:#15803d;">âœ“ STEP 2: Details Loaded</span>';
-    stepHtml += '<span class="badge" style="background:#dcfce7; color:#15803d;">âœ“ STEP 3: Form Updated</span>';
+    stepHtml += '<span class="badge" style="background:#dcfce7; color:#15803d;">✓ STEP 1: Product Found</span>';
+    stepHtml += '<span class="badge" style="background:#dcfce7; color:#15803d;">✓ STEP 2: Details Loaded</span>';
+    stepHtml += '<span class="badge" style="background:#dcfce7; color:#15803d;">✓ STEP 3: Form Updated</span>';
     stepHtml += '<span class="badge" style="background:#e0f2fe; color:#0369a1;">STEP 4: Ready for Safety Check</span>';
     stepHtml += '<span class="badge" style="background:' + (missing.length ? '#fef3c7' : '#dcfce7') + '; color:' + (missing.length ? '#92400e' : '#15803d') + ';">STEP 5: ' + (missing.length ? 'Missing Info Identified' : 'Info Complete') + '</span>';
     stepHtml += '<span class="badge" style="background:#faf5ff; color:#6d28d9;">STEP 6: Lab Parameters Mapped</span>';
@@ -1791,8 +1858,8 @@ window.autoFillFromBarcode = function(name, category, ingredients, origin, kcal,
     barcodeStepBanner.style.display = 'block';
 
     // Set temperature range
-    var range = tempRanges[category];
-    if (range) {
+    if (typeof tempRanges !== 'undefined' && tempRanges[data.category]) {
+        var range = tempRanges[data.category];
         if (el('t_min')) el('t_min').value = range[0];
         if (el('t_max')) el('t_max').value = range[1];
     }
@@ -1800,8 +1867,24 @@ window.autoFillFromBarcode = function(name, category, ingredients, origin, kcal,
     if (el('fssai')) el('fssai').value = '';
     if (el('barcodeResult')) el('barcodeResult').style.display = 'none';
     
-    if (el('p_name')) {
-        el('p_name').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // In Consumer Mode, trigger proxy questionnaire for detected category directly
+    if (window.currentMode === 'consumer') {
+        var resCard = el('consumerResultCard');
+        if (resCard) resCard.style.display = 'none';
+        if (typeof renderDynamicQuestions === 'function') {
+            renderDynamicQuestions(data.category);
+        }
+    }
+
+    // Scroll to the form
+    var targetEl = el('analyzerForm') || el('p_name');
+    if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Show success toast
+    if (typeof showToast === 'function') {
+        showToast('Form auto-filled with product data (' + (data.name || 'Product') + ')!', 'success');
     }
 };
 
@@ -1848,7 +1931,7 @@ function startCameraScan() {
             var resultDiv = el('barcodeResult');
             if (resultDiv) {
                 resultDiv.style.display = 'block';
-                resultDiv.innerHTML = '<div style="padding:15px; background:#fffbeb; border:2px solid #f59e0b; border-radius:8px; color:#92400e; text-align:center;"><strong>ðŸ“· Camera not available</strong><br><small>Error: ' + err.message + '</small><br><br><strong>Alternatives:</strong><br>â€¢ Upload barcode image<br>â€¢ Type barcode number manually</div>';
+                resultDiv.innerHTML = '<div style="padding:15px; background:#fffbeb; border:2px solid #f59e0b; border-radius:8px; color:#92400e; text-align:center;"><strong>📷 Camera not available</strong><br><small>Error: ' + err.message + '</small><br><br><strong>Alternatives:</strong><br>• Upload barcode image<br>• Type barcode number manually</div>';
             }
             return;
         }
@@ -1897,7 +1980,7 @@ function scanBarcodeFromFile(file) {
     var resultDiv = el('barcodeResult');
     if (resultDiv) {
         resultDiv.style.display = 'block';
-        resultDiv.innerHTML = '<div style="padding:15px; background:#dbeafe; border-radius:8px; text-align:center;">â³ Scanning barcode from image...</div>';
+        resultDiv.innerHTML = '<div style="padding:15px; background:#dbeafe; border-radius:8px; text-align:center;"><i class="fas fa-spinner fa-spin"></i> Scanning barcode from image...</div>';
     }
     
     var reader = new FileReader();
@@ -1994,259 +2077,610 @@ document.addEventListener('visibilitychange', function() {
         stopCameraScan();
     }
 });
+
 // ==========================================
-// UPDATED: CSV BATCH ANALYSIS & PROCESSING
+// CSV BATCH ANALYSIS & PROCESSING (ML k-NN)
 // ==========================================
 
-// 1. CSV File Processor (Triggered on file upload)
-function processCSV(file, callback) {
+function parseCSVFile(text) {
+    var rawLines = text.split(/\r?\n/).map(function(l) { return l.trim(); }).filter(function(l) { return l.length > 0; });
+    if (rawLines.length === 0) return { headers: [], rows: [] };
+
+    function parseLine(line) {
+        var res = [];
+        var cur = '';
+        var inQuotes = false;
+        for (var i = 0; i < line.length; i++) {
+            var ch = line[i];
+            if (ch === '"') {
+                if (inQuotes && line[i + 1] === '"') {
+                    cur += '"';
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (ch === ',' && !inQuotes) {
+                res.push(cur.trim());
+                cur = '';
+            } else {
+                cur += ch;
+            }
+        }
+        res.push(cur.trim());
+        return res;
+    }
+
+    var headerRow = parseLine(rawLines[0]).map(function(h) { return h.replace(/^["']|["']$/g, '').trim(); });
+    var rows = [];
+
+    for (var i = 1; i < rawLines.length; i++) {
+        var cols = parseLine(rawLines[i]);
+        if (cols.length === 0 || (cols.length === 1 && !cols[0])) continue;
+        var rowObj = {};
+        for (var j = 0; j < headerRow.length; j++) {
+            var h = headerRow[j];
+            rowObj[h] = (cols[j] !== undefined ? cols[j].replace(/^["']|["']$/g, '').trim() : '');
+        }
+        rows.push(rowObj);
+    }
+
+    return { headers: headerRow, rows: rows };
+}
+
+// 1. CSV File Processor (Triggered on file upload or button click)
+async function processCSV(file, callback) {
     if (!file) {
         if (typeof callback === 'function') callback();
         return;
     }
 
+    var outDiv = el('csv-batch-results');
+    if (outDiv) {
+        outDiv.innerHTML = '<div style="padding:15px; background:#f8fafc; border-radius:8px; border:1px solid var(--border); color:var(--text-dark);">' +
+            '<i class="fas fa-spinner fa-spin" style="margin-right:8px; color:var(--primary);"></i> Sending batch to ML service for prediction using the trained model...' +
+            '</div>';
+    }
+
     var reader = new FileReader();
-    reader.onload = function (e) {
+    reader.onload = async function (e) {
         try {
             var text = e.target.result;
-            var rows = text.split('\n').map(function (r) { return r.split(','); });
-            
-            // Remove empty rows
-            rows = rows.filter(function (r) { return r.length > 1 && r[0].trim() !== ''; });
+            var parsed = parseCSVFile(text);
+            var rows = parsed.rows;
 
-           if (rows.length < 1) {
-    if (el('csv-batch-results')) {
-        el('csv-batch-results').innerHTML =
-            '<div style="color:red; padding:10px;">CSV file is empty.</div>';
-    }
-    if (typeof callback === 'function') callback();
-    return;
-}
-            var startIndex = 0;
-            var firstRowStr = rows[0].join(' ').toLowerCase();
-            if (firstRowStr.includes('name') || firstRowStr.includes('product')) {
-                startIndex = 1;
+            if (rows.length < 1) {
+                if (outDiv) {
+                    outDiv.innerHTML = '<div style="color:#dc2626; padding:12px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px;">❌ CSV file is empty or has only headers.</div>';
+                }
+                showToast('CSV file contains no data rows', 'warning');
+                return;
             }
 
-            var dataRows = rows.slice(startIndex);
-            
-            // Show Toast Feedback
-            showToast("Loaded " + dataRows.length + " products. Analyzing...", "info");
+            if (rows.length > 500) {
+                if (outDiv) {
+                    outDiv.innerHTML = '<div style="color:#dc2626; padding:12px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px;">❌ CSV batch exceeds maximum limit of 500 rows.</div>';
+                }
+                showToast('Batch exceeds maximum limit of 500 rows', 'error');
+                return;
+            }
 
-            // RUN BATCH ANALYSIS
-            showCSVBatchAnalysis(dataRows);
+            // Determine category:
+            // 1. From CSV row's Category/category column if present and non-empty
+            // 2. Fallback to UI selection (p_cat, mlCategorySelect, etc.)
+            var detectedCategory = null;
+            for (var r = 0; r < rows.length; r++) {
+                var rowCat = rows[r].Category || rows[r].category || rows[r].cat || rows[r].Food_Category;
+                if (rowCat && String(rowCat).trim()) {
+                    detectedCategory = String(rowCat).trim();
+                    break;
+                }
+            }
+
+            var uiCat = (el('p_cat') && el('p_cat').value) ||
+                        (el('mlCategorySelect') && el('mlCategorySelect').value) ||
+                        'Dairy';
+
+            var finalCategory = detectedCategory || uiCat;
+
+            showToast("Sending " + rows.length + " rows (" + finalCategory + ") for ML prediction...", "info");
+
+            var apiBase = window.API_BASE || 'http://localhost:5000';
+            var response = await fetch(apiBase + '/api/ml/predict-batch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    category: finalCategory,
+                    rows: rows
+                })
+            });
+
+            if (!response.ok) {
+                var errJson = await response.json().catch(function() { return {}; });
+                var errMsg = errJson.message || response.statusText || 'Server error';
+                if (response.status === 503) {
+                    errMsg = 'ML Service is currently offline. Please ensure Python service (port 8000) and Node server are running.';
+                }
+                if (outDiv) {
+                    outDiv.innerHTML = '<div style="color:#dc2626; padding:16px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px;">' +
+                        '<h4>❌ Batch Prediction Request Failed (' + response.status + ')</h4>' +
+                        '<p style="margin:6px 0 0; font-size:0.9rem;">' + escapeHtml(errMsg) + '</p>' +
+                        '</div>';
+                }
+                showToast('Batch prediction failed: ' + errMsg, 'error');
+                return;
+            }
+
+            var resultData = await response.json();
+            showCSVBatchAnalysis(resultData, file.name);
+            showToast("Batch prediction completed successfully!", "success");
+
         } catch (err) {
-            console.error('Error processing CSV:', err);
-            showToast('Error processing CSV file', 'error');
+            console.error('Error processing CSV batch:', err);
+            if (outDiv) {
+                outDiv.innerHTML = '<div style="color:#dc2626; padding:16px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px;">' +
+                    '<h4>❌ Error processing batch</h4>' +
+                    '<p style="margin:6px 0 0; font-size:0.9rem;">' + escapeHtml(err.message || 'Network error or service unreachable') + '</p>' +
+                    '</div>';
+            }
+            showToast('Error processing CSV batch', 'error');
         } finally {
             if (typeof callback === 'function') callback();
         }
     };
-    reader.onerror = function() {
+
+    reader.onerror = function () {
         showToast('Error reading CSV file', 'error');
         if (typeof callback === 'function') callback();
     };
     reader.readAsText(file);
 }
 
-// 2. Batch Analysis Logic (Calculates Risk & Generates Report)
-// 2. Batch Analysis Logic (Updated with Allergen Names & Download)
-// 2. Batch Analysis Logic (Updated with Allergen Names & Download FIX)
-// 2. Batch Analysis Logic (Fixed Download Logic)
-function showCSVBatchAnalysis(rows) {
+// 2. Batch Analysis Presentation (Renders KPIs, Confidence, Table, and CSV Export)
+function showCSVBatchAnalysis(data, filename) {
     var outDiv = el('csv-batch-results');
     if (!outDiv) return;
 
-    // Initialize Counters
-    var total = rows.length;
-    var safeCount = 0;
-    var unsafeCount = 0;
-    var moderateCount = 0;
-    var allergenCountTotal = 0;
-    var additiveCountTotal = 0;
-    var avgRiskScore = 0;
+    var total = data.total || (data.results ? data.results.length : 0);
+    var safeCount = data.safe_count || 0;
+    var unsafeCount = data.unsafe_count || 0;
+    var errorCount = data.error_count || 0;
+    var avgConfidence = (data.avg_confidence !== undefined && data.avg_confidence !== null)
+        ? (Number(data.avg_confidence) * 100).toFixed(1) + '%'
+        : 'N/A';
+    var cat = data.category || 'Food';
+    var kVal = data.k || 5;
+    var trainedOn = data.trained_on || 0;
+    var results = data.results || [];
 
-    var processedData = [];
     var html = '';
 
-    // --- ANALYSIS LOOP ---
-    for (var i = 0; i < rows.length; i++) {
-        var r = rows[i];
-        
-        // Map CSV columns
-        var name = r[0] ? r[0].trim() : 'Unknown Product';
-        var cat = r[1] ? r[1].trim() : 'Packaged Snack';
-        var exp = r[2] ? r[2].trim() : '';
-        var ing = r[3] ? r[3].trim().toLowerCase() : '';
-        var origin = r[4] ? r[4].trim() : 'India';
-        var tmin = parseFloat(r[5]) || 0;
-        var tmax = parseFloat(r[6]) || 0;
-        var sugar = parseFloat(r[7]) || 0;
-        var sodium = parseFloat(r[8]) || 0;
-        var sat = parseFloat(r[9]) || 0;
-        var trans = parseFloat(r[10]) || 0;
-        var kcal = parseFloat(r[11]) || 0;
-        var fssai = r[12] ? r[12].trim() : '';
+    // Card Container
+    html += '<div style="background:#fff; padding:20px; border-radius:12px; box-shadow:var(--shadow); margin-top:20px; border:1px solid var(--border);">';
 
-        // CALCULATE SCORE
-        var score = baseRiskByCategory(cat);
-        var notes = [];
-        var allergensFound = [];
+    // Header & Download Button
+    html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">';
+    html += '<div>';
+    html += '<h3 style="margin:0; color:var(--text-dark); display:flex; align-items:center; gap:8px;"><i class="fas fa-layer-group" style="color:var(--primary);"></i> Batch ML Safety Prediction Report</h3>';
+    html += '<small style="color:var(--text-light); font-size:0.85rem;">Category: <strong>' + escapeHtml(cat) + '</strong> | Model: k-NN (k=' + kVal + ', trained on ' + trainedOn + ' samples)</small>';
+    html += '</div>';
+    html += '<button id="btn-download-batch" class="btn btn-primary" style="padding:8px 16px; font-size:0.9rem;"><i class="fas fa-download"></i> Export Results CSV</button>';
+    html += '</div>';
 
-        // Name Check
-        if (!validFoodKeywords.some(function (k) { return name.toLowerCase().includes(k); })) { score += 5; }
+    // IMPORTANT Honesty Rule Disclaimer Box
+    html += '<div style="margin:12px 0 16px; font-size:0.85rem; color:#0369a1; background:#f0f9ff; padding:12px 14px; border-radius:8px; border-left:4px solid #0284c7; line-height:1.45;">';
+    html += '<strong>📌 Prediction using the trained model:</strong> Predictions come from a model trained on the synthetic dataset. ';
+    html += 'Uploaded batch rows have no ground-truth laboratory labels; therefore, model confidence is presented (not accuracy). ';
+    html += 'This inference report is for decision support and does not replace official laboratory certification.';
+    html += '</div>';
 
-        // Expiry Check
-        if (exp) {
-            var d = new Date(exp), now = new Date(), days = Math.floor((d - now) / (1000 * 3600 * 24));
-            if (days < 0) { score += 40; } else if (days <= 3) { score += 15; }
-        }
+    // Summary KPIs (Total, Safe, Unsafe, Errors, Confidence) - NO ACCURACY!
+    html += '<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); margin-bottom:20px;">';
+    html += '<div class="kpi-card"><div class="kpi-title">Total Rows</div><div class="kpi-value">' + total + '</div></div>';
+    html += '<div class="kpi-card" style="border-color:#16a34a;"><div class="kpi-title">Safe (Low Risk)</div><div class="kpi-value" style="color:#16a34a;">' + safeCount + '</div></div>';
+    html += '<div class="kpi-card" style="border-color:#dc2626;"><div class="kpi-title">Unsafe (High Risk)</div><div class="kpi-value" style="color:#dc2626;">' + unsafeCount + '</div></div>';
+    html += '<div class="kpi-card" style="border-color:#f59e0b;"><div class="kpi-title">Rows with Errors</div><div class="kpi-value" style="color:#f59e0b;">' + errorCount + '</div></div>';
+    html += '<div class="kpi-card" style="border-color:#0284c7;"><div class="kpi-title">Avg Confidence</div><div class="kpi-value" style="color:#0284c7;">' + avgConfidence + '</div></div>';
+    html += '</div>';
 
-        // Allergens & Additives
-        var currentAllergens = 0;
-        var currentAdditives = 0;
-        
-        if (ing) {
-            for (var j = 0; j < commonAllergens.length; j++) {
-                if (ing.includes(commonAllergens[j])) {
-                    currentAllergens++;
-                    allergensFound.push(commonAllergens[j]);
-                }
-            }
-            var em = (ing.match(/e\s?\d{3}/gi) || []).map(function (x) { return x.toUpperCase().replace(/\s/g, ''); });
-            for (var k = 0; k < em.length; k++) {
-                if (additiveWatchlist[em[k]]) {
-                    currentAdditives++;
-                }
-            }
-        }
+    // Results Table
+    html += '<div style="border:1px solid var(--border); border-radius:8px; overflow:hidden;">';
+    html += '<div style="overflow-x:auto;"><table class="table" style="font-size:0.88rem; width:100%; border-collapse:collapse; margin:0;">';
+    html += '<thead><tr style="background:#f8fafc; border-bottom:1px solid var(--border);">';
+    html += '<th style="padding:10px 12px; text-align:left;">#</th>';
+    html += '<th style="padding:10px 12px; text-align:left;">Sample / Product Name</th>';
+    html += '<th style="padding:10px 12px; text-align:center;">Verdict</th>';
+    html += '<th style="padding:10px 12px; text-align:center;">Confidence</th>';
+    html += '<th style="padding:10px 12px; text-align:center;">Nearest Neighbor Distance</th>';
+    html += '<th style="padding:10px 12px; text-align:left;">Status & Diagnostics</th>';
+    html += '</tr></thead><tbody>';
 
-        if (currentAllergens > 0) { score += (currentAllergens * 5); }
-        if (currentAdditives > 0) { score += (currentAdditives * 5); }
+    for (var i = 0; i < results.length; i++) {
+        var item = results[i];
+        var isOk = item.status === 'ok';
+        var isSafe = item.verdict === 'SAFE';
 
-        // FSSAI, Origin, Nutrition
-        if (!fssai) score += 5; else if (!/^\d{14}$/.test(fssai)) score += 10;
-        if (origin !== 'India') score += 5;
-        if (sugar > 22.5) score += 8;
-        if (sodium > 800) score += 8;
-        if (tempRanges[cat]) {
-            if (tmin < tempRanges[cat][0] || tmax > tempRanges[cat][1]) score += 15;
-        }
-
-        score = clamp(Math.round(score), 0, 100);
-        avgRiskScore += score;
-
-        // Categorize Result
-        var isInsufficient = (!name || name === 'Unknown Product') && (!exp) && (!ing);
-        var status = 'Moderate Concern';
-        var colorClass = 'badge-warn';
-
-        if (isInsufficient) {
-            status = 'Insufficient Information';
-            colorClass = 'badge-warn';
-            score = 0;
-        } else if (score <= 30) { 
-            status = 'Low Concern'; 
-            colorClass = 'badge-safe';
-            safeCount++; 
-        } else if (score >= 70) { 
-            status = 'High Concern'; 
-            colorClass = 'badge-risk';
-            unsafeCount++; 
+        var verdictBadge = '';
+        if (isOk) {
+            verdictBadge = isSafe
+                ? '<span class="badge badge-safe" style="background:#dcfce7; color:#15803d; padding:4px 8px; border-radius:4px; font-weight:600;"><i class="fas fa-check-circle"></i> SAFE</span>'
+                : '<span class="badge badge-risk" style="background:#fee2e2; color:#b91c1c; padding:4px 8px; border-radius:4px; font-weight:600;"><i class="fas fa-exclamation-triangle"></i> UNSAFE</span>';
         } else {
-            status = 'Moderate Concern';
-            moderateCount++;
+            verdictBadge = '<span class="badge badge-warn" style="background:#fef3c7; color:#b45309; padding:4px 8px; border-radius:4px; font-weight:600;"><i class="fas fa-times-circle"></i> ERROR</span>';
         }
 
-        if (currentAllergens > 0) allergenCountTotal++;
-        if (currentAdditives > 0) additiveCountTotal++;
+        var confText = (item.confidence !== null && item.confidence !== undefined)
+            ? (Number(item.confidence) * 100).toFixed(1) + '%'
+            : '<span style="color:#9ca3af;">—</span>';
 
-        processedData.push({
-            name: name,
-            cat: cat,
-            score: score,
-            status: status,
-            badge: colorClass,
-            allergens: allergensFound.length,
-            allergenNames: allergensFound.join(', ')
-        });
-    }
+        var distText = (item.nearest_distance !== null && item.nearest_distance !== undefined)
+            ? Number(item.nearest_distance).toFixed(3)
+            : '<span style="color:#9ca3af;">—</span>';
 
-    avgRiskScore = Math.round(avgRiskScore / (total || 1));
-
-    // --- GENERATE REPORT HTML ---
-    
-    // 1. Summary Dashboard (KPIs)
-    html += '<div style="background:#fff; padding:20px; border-radius:12px; box-shadow:var(--shadow); margin-bottom:20px; border:1px solid var(--border);">';
-    html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:10px;">';
-    html += '<h3 style="margin:0; color:var(--text-dark);">📊 Batch Consumer Screening Analysis Report</h3>';
-    
-    html += '<button id="btn-download-batch" class="btn btn-primary" style="padding:8px 16px; font-size:0.9rem;"><i class="fas fa-download"></i> Download Results CSV</button>';
-    
-    html += '</div>';
-    
-    html += '<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));">';
-    html += '<div class="kpi-card"><div class="kpi-title">Total Products</div><div class="kpi-value">' + total + '</div></div>';
-    html += '<div class="kpi-card" style="border-color:#16a34a;"><div class="kpi-title">Low Concern</div><div class="kpi-value" style="color:#16a34a;">' + safeCount + '</div></div>';
-    html += '<div class="kpi-card" style="border-color:#dc2626;"><div class="kpi-title">High Concern</div><div class="kpi-value" style="color:#dc2626;">' + unsafeCount + '</div></div>';
-    html += '<div class="kpi-card" style="border-color:#f59e0b;"><div class="kpi-title">Allergens</div><div class="kpi-value" style="color:#f59e0b;">' + allergenCountTotal + '</div></div>';
-    html += '</div>';
-    
-    html += '<div style="margin-top:15px; font-size:0.85rem; color:var(--text-light); background:#f8fafc; padding:10px 14px; border-radius:6px; border-left:4px solid var(--primary);">';
-    html += 'ðŸ“Œ <strong>Consumer Screening Analysis:</strong> This batch report is based on provided data entries only. It does not replace physical laboratory testing.';
-    html += '</div>';
-    html += '</div>';
-
-    // 2. Detailed Table
-    html += '<div class="card">';
-    html += '<div class="card-header"><i class="fas fa-list"></i><h3>Detailed Results</h3></div>';
-    html += '<div style="overflow-x:auto;"><table class="table" style="font-size:0.9rem;">';
-    html += '<thead><tr><th>#</th><th>Product Name</th><th>Category</th><th>Score</th><th>Status</th><th>Allergens Found</th></tr></thead><tbody>';
-
-    for (var i = 0; i < processedData.length; i++) {
-        var item = processedData[i];
-        html += '<tr>';
-        html += '<td>' + (i + 1) + '</td>';
-        html += '<td>' + escapeHtml(item.name) + '</td>';
-        html += '<td>' + escapeHtml(item.cat) + '</td>';
-        html += '<td>' + item.score + '</td>';
-        html += '<td><span class="badge ' + item.badge + '">' + item.status + '</span></td>';
-        
-        if (item.allergenNames && item.allergenNames.trim() !== '') {
-            html += '<td style="color:#d97706; font-weight:500;"><i class="fas fa-exclamation-triangle"></i> ' + escapeHtml(item.allergenNames) + '</td>';
+        var noteText = '';
+        if (isOk) {
+            noteText = '<span style="color:#16a34a; font-size:0.83rem;">Valid feature vector (unsafe prob: ' + ((item.unsafe_probability || 0) * 100).toFixed(1) + '%)</span>';
         } else {
-            html += '<td style="color:#059669;">None</td>';
+            noteText = '<span style="color:#dc2626; font-size:0.83rem; font-weight:500;"><i class="fas fa-info-circle"></i> ' + escapeHtml(item.error || 'Row data missing or invalid') + '</span>';
         }
+
+        html += '<tr style="border-bottom:1px solid #f1f5f9;">';
+        html += '<td style="padding:9px 12px;">' + (item.row_index || (i + 1)) + '</td>';
+        html += '<td style="padding:9px 12px; font-weight:500;">' + escapeHtml(item.name || 'Sample #' + (i + 1)) + '</td>';
+        html += '<td style="padding:9px 12px; text-align:center;">' + verdictBadge + '</td>';
+        html += '<td style="padding:9px 12px; text-align:center; font-weight:600;">' + confText + '</td>';
+        html += '<td style="padding:9px 12px; text-align:center;">' + distText + '</td>';
+        html += '<td style="padding:9px 12px;">' + noteText + '</td>';
         html += '</tr>';
     }
+
     html += '</tbody></table></div>';
-    html += '</div>';
+    html += '</div>'; // End table card
+    html += '</div>'; // End outer card
 
-    // Render to Page
     outDiv.innerHTML = html;
-    
-    // 3. Generate CSV String for Download
-    var csvHeader = 'Name,Category,Score,Status,Allergens\n';
-    var csvBody = processedData.map(function(row) {
-        var safeName = (row.name || '').replace(/"/g, '""');
-        var safeAllergens = (row.allergenNames || 'None').replace(/"/g, '""');
-        return `"${safeName}","${row.cat}",${row.score},"${row.status}","${safeAllergens}"`;
-    }).join('\n');
-    
-    window.lastBatchCSV = csvHeader + csvBody;
 
-    // 4. EVENT LISTENER ATTACHMENT (The Fix)
+    // Generate CSV for download
+    var csvHeader = 'Row,Sample Name,Category,Verdict,Confidence,Nearest Neighbor Distance,Status,Diagnostics\n';
+    var csvLines = results.map(function(r) {
+        var rName = (r.name || '').replace(/"/g, '""');
+        var rVerdict = r.verdict || 'ERROR';
+        var rConf = (r.confidence !== null && r.confidence !== undefined) ? (Number(r.confidence) * 100).toFixed(1) + '%' : '';
+        var rDist = (r.nearest_distance !== null && r.nearest_distance !== undefined) ? r.nearest_distance : '';
+        var rDiag = (r.error || (r.status === 'ok' ? 'OK' : 'Error')).replace(/"/g, '""');
+        return '"' + (r.row_index || '') + '","' + rName + '","' + cat + '","' + rVerdict + '","' + rConf + '","' + rDist + '","' + r.status + '","' + rDiag + '"';
+    }).join('\n');
+
+    window.lastBatchCSV = csvHeader + csvLines;
+
     var dlBtn = document.getElementById('btn-download-batch');
-    if(dlBtn) {
+    if (dlBtn) {
         dlBtn.addEventListener('click', function(e) {
-            e.preventDefault(); // Stop form submit
-            window.downloadBatchCSV(); // Call global function
+            e.preventDefault();
+            window.downloadBatchCSV();
         });
     }
-    
-    // Scroll to results
+
     outDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+// ==========================================
+// CUSTOM CSV MODEL TRAINING & PREDICTION
+// ==========================================
+
+var currentCustomModel = null;
+var customCsvData = null;
+
+function onCsvFileSelected(file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var text = e.target.result;
+        var parsed = parseCSVFile(text);
+        customCsvData = parsed;
+
+        var catCol = null;
+        for (var i = 0; i < parsed.headers.length; i++) {
+            if (parsed.headers[i].trim().toLowerCase() === 'category') {
+                catCol = parsed.headers[i];
+                break;
+            }
+        }
+
+        var wrapper = el('customCsvCategoryWrapper');
+        var select = el('customCsvCategorySelect');
+        if (catCol) {
+            var catSet = {};
+            parsed.rows.forEach(function(r) {
+                var c = r[catCol];
+                if (c && String(c).trim() && String(c).trim().toLowerCase() !== 'nan') {
+                    catSet[String(c).trim()] = true;
+                }
+            });
+            var catList = Object.keys(catSet).sort();
+            if (select) {
+                select.innerHTML = '<option value="">-- Choose Category --</option>' +
+                    catList.map(function(c) {
+                        return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>';
+                    }).join('');
+            }
+            if (wrapper) wrapper.style.display = 'block';
+        } else {
+            if (wrapper) wrapper.style.display = 'none';
+            if (select) select.innerHTML = '<option value="">-- No Category Column in CSV --</option>';
+        }
+    };
+    reader.readAsText(file);
+}
+
+if (el('csvFile')) {
+    el('csvFile').addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            onCsvFileSelected(this.files[0]);
+        }
+    });
+}
+
+function downloadCsvTemplate() {
+    var templateCsv = "Temperature_C,Moisture_percent,Storage_Days,pH,Safety_Label\n" +
+        "3.5,82.0,2,6.65,Safe\n4.0,84.5,1,6.70,Safe\n3.8,81.0,3,6.60,Safe\n2.5,78.0,2,6.72,Safe\n4.2,85.0,2,6.58,Safe\n" +
+        "3.0,80.5,4,6.62,Safe\n2.8,79.0,1,6.68,Safe\n3.2,83.0,3,6.64,Safe\n4.5,86.0,2,6.55,Safe\n3.6,82.5,1,6.69,Safe\n" +
+        "3.9,81.5,4,6.59,Safe\n2.7,77.5,2,6.71,Safe\n4.1,84.0,3,6.61,Safe\n3.4,80.0,1,6.67,Safe\n3.1,82.0,2,6.63,Safe\n" +
+        "4.3,85.5,3,6.57,Safe\n2.9,78.5,1,6.70,Safe\n3.7,83.5,4,6.58,Safe\n3.3,81.0,2,6.65,Safe\n4.0,82.0,2,6.66,Safe\n" +
+        "18.5,91.0,8,5.40,Unsafe\n22.0,93.5,10,4.80,Unsafe\n25.0,94.0,12,4.50,Unsafe\n19.0,89.5,7,5.55,Unsafe\n24.5,92.0,11,4.70,Unsafe\n" +
+        "26.0,95.0,14,4.20,Unsafe\n20.5,90.0,9,5.20,Unsafe\n23.0,92.5,10,4.90,Unsafe\n27.5,96.0,15,4.10,Unsafe\n18.0,88.5,8,5.60,Unsafe\n" +
+        "21.5,91.5,9,5.10,Unsafe\n25.5,94.5,13,4.40,Unsafe\n22.5,93.0,11,4.75,Unsafe\n28.0,95.5,16,4.00,Unsafe\n19.5,90.5,7,5.30,Unsafe\n" +
+        "23.5,92.0,10,4.85,Unsafe\n26.5,94.0,14,4.30,Unsafe\n21.0,89.0,8,5.25,Unsafe\n24.0,93.0,12,4.60,Unsafe\n29.0,97.0,18,3.90,Unsafe\n";
+
+    var blob = new Blob([templateCsv], { type: 'text/csv;charset=utf-8;' });
+    var link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'food_safety_template_40rows.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+if (el('downloadCsvTemplateBtn')) {
+    el('downloadCsvTemplateBtn').addEventListener('click', downloadCsvTemplate);
+}
+
+async function trainCustomCsvModel() {
+    var token = localStorage.getItem('fs_token');
+    if (!token) {
+        showToast('Please login first to train custom models', 'warning');
+        return;
+    }
+
+    var fileInput = el('csvFile');
+    var file = fileInput && fileInput.files && fileInput.files[0];
+    if (!file && (!customCsvData || !customCsvData.rows || customCsvData.rows.length === 0)) {
+        showToast('Please upload a CSV file first', 'warning');
+        return;
+    }
+
+    var catWrapper = el('customCsvCategoryWrapper');
+    var catSelect = el('customCsvCategorySelect');
+    var categoryVal = null;
+    if (catWrapper && catWrapper.style.display !== 'none') {
+        categoryVal = catSelect ? catSelect.value : '';
+        if (!categoryVal) {
+            showToast('Please select a category from the dropdown', 'warning');
+            return;
+        }
+    }
+
+    var btn = el('trainCustomCsvBtn');
+    setButtonLoading(btn, true, 'Training...');
+
+    var resultsDiv = el('customTrainResults');
+    var predictContainer = el('customPredictContainer');
+    if (resultsDiv) {
+        resultsDiv.style.display = 'block';
+        resultsDiv.innerHTML = '<div style="padding:12px; background:#eff6ff; border-radius:6px; color:#1e40af;"><i class="fas fa-spinner fa-spin"></i> Training custom Logistic Regression model on CSV rows...</div>';
+    }
+    if (predictContainer) predictContainer.style.display = 'none';
+
+    try {
+        if (!customCsvData || !customCsvData.rows || customCsvData.rows.length === 0) {
+            var fileText = await file.text();
+            customCsvData = parseCSVFile(fileText);
+        }
+
+        var res = await fetch((window.API_BASE || 'http://localhost:5000') + '/api/ml/train-custom', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+                rows: customCsvData.rows,
+                category: categoryVal || null,
+                target: 'Safety_Label'
+            })
+        });
+
+        var data = await res.json();
+        if (!res.ok) {
+            var msg = data.message || 'Training failed';
+            if (resultsDiv) {
+                resultsDiv.innerHTML = '<div style="padding:12px; background:#fef2f2; border:1px solid #fecaca; border-radius:6px; color:#dc2626;"><strong>❌ Training Error:</strong> ' + escapeHtml(msg) + '</div>';
+            }
+            showToast(msg, 'error');
+            return;
+        }
+
+        currentCustomModel = data;
+
+        var testAccPct = (data.test_accuracy * 100).toFixed(1) + '%';
+        var trainAccPct = (data.train_accuracy * 100).toFixed(1) + '%';
+        var precPct = (data.precision * 100).toFixed(1) + '%';
+        var recPct = (data.recall * 100).toFixed(1) + '%';
+        var f1Pct = (data.f1 * 100).toFixed(1) + '%';
+
+        var smallDatasetWarning = '';
+        if (data.n_total < 100) {
+            smallDatasetWarning = '<div style="margin-top:10px; padding:10px 14px; background:#fffbeb; border-left:4px solid #f59e0b; border-radius:6px; color:#b45309; font-size:0.85rem;">' +
+                '<i class="fas fa-exclamation-triangle"></i> <strong>Small dataset (' + data.n_total + ' usable rows):</strong> Model accuracy may be unreliable. Datasets with 100+ validated samples produce more generalized decision boundaries.' +
+                '</div>';
+        }
+
+        var featuresBadges = data.features.map(function(f) {
+            return '<span style="display:inline-block; padding:3px 8px; margin:2px 4px 2px 0; background:#e0f2fe; color:#0369a1; border-radius:4px; font-size:0.8rem; font-weight:600;">' + escapeHtml(f) + '</span>';
+        }).join('');
+
+        var excludedHtml = '';
+        if (data.excluded_columns && data.excluded_columns.length) {
+            excludedHtml = '<div style="margin-top:10px; font-size:0.82rem; color:#475569;">' +
+                '<strong>Excluded columns (' + data.excluded_columns.length + '):</strong> ' +
+                data.excluded_columns.map(function(e) {
+                    return '<span style="display:inline-block; margin:2px 4px; padding:2px 6px; background:#f1f5f9; border-radius:4px; border:1px solid #cbd5e1;"><code>' + escapeHtml(e.column) + '</code> (' + escapeHtml(e.reason) + ')</span>';
+                }).join(' ') +
+                '</div>';
+        }
+
+        var cm = data.confusion_matrix || [[0, 0], [0, 0]];
+        var cmTable = '<table style="margin-top:8px; border-collapse:collapse; font-size:0.82rem; text-align:center;">' +
+            '<tr><th style="padding:4px 8px; border-bottom:1px solid #cbd5e1;"></th><th style="padding:4px 8px; border-bottom:1px solid #cbd5e1; color:#059669;">Pred Safe</th><th style="padding:4px 8px; border-bottom:1px solid #cbd5e1; color:#dc2626;">Pred Unsafe</th></tr>' +
+            '<tr><th style="padding:4px 8px; text-align:left; border-right:1px solid #cbd5e1; color:#059669;">Actual Safe</th><td style="padding:4px 10px; background:#dcfce7; font-weight:700;">' + cm[0][0] + '</td><td style="padding:4px 10px; background:#fee2e2; font-weight:700;">' + cm[0][1] + '</td></tr>' +
+            '<tr><th style="padding:4px 8px; text-align:left; border-right:1px solid #cbd5e1; color:#dc2626;">Actual Unsafe</th><td style="padding:4px 10px; background:#fee2e2; font-weight:700;">' + cm[1][0] + '</td><td style="padding:4px 10px; background:#dcfce7; font-weight:700;">' + cm[1][1] + '</td></tr>' +
+            '</table>';
+
+        resultsDiv.innerHTML = '<div style="background:#ffffff; border:1px solid #bbf7d0; border-radius:8px; padding:16px;">' +
+            '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">' +
+            '<h5 style="margin:0; color:#15803d; font-size:1rem;"><i class="fas fa-check-circle"></i> Custom Model Trained Successfully' + (data.category ? ' (' + escapeHtml(data.category) + ')' : '') + '</h5>' +
+            '<span style="font-size:0.75rem; color:#64748b; font-family:monospace;">ID: ' + escapeHtml(data.model_id.substring(0, 8)) + '...</span>' +
+            '</div>' +
+            smallDatasetWarning +
+            '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-top:14px;">' +
+            '<div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:10px; text-align:center;"><div style="font-size:0.75rem; color:#166534; font-weight:600;">Test Accuracy</div><div style="font-size:1.25rem; font-weight:700; color:#15803d;">' + testAccPct + '</div></div>' +
+            '<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:10px; text-align:center;"><div style="font-size:0.75rem; color:#475569; font-weight:600;">Train Accuracy</div><div style="font-size:1.1rem; font-weight:600; color:#1e293b;">' + trainAccPct + '</div></div>' +
+            '<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:10px; text-align:center;"><div style="font-size:0.75rem; color:#475569; font-weight:600;">Precision / Recall</div><div style="font-size:0.95rem; font-weight:600; color:#1e293b;">' + precPct + ' / ' + recPct + '</div></div>' +
+            '<div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:10px; text-align:center;"><div style="font-size:0.75rem; color:#475569; font-weight:600;">F1 Score</div><div style="font-size:1.1rem; font-weight:600; color:#1e293b;">' + f1Pct + '</div></div>' +
+            '</div>' +
+            '<div style="margin-top:12px; font-size:0.85rem; color:#334155;">' +
+            '<strong>Rows:</strong> ' + data.n_total + ' usable (' + data.n_train + ' train / ' + data.n_test + ' test), ' + data.rows_dropped + ' dropped for missing values. ' +
+            '<strong>Class breakdown:</strong> ' + data.class_counts.Safe + ' Safe, ' + data.class_counts.Unsafe + ' Unsafe.' +
+            '</div>' +
+            '<div style="margin-top:10px;"><strong>Features used (' + data.features.length + '):</strong> ' + featuresBadges + '</div>' +
+            excludedHtml +
+            '<div style="margin-top:14px;"><strong style="font-size:0.85rem; color:#1e293b;">Test Confusion Matrix:</strong>' + cmTable + '</div>' +
+            '</div>';
+
+        if (predictContainer) {
+            var featInputsHtml = data.features.map(function(f, idx) {
+                return '<div class="col" style="min-width:180px;"><div class="form-group" style="margin-bottom:8px;">' +
+                    '<label class="form-label" style="font-size:0.8rem; margin-bottom:2px;">' + escapeHtml(f) + '</label>' +
+                    '<input type="number" step="any" class="form-control custom-feat-field" id="cpf_' + idx + '" data-key="' + escapeHtml(f) + '" placeholder="e.g. 0.0" style="padding:6px 10px; font-size:0.85rem;">' +
+                    '</div></div>';
+            }).join('');
+
+            predictContainer.innerHTML = '<h5 style="color:#1e3a8a; margin:0 0 10px 0; font-size:0.95rem;"><i class="fas fa-play-circle"></i> Predict with Your Trained Model</h5>' +
+                '<p style="font-size:0.82rem; color:#64748b; margin-bottom:10px;">Enter values for the model features to get an immediate prediction:</p>' +
+                '<div class="row" style="margin:0 -5px;">' + featInputsHtml + '</div>' +
+                '<div style="margin-top:10px;">' +
+                '<button type="button" class="btn btn-secondary" id="customPredictBtn" style="padding:7px 14px; font-size:0.85rem;"><i class="fas fa-brain"></i> Predict Sample</button>' +
+                '<span id="customPredictOutput" style="margin-left:14px; font-size:0.9rem; font-weight:600;"></span>' +
+                '</div>';
+            predictContainer.style.display = 'block';
+
+            var predBtn = el('customPredictBtn');
+            if (predBtn) {
+                predBtn.addEventListener('click', executeCustomPrediction);
+            }
+        }
+
+        showToast('Custom model trained! Test accuracy: ' + testAccPct, 'success');
+    } catch (err) {
+        if (resultsDiv) {
+            resultsDiv.innerHTML = '<div style="padding:12px; background:#fef2f2; border:1px solid #fecaca; border-radius:6px; color:#dc2626;"><strong>❌ Network Error:</strong> ' + escapeHtml(err.message || 'Server error') + '</div>';
+        }
+        showToast('Server error while training model', 'error');
+    } finally {
+        setButtonLoading(btn, false);
+    }
+}
+
+async function executeCustomPrediction() {
+    if (!currentCustomModel || !currentCustomModel.model_id) {
+        showToast('No active custom model. Please train a model first.', 'warning');
+        return;
+    }
+
+    var token = localStorage.getItem('fs_token');
+    var featInputs = document.querySelectorAll('.custom-feat-field');
+    var features = {};
+    var missing = [];
+
+    featInputs.forEach(function(inp) {
+        var key = inp.getAttribute('data-key');
+        var val = inp.value.trim();
+        if (val === '' || isNaN(parseFloat(val))) {
+            missing.push(key);
+        } else {
+            features[key] = parseFloat(val);
+        }
+    });
+
+    if (missing.length > 0) {
+        showToast('Please enter required value for: ' + missing.join(', '), 'warning');
+        return;
+    }
+
+    var outSpan = el('customPredictOutput');
+    var btn = el('customPredictBtn');
+    if (outSpan) outSpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Predicting...';
+    setButtonLoading(btn, true, 'Predicting...');
+
+    try {
+        var res = await fetch((window.API_BASE || 'http://localhost:5000') + '/api/ml/predict-custom', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + (token || '')
+            },
+            body: JSON.stringify({
+                model_id: currentCustomModel.model_id,
+                features: features
+            })
+        });
+
+        if (res.status === 404) {
+            if (outSpan) outSpan.innerHTML = '<span style="color:#dc2626;">❌ Model expired, please train again</span>';
+            showToast('Model expired, please train again', 'error');
+            return;
+        }
+
+        var data = await res.json();
+        if (!res.ok) {
+            if (outSpan) outSpan.innerHTML = '<span style="color:#dc2626;">❌ ' + escapeHtml(data.message || 'Prediction failed') + '</span>';
+            showToast(data.message || 'Prediction failed', 'error');
+            return;
+        }
+
+        var isSafe = data.verdict === 'Safe';
+        var badgeBg = isSafe ? '#dcfce7' : '#fee2e2';
+        var badgeColor = isSafe ? '#15803d' : '#b91c1c';
+        var icon = isSafe ? 'fa-check-circle' : 'fa-exclamation-triangle';
+        var probPct = (data.unsafe_probability * 100).toFixed(1) + '%';
+
+        if (outSpan) {
+            outSpan.innerHTML = '<span style="display:inline-flex; align-items:center; gap:6px; padding:4px 10px; background:' + badgeBg + '; color:' + badgeColor + '; border-radius:6px; border:1px solid ' + badgeColor + ';">' +
+                '<i class="fas ' + icon + '"></i> <strong>' + escapeHtml(data.verdict) + '</strong> (Unsafe Probability: ' + probPct + ')' +
+                '</span>';
+        }
+        showToast('Prediction: ' + data.verdict + ' (' + probPct + ' unsafe prob)', isSafe ? 'success' : 'warning');
+    } catch (err) {
+        if (outSpan) outSpan.innerHTML = '<span style="color:#dc2626;">❌ Server error</span>';
+        showToast('Server error during prediction', 'error');
+    } finally {
+        setButtonLoading(btn, false);
+    }
+}
+
+if (el('trainCustomCsvBtn')) {
+    el('trainCustomCsvBtn').addEventListener('click', trainCustomCsvModel);
+}
+
     // ========== EVENT LISTENERS ==========
     if (el('contactForm')) el('contactForm').addEventListener('submit', function (e) { e.preventDefault(); showToast('Thank you! Your message has been sent (Demo)', 'success'); this.reset(); });
     if (el('runBtn')) el('runBtn').addEventListener('click', runChecks);
@@ -2318,21 +2752,37 @@ if (el('manualBarcode')) el('manualBarcode').value = '';
 
     
 async function executeKnnPrediction(triggerBtn) {
-    var token = localStorage.getItem('fs_token');
-    if (!token) { showToast('Please login first to use ML prediction!', 'warning'); return; }
-
     if (window.currentMode === 'consumer') {
         showToast('k-NN Prediction requires laboratory instrument measurements. Please switch to Lab / Inspector Mode.', 'warning');
         return;
     }
 
-    var cat = el('p_cat') ? el('p_cat').value : 'Packaged Snack';
-    var pH = numVal('p_ph');
-    var moisture = numVal('p_moisture');
-    var temp = numVal('p_temp');
+    var cat = el('p_cat') ? el('p_cat').value : (el('mlCategorySelect') ? el('mlCategorySelect').value : 'Dairy');
+    if (!cat || cat === 'All') cat = 'Dairy';
 
-    if (pH === null || moisture === null || temp === null) {
-        showToast('Please enter measured pH, moisture, and temperature in Lab Mode before running k-NN prediction.', 'warning');
+    var schema = CATEGORY_SCHEMAS[cat] || CATEGORY_SCHEMAS['Dairy'];
+    var allFields = schema.common.concat(schema.specific);
+
+    // Ensure matching fields are rendered in DOM
+    var firstFieldElem = allFields.length > 0 ? el(allFields[0].id) : null;
+    if (!firstFieldElem && typeof renderDynamicLabFields === 'function') {
+        renderDynamicLabFields(cat);
+    }
+
+    var features = {};
+    var missingFields = [];
+
+    allFields.forEach(function (f) {
+        var val = numVal(f.id);
+        if (val === null || isNaN(val)) {
+            missingFields.push(f.label);
+        } else {
+            features[f.key] = val;
+        }
+    });
+
+    if (missingFields.length > 0) {
+        showToast('Please enter required field: ' + missingFields.join(', '), 'warning');
         return;
     }
 
@@ -2340,17 +2790,16 @@ async function executeKnnPrediction(triggerBtn) {
     if (el('knn_out')) el('knn_out').innerText = 'Predicting...';
     setButtonLoading(btn, true, 'Predicting...');
     try {
+        var token = localStorage.getItem('fs_token');
+        var headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+
         var res = await fetch((window.API_BASE || 'http://localhost:5000') + '/api/ml/predict', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token
-            },
+            headers: headers,
             body: JSON.stringify({
-                pH: pH,
-                moisture: moisture,
-                temperature: temp,
-                catCode: categoryEncode[cat] || 0
+                category: cat,
+                features: features
             })
         });
         var data = await res.json();
@@ -2360,9 +2809,65 @@ async function executeKnnPrediction(triggerBtn) {
             return;
         }
 
-        var sampleNote = data.trainedOnSamples < 20 ? ' âš  Experimental' : '';
+        var sampleNote = data.trainedOnSamples < 20 ? ' ⚠️ Experimental' : '';
+        var probPct = (typeof data.unsafeProbability === 'number') ? (data.unsafeProbability * 100).toFixed(1) + '%' : 'N/A';
+        var testAccPct = (data.evaluation && typeof data.evaluation.test_accuracy === 'number') ? (data.evaluation.test_accuracy * 100).toFixed(1) + '%' : 'N/A';
+
+        // 1. Update k-NN badge with verdict, unsafe prob, test accuracy, k, sample count
         if (el('knn_out')) {
-            el('knn_out').innerText = data.prediction + ' (trained on ' + data.trainedOnSamples + ' real samples, k=' + data.k + ')' + sampleNote;
+            el('knn_out').innerText = data.prediction + ' | Unsafe Prob: ' + probPct + ' | Test Acc: ' + testAccPct + ' (k=' + data.k + ', trained on ' + data.trainedOnSamples + ' samples)' + sampleNote;
+        }
+
+        // 2. Render nearest neighbors list if layout allows
+        var nnContainer = el('knn_neighbors_box');
+        if (!nnContainer && el('knn_out') && el('knn_out').parentNode) {
+            nnContainer = document.createElement('div');
+            nnContainer.id = 'knn_neighbors_box';
+            nnContainer.style.marginTop = '8px';
+            nnContainer.style.fontSize = '0.82rem';
+            nnContainer.style.color = '#334155';
+            el('knn_out').parentNode.appendChild(nnContainer);
+        }
+        if (nnContainer) {
+            if (data.neighbors && data.neighbors.length) {
+                var nnHtml = '<strong>Nearest Neighbors:</strong> ';
+                nnHtml += data.neighbors.map(function (n, i) {
+                    var dist = (typeof n.distance === 'number') ? n.distance.toFixed(3) : n.distance;
+                    var badgeColor = n.label === 'SAFE' ? '#16a34a' : '#dc2626';
+                    return '<span style="display:inline-block; margin:2px 4px 2px 0; padding:2px 6px; background:#fff; border-radius:4px; border:1px solid #cbd5e1;">#' + (i + 1) + ' <strong style="color:' + badgeColor + '">' + n.label + '</strong> (d=' + dist + ')</span>';
+                }).join(' ');
+                nnContainer.innerHTML = nnHtml;
+                nnContainer.style.display = 'block';
+            } else {
+                nnContainer.style.display = 'none';
+            }
+        }
+
+        // 3. Render rich breakdown in ML Lab results panel
+        if (typeof clearMLResults === 'function') clearMLResults();
+        if (typeof showMLResult === 'function') {
+            showMLResult("🧠 k-NN PREDICTION — Category: " + (data.category || cat), true);
+            showMLResult("✅ VERDICT: " + String(data.prediction).toUpperCase(), true);
+            showMLResult("  Unsafe probability: " + probPct);
+            showMLResult("  Trained on: " + data.trainedOnSamples + " category dataset samples (k=" + data.k + ")");
+            showMLResult("  Features evaluated: " + (data.featuresUsed ? data.featuresUsed.join(', ') : Object.keys(features).join(', ')));
+
+            if (data.neighbors && data.neighbors.length) {
+                showMLResult("\n👥 NEAREST NEIGHBORS:", true);
+                data.neighbors.forEach(function (n, i) {
+                    var dist = (typeof n.distance === 'number') ? n.distance.toFixed(3) : n.distance;
+                    showMLResult("  #" + (i + 1) + ": label = " + n.label + ", distance = " + dist);
+                });
+            }
+
+            if (data.evaluation) {
+                var ev = data.evaluation;
+                showMLResult("\n🎯 MODEL EVALUATION (k-NN, " + ev.n_train + " train / " + ev.n_test + " test):", true);
+                if (typeof ev.train_accuracy === 'number') {
+                    showMLResult("  Train Accuracy: " + (ev.train_accuracy * 100).toFixed(1) + "%");
+                }
+                showMLResult("  Held-out Test Accuracy: " + testAccPct);
+            }
         }
 
         var disc = el('mlSampleDisclaimer');
@@ -2374,7 +2879,7 @@ async function executeKnnPrediction(triggerBtn) {
                 disc.style.display = 'none';
             }
         }
-        showToast('k-NN Prediction: ' + data.prediction, 'success');
+        showToast('k-NN: ' + data.prediction + ' (' + probPct + ' unsafe prob)', 'success');
     } catch (err) {
         if (el('knn_out')) el('knn_out').innerText = 'Server error. Is the backend running?';
         showToast('Server error. Is the backend running?', 'error');
@@ -2483,7 +2988,7 @@ var categoryLabParameters = {
     { group: "Chemical & Heavy Metals", items: ["Calcium Carbide / Acetylene Ripening Residues", "Lead", "Cadmium"] },
     { group: "Residue Testing", items: ["Multi-residue Pesticides", "Fungicide Residues", "Herbicides"] },
     { group: "Toxin Testing", items: ["Patulin (in apple products)", "Solanine (in damaged potatoes)"] },
-    { group: "Physical & Quality", items: ["Moisture Content", "Brix (Â°Bx) / Total Soluble Solids", "Physical Defects / Rot", "Foreign Matter"] },
+    { group: "Physical & Quality", items: ["Moisture Content", "Brix (°Bx) / Total Soluble Solids", "Physical Defects / Rot", "Foreign Matter"] },
     { group: "Composition / Nutrition", items: ["Vitamin C / Ascorbic Acid", "Sugars", "Acidity"] },
     { group: "Adulteration Testing", items: ["Malachite Green Dye Check", "Copper Sulphate Brightening Check", "Wax Coating Verification"] }
   ],
@@ -2510,7 +3015,7 @@ var categoryLabParameters = {
     { group: "Chemical & Heavy Metals", items: ["Arsenic", "Lead", "Cadmium", "BPA Migration", "Bromated Vegetable Oil"] },
     { group: "Residue Testing", items: ["Pesticide Residues"] },
     { group: "Toxin Testing", items: ["Patulin (Fruit Juices)"] },
-    { group: "Physical & Quality", items: ["Brix (Â°Bx) / Sugar Content", "pH / Acidity", "Turbidity / Clarity", "Carbonation Level"] },
+    { group: "Physical & Quality", items: ["Brix (°Bx) / Sugar Content", "pH / Acidity", "Turbidity / Clarity", "Carbonation Level"] },
     { group: "Composition / Nutrition", items: ["Fruit Juice Content (%)", "Added Sugar", "Caffeine Content", "Sodium / Potassium"] },
     { group: "Adulteration Testing", items: ["Synthetic Sweetener Adulteration", "Artificial Dye Check", "Diluted Juice Ratio Check"] }
   ],
@@ -2555,7 +3060,7 @@ function renderCategoryLabParamsGuide(category) {
         html += '</h5>';
         html += '<ul style="list-style:none; padding:0; margin:0; font-size:0.83rem; color:#475569; line-height:1.6;">';
         grp.items.forEach(function(item) {
-            html += '<li style="padding:2px 0;">â€¢ ' + escapeHtml(item) + '</li>';
+            html += '<li style="padding:2px 0;">• ' + escapeHtml(item) + '</li>';
         });
         html += '</ul>';
         html += '</div>';
@@ -2591,7 +3096,7 @@ if (el('processCsvBtn')) el('processCsvBtn').addEventListener('click', function 
     if (el('runRidge')) el('runRidge').addEventListener('click', ml.runRidge);
     if (el('runLasso')) el('runLasso').addEventListener('click', ml.runLasso);
     if (el('runHist')) el('runHist').addEventListener('click', ml.showHistograms);
-    if (el('runKnBtnLab')) el('runKnBtnLab').addEventListener('click', ml.runKnnPredictionLab);
+    if (el('runKnBtnLab')) el('runKnBtnLab').addEventListener('click', function () { executeKnnPrediction(el('runKnBtnLab')); });
 
     if (el('verifyFssai')) el('verifyFssai').addEventListener('click', function () {
         var n = el('fssai') ? el('fssai').value.trim() : '', s = el('fssaiStatus'); if (!s) return;
@@ -2653,9 +3158,9 @@ if (el('processCsvBtn')) el('processCsvBtn').addEventListener('click', function 
     }
     // Disease Warning on Category Select & Consumer Proxy Update
     var diseaseInfo = {
-        "Meat & Poultry": "⚠️ High risk of Salmonella, E. coli if not cooked above 75Â°C.",
+        "Meat & Poultry": "⚠️ High risk of Salmonella, E. coli if not cooked above 75°C.",
         "Seafood": "⚠️ Risk of Mercury, Vibrio bacteria. Ensure proper refrigeration.",
-        "Dairy": "⚠️ Listeria & E. coli risk if kept above 5Â°C.",
+        "Dairy": "⚠️ Listeria & E. coli risk if kept above 5°C.",
         "Street Food": "⚠️ High risk of food poisoning, unhygienic water usage.",
         "Baby Food": "⚠️ Strictly check for added preservatives and heavy metals."
     };
@@ -2793,7 +3298,7 @@ if(el('adulterant_test')) {
 
         // categoryProxyConfig loaded from categoryProxyConfig.js (script tag in HTML)
         if (typeof categoryProxyConfig === 'undefined') {
-            section.innerHTML = '<div style="padding:12px; background:#fef2f2; border-radius:8px; color:#b91c1c; margin-top:16px;">âš  Category proxy config not loaded. Check that categoryProxyConfig.js is included.</div>';
+            section.innerHTML = '<div style="padding:12px; background:#fef2f2; border-radius:8px; color:#b91c1c; margin-top:16px;">⚠️ Category proxy config not loaded. Check that categoryProxyConfig.js is included.</div>';
             section.style.display = 'block';
             return;
         }
@@ -2817,7 +3322,7 @@ if(el('adulterant_test')) {
 
             if (q.type === 'yesno') {
                 html += '<div class="proxy-yesno-group">';
-                html += '<button type="button" class="proxy-yesno-btn" id="pq-' + q.id + '-yes" data-qid="' + q.id + '" data-val="yes" onclick="proxyYesNoSelect(this)">✅ Yes</button>';
+                html += '<button type="button" class="proxy-yesno-btn" id="pq-' + q.id + '-yes" data-qid="' + q.id + '" data-val="yes" onclick="proxyYesNoSelect(this)"><i class="fas fa-check"></i> Yes</button>';
                 html += '<button type="button" class="proxy-yesno-btn" id="pq-' + q.id + '-no" data-qid="' + q.id + '" data-val="no" onclick="proxyYesNoSelect(this)">âŒ No</button>';
                 html += '<input type="hidden" id="pq-' + q.id + '" data-qid="' + q.id + '" value="">';
                 html += '</div>';
@@ -2975,7 +3480,7 @@ if(el('adulterant_test')) {
             var axisClass = axisClasses[axisKey] || '';
             breakdownHtml += '<div class="proxy-breakdown-item ' + axisClass + '">';
             breakdownHtml += '<div class="axis-name">' + escapeHtml(axisLabel) + '</div>';
-            breakdownHtml += '<div class="axis-value">' + (breakdown[qid] > 0 ? 'âš  Risk: ' + breakdown[qid] : 'âœ“ OK') + '</div>';
+            breakdownHtml += '<div class="axis-value">' + (breakdown[qid] > 0 ? '⚠️ Risk: ' + breakdown[qid] : '✓ OK') + '</div>';
             breakdownHtml += '</div>';
         });
         breakdownHtml += '</div>';
@@ -3037,22 +3542,6 @@ if(el('adulterant_test')) {
         cardDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    // ============================================================
-    //  BARCODE â†’ CATEGORY â†’ QUESTIONNAIRE TRIGGER
-    //  After autoFillFromBarcode() sets the category, show questionnaire
-    // ============================================================
-    var _origAutoFill = window.autoFillFromBarcode;
-    window.autoFillFromBarcode = function(name, category, ingredients, origin, kcal, sugar, sodium, sat, trans) {
-        if (typeof _origAutoFill === 'function') {
-            _origAutoFill(name, category, ingredients, origin, kcal, sugar, sodium, sat, trans);
-        }
-        // In Consumer Mode, trigger proxy questionnaire for detected category
-        if (window.currentMode === 'consumer') {
-            var resCard = el('consumerResultCard');
-            if (resCard) resCard.style.display = 'none';
-            renderDynamicQuestions(category);
-        }
-    };
 
 
     // ======================

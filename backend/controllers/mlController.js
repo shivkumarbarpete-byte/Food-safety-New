@@ -1,5 +1,4 @@
 const { callPython, MLServiceError } = require('../ml/pythonClient');
-const { trainAndPredict } = require('../ml/knnModel');          // sirf purane (legacy) pH/moisture/temp path ke liye
 const { loadCategoryDataset } = require('../ml/datasetLoader');  // /dataset endpoint ke liye
 
 // Python se aaye error ko sahi HTTP status ke saath frontend ko bhejna
@@ -72,42 +71,103 @@ exports.logistic = async (req, res) => {
 };
 
 // POST /api/ml/predict
-//   Naya tareeka : body { category, features }  -> Python k-NN
-//   Purana tareeka: body { pH, moisture, temperature, catCode } -> purana JS k-NN (script.js abhi ise use karta hai)
+//   Body: { category, features } -> Python k-NN
 exports.predict = async (req, res) => {
   try {
-    const { category, features, pH, moisture, temperature, catCode } = req.body || {};
+    const { category, features } = req.body || {};
 
-    if (category && features) {
-      const result = await callPython('POST', '/predict', { body: { category, features } });
-      // Purane response ke naam wahi rakhe, taaki frontend na toote
-      return res.status(200).json({
-        prediction: result.verdict,
-        rawLabel: result.prediction,
-        trainedOnSamples: result.trained_on,
-        k: result.k,
-        category: result.category,
-        featuresUsed: result.features_used,
-        // naye fields
-        unsafeProbability: result.unsafe_probability,
-        neighbors: result.neighbors,
-        evaluation: result.evaluation
-      });
+    if (!category || !features || typeof features !== 'object') {
+      return res.status(400).json({ message: 'Please provide category and features' });
     }
 
-    // Legacy fallback for pH/moisture/temperature
-    if (pH != null && moisture != null && temperature != null) {
-      const result = await trainAndPredict([pH, moisture, temperature, catCode || 0], req.userId);
-      return res.status(200).json({
-        prediction: result.prediction === 0 ? 'Low Risk Estimate' : 'Higher Risk Estimate',
-        rawLabel: result.prediction,
-        trainedOnSamples: result.trainedOn,
-        k: result.k,
-        featuresUsed: ['pH', 'moisture', 'temperature']
-      });
+    const result = await callPython('POST', '/predict', { body: { category, features } });
+    return res.status(200).json({
+      prediction: result.verdict,
+      rawLabel: result.prediction,
+      trainedOnSamples: result.trained_on,
+      k: result.k,
+      category: result.category,
+      featuresUsed: result.features_used,
+      unsafeProbability: result.unsafe_probability,
+      neighbors: result.neighbors,
+      evaluation: result.evaluation
+    });
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
+// POST /api/ml/predict-batch   body: { category, rows }
+exports.predictBatch = async (req, res) => {
+  try {
+    const { category, rows } = req.body || {};
+    if (!Array.isArray(rows)) {
+      return res.status(400).json({ message: "'rows' must be an array of feature objects" });
+    }
+    if (rows.length === 0) {
+      return res.status(400).json({ message: "'rows' cannot be empty" });
+    }
+    if (rows.length > 500) {
+      return res.status(400).json({ message: "Batch size exceeds maximum limit of 500 rows" });
     }
 
-    return res.status(400).json({ message: 'Please provide either (category and features) or (pH, moisture, temperature)' });
+    const result = await callPython('POST', '/predict-batch', {
+      body: {
+        category: category || 'Dairy',
+        rows: rows
+      }
+    });
+
+    res.status(200).json(result);
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
+// POST /api/ml/train-custom   body: { rows, target, category, exclude }
+exports.trainCustom = async (req, res) => {
+  try {
+    const { rows, target, category, exclude } = req.body || {};
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return res.status(400).json({ message: "'rows' must be a non-empty array of row objects" });
+    }
+
+    const result = await callPython('POST', '/train-custom', {
+      body: {
+        rows,
+        target: target || 'Safety_Label',
+        category: category || null,
+        exclude: Array.isArray(exclude) ? exclude : null,
+        user_id: req.userId || null
+      }
+    });
+
+    res.status(200).json(result);
+  } catch (error) {
+    sendError(res, error);
+  }
+};
+
+// POST /api/ml/predict-custom   body: { model_id, features }
+exports.predictCustom = async (req, res) => {
+  try {
+    const { model_id, features } = req.body || {};
+    if (!model_id) {
+      return res.status(400).json({ message: "'model_id' is required" });
+    }
+    if (!features || typeof features !== 'object') {
+      return res.status(400).json({ message: "'features' must be an object of numeric values" });
+    }
+
+    const result = await callPython('POST', '/predict-custom', {
+      body: {
+        model_id,
+        user_id: req.userId || null,
+        features
+      }
+    });
+
+    res.status(200).json(result);
   } catch (error) {
     sendError(res, error);
   }

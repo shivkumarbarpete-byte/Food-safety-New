@@ -21,7 +21,8 @@ from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 
 from analysis import run_eda, run_histograms
-from knn import predict_knn
+from custom_trainer import predict_custom_model, train_custom_model
+from knn import predict_knn, predict_knn_batch
 from models import run_linear_regression, run_logistic
 
 app = FastAPI(title="Food Safety ML Service", version="1.0.0")
@@ -41,15 +42,38 @@ class PredictRequest(BaseModel):
     features: dict[str, Any]
 
 
+class PredictBatchRequest(BaseModel):
+    category: str = "Dairy"
+    rows: list[dict[str, Any]]
+
+
+class TrainCustomRequest(BaseModel):
+    rows: list[dict[str, Any]]
+    target: str = "Safety_Label"
+    category: str | None = None
+    exclude: list[str] | None = None
+    user_id: str | None = None
+
+
+class PredictCustomRequest(BaseModel):
+    model_id: str
+    user_id: str | None = None
+    features: dict[str, Any]
+
+
 def _call(fn, *args, **kwargs):
     """
     ML function chalata hai aur errors ko sahi HTTP status mein badalta hai.
+      KeyError         -> 404 (model expired / not found)
       ValueError       -> 400 (user ka galat input / kam data)
       FileNotFoundError-> 500 (dataset file nahi mili)
       baaki errors     -> FastAPI khud 500 deta hai
     """
     try:
         return fn(*args, **kwargs)
+    except KeyError as e:
+        msg = str(e).strip("'\"")
+        raise HTTPException(status_code=404, detail=msg)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except FileNotFoundError as e:
@@ -84,3 +108,18 @@ def logistic(req: LogisticRequest):
 @app.post("/predict")
 def predict(req: PredictRequest):
     return _call(predict_knn, req.category, req.features)
+
+
+@app.post("/predict-batch")
+def predict_batch(req: PredictBatchRequest):
+    return _call(predict_knn_batch, req.category, req.rows)
+
+
+@app.post("/train-custom")
+def train_custom(req: TrainCustomRequest):
+    return _call(train_custom_model, req.rows, req.target, req.category, req.exclude, req.user_id)
+
+
+@app.post("/predict-custom")
+def predict_custom(req: PredictCustomRequest):
+    return _call(predict_custom_model, req.model_id, req.user_id, req.features)

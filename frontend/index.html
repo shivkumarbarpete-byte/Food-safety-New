@@ -469,11 +469,54 @@
           
           <div class="form-group">
             <label class="form-label">CSV Upload (Batch Analysis)</label>
+            <p style="font-size:0.83rem; color:#0369a1; background:#f0f9ff; padding:8px 12px; border-radius:6px; border-left:3px solid #0284c7; margin:4px 0 10px 0;">
+              📌 <strong>Prediction using the trained model:</strong> Predictions come from a model trained on the synthetic dataset.
+            </p>
             <input type="file" class="form-control" id="csvFile" accept=".csv">
             <!-- HTML mein ye div add karein csvFile input ke niche -->
-<div id="csv-batch-results" style="margin-top: 20px;">
-    <!-- Yahan CSV ka analysis aayega -->
-</div>
+            <div id="csv-batch-results" style="margin-top: 20px;">
+                <!-- Yahan CSV ka analysis aayega -->
+            </div>
+
+            <!-- ==================== NEW SECTION: TRAIN MODEL ON MY CSV ==================== -->
+            <div class="card" style="margin-top: 20px; border: 1px solid #93c5fd; background: #f8fafc; border-radius: 8px; padding: 18px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+                <h4 style="margin:0; color:#1e3a8a; font-size:1.05rem;">
+                  <i class="fas fa-graduation-cap" style="color:#2563eb;"></i> Train Model on My CSV
+                </h4>
+                <a href="javascript:void(0)" id="downloadCsvTemplateBtn" style="font-size:0.85rem; color:#2563eb; font-weight:600; text-decoration:underline;">
+                  <i class="fas fa-download"></i> Download CSV Template (40 rows)
+                </a>
+              </div>
+
+              <!-- Honesty text required by prompt -->
+              <p style="font-size:0.83rem; color:#1e40af; background:#eff6ff; padding:8px 12px; border-radius:6px; border-left:4px solid #3b82f6; margin:6px 0 14px 0;">
+                ℹ️ <strong>Transparency Note:</strong> Model is trained only on your uploaded CSV. Results depend on the quality and size of your data.
+              </p>
+
+              <!-- Category selector if CSV has Category column -->
+              <div id="customCsvCategoryWrapper" style="display:none; margin-bottom:12px;">
+                <label for="customCsvCategorySelect" style="font-weight:600; font-size:0.88rem; color:#1e293b; display:block; margin-bottom:4px;">
+                  <i class="fas fa-filter"></i> Select Category from Uploaded CSV:
+                </label>
+                <select id="customCsvCategorySelect" class="form-select" style="max-width:320px; font-weight:500;">
+                  <option value="">-- Choose Category --</option>
+                </select>
+                <small style="color:#64748b; font-size:0.8rem;">The uploaded CSV contains multiple categories. Select which category model to train.</small>
+              </div>
+
+              <div style="margin-top:10px;">
+                <button type="button" class="btn btn-primary" id="trainCustomCsvBtn" style="display:inline-flex; align-items:center; gap:6px;">
+                  <i class="fas fa-cogs"></i> Train Model on My CSV
+                </button>
+              </div>
+
+              <!-- Training Results Container -->
+              <div id="customTrainResults" style="display:none; margin-top:16px;"></div>
+
+              <!-- Interactive Predict Container -->
+              <div id="customPredictContainer" style="display:none; margin-top:18px; padding-top:16px; border-top:1px dashed #cbd5e1;"></div>
+            </div>
           </div>
           <div class="form-group">
   <label class="form-label">Upload Product Label / Photo (for OCR & Visual Check)</label>
@@ -490,7 +533,7 @@
             <button type="button" class="btn btn-secondary" id="demoBtn"><i class="fas fa-magic"></i> Load Demo</button>
             <button type="button" class="btn btn-outline" id="clearBtn"><i class="fas fa-eraser"></i> Clear Form</button>
             <button type="button" class="btn btn-outline" id="runKnBtn" style="display:none;"><i class="fas fa-brain"></i> k-NN Prediction</button>
-            <button type="button" class="btn btn-outline" id="processCsvBtn"><i class="fas fa-file-csv"></i> Process CSV</button>
+            <button type="button" class="btn btn-outline" id="processCsvBtn"><i class="fas fa-file-csv"></i> Rule-based CSV screening</button>
           </div>
           
           <div class="btn-group">
