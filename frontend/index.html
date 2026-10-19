@@ -513,7 +513,18 @@
                 <small style="color:#64748b; font-size:0.8rem;">The uploaded CSV contains multiple categories. Select which category model to train.</small>
               </div>
 
-              <div style="margin-top:10px;">
+              <div style="margin-top:10px; display:flex; align-items:center; flex-wrap:wrap; gap:12px;">
+                <div style="display:inline-flex; align-items:center; gap:6px;">
+                  <label for="customModelTypeSelect" style="font-size:0.88rem; font-weight:600; color:#1e293b; margin:0;">
+                    <i class="fas fa-brain" style="color:#2563eb;"></i> Model:
+                  </label>
+                  <select id="customModelTypeSelect" class="form-select" style="max-width:210px; padding:6px 10px; font-size:0.88rem; font-weight:500;">
+                    <option value="logistic" selected>Logistic Regression</option>
+                    <option value="ridge">Ridge (L2)</option>
+                    <option value="lasso">Lasso (L1)</option>
+                    <option value="knn">k-NN (k=5)</option>
+                  </select>
+                </div>
                 <button type="button" class="btn btn-primary" id="trainCustomCsvBtn" style="display:inline-flex; align-items:center; gap:6px;">
                   <i class="fas fa-cogs"></i> Train Model on My CSV
                 </button>

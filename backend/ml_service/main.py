@@ -52,6 +52,7 @@ class TrainCustomRequest(BaseModel):
     target: str = "Safety_Label"
     category: str | None = None
     exclude: list[str] | None = None
+    model_type: str = "logistic"
     user_id: str | None = None
 
 
@@ -117,7 +118,15 @@ def predict_batch(req: PredictBatchRequest):
 
 @app.post("/train-custom")
 def train_custom(req: TrainCustomRequest):
-    return _call(train_custom_model, req.rows, req.target, req.category, req.exclude, req.user_id)
+    return _call(
+        train_custom_model,
+        req.rows,
+        req.target,
+        req.category,
+        req.exclude,
+        req.user_id,
+        req.model_type,
+    )
 
 
 @app.post("/predict-custom")

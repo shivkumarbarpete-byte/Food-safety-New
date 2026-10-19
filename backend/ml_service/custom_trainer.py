@@ -15,6 +15,7 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -40,6 +41,7 @@ def train_custom_model(
     category: str | None = None,
     exclude: list[str] | None = None,
     user_id: str | None = None,
+    model_type: str = "logistic",
 ) -> dict[str, Any]:
     if not isinstance(rows, list) or len(rows) == 0:
         raise ValueError("Dataset must contain at least one row.")
@@ -199,7 +201,25 @@ def train_custom_model(
             f"Dataset must contain at least 5 samples of each class (Safe and Unsafe). Found Safe: {safe_count}, Unsafe: {unsafe_count}."
         )
 
-    # 5. Train / Test Split & Logistic Regression
+    model_type_clean = str(model_type or "logistic").strip().lower()
+    if model_type_clean not in ("logistic", "ridge", "lasso", "knn"):
+        raise ValueError(
+            f"Invalid model_type '{model_type}'. Allowed types are 'logistic', 'ridge', 'lasso', 'knn'."
+        )
+
+    # Feature statistics across usable dataset
+    feature_stats = [
+        {
+            "feature": col,
+            "mean": round(float(df[col].mean()), 3),
+            "std": round(float(df[col].std(ddof=1)), 3) if len(df) > 1 else 0.0,
+            "min": round(float(df[col].min()), 3),
+            "max": round(float(df[col].max()), 3),
+        }
+        for col in valid_feature_cols
+    ]
+
+    # 5. Train / Test Split & Scaler (fitted on train only)
     X = df[valid_feature_cols].to_numpy(dtype=float)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
@@ -209,33 +229,88 @@ def train_custom_model(
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
-    clf = LogisticRegression(max_iter=5000, random_state=42)
-    clf.fit(X_train_scaled, y_train)
+    k_val = max(1, min(5, len(y_train)))
 
-    train_preds = clf.predict(X_train_scaled)
-    test_preds = clf.predict(X_test_scaled)
+    MODEL_SPECS = {
+        "logistic": {
+            "title": "Logistic Regression",
+            "instantiate": lambda: LogisticRegression(max_iter=5000, random_state=42, C=1e6),
+        },
+        "ridge": {
+            "title": "Ridge Regression (L2)",
+            "instantiate": lambda: LogisticRegression(max_iter=5000, random_state=42, C=1.0, l1_ratio=0.0),
+        },
+        "lasso": {
+            "title": "Lasso Regression (L1)",
+            "instantiate": lambda: LogisticRegression(max_iter=5000, random_state=42, C=1.0, l1_ratio=1.0, solver="saga"),
+        },
+        "knn": {
+            "title": f"k-Nearest Neighbors (k={k_val})",
+            "instantiate": lambda: KNeighborsClassifier(n_neighbors=k_val),
+        },
+    }
+
+    # Evaluate ALL 4 models on the same train/test split for the comparison table
+    comparison = []
+    models_fitted = {}
+
+    for m_key, spec in MODEL_SPECS.items():
+        m_inst = spec["instantiate"]()
+        m_inst.fit(X_train_scaled, y_train)
+        models_fitted[m_key] = m_inst
+        m_test_preds = m_inst.predict(X_test_scaled)
+        comparison.append({
+            "model_type": m_key,
+            "model_name": spec["title"],
+            "test_accuracy": round(float(accuracy_score(y_test, m_test_preds)), 4),
+            "precision": round(float(precision_score(y_test, m_test_preds, pos_label=1, zero_division=0)), 4),
+            "recall": round(float(recall_score(y_test, m_test_preds, pos_label=1, zero_division=0)), 4),
+            "f1": round(float(f1_score(y_test, m_test_preds, pos_label=1, zero_division=0)), 4),
+        })
+
+    # Chosen model evaluation & metrics
+    chosen_model = models_fitted[model_type_clean]
+    train_preds = chosen_model.predict(X_train_scaled)
+    test_preds = chosen_model.predict(X_test_scaled)
 
     train_acc = round(float(accuracy_score(y_train, train_preds)), 4)
     test_acc = round(float(accuracy_score(y_test, test_preds)), 4)
     prec = round(float(precision_score(y_test, test_preds, pos_label=1, zero_division=0)), 4)
     rec = round(float(recall_score(y_test, test_preds, pos_label=1, zero_division=0)), 4)
     f1 = round(float(f1_score(y_test, test_preds, pos_label=1, zero_division=0)), 4)
-    cm = confusion_matrix(y_test, test_preds).tolist()
+    cm = confusion_matrix(y_test, test_preds, labels=[0, 1]).tolist()
 
-    # Feature influence
-    coefs = clf.coef_[0]
-    feature_influence = [
-        {
-            "feature": col,
-            "coefficient": round(float(c), 4),
-            "importance": round(abs(float(c)), 4),
-        }
-        for col, c in zip(valid_feature_cols, coefs)
-    ]
-    feature_influence.sort(key=lambda x: x["importance"], reverse=True)
+    # Feature influence and zero-weight features
+    if model_type_clean in ("logistic", "ridge", "lasso"):
+        coefs = chosen_model.coef_[0]
+        feature_influence = [
+            {
+                "feature": col,
+                "weight": round(float(c), 4),
+                "importance": round(abs(float(c)), 4),
+                "effect": (
+                    "no effect (weight 0)" if round(float(c), 6) == 0.0
+                    else "higher value -> Unsafe signal" if float(c) > 0
+                    else "higher value -> Safe signal"
+                ),
+                "direction": "Unsafe" if float(c) > 0 else ("Safe" if float(c) < 0 else "Neutral"),
+            }
+            for col, c in zip(valid_feature_cols, coefs)
+        ]
+        feature_influence.sort(key=lambda x: x["importance"], reverse=True)
+        if model_type_clean == "lasso":
+            zero_weight_features = [
+                col for col, c in zip(valid_feature_cols, coefs) if round(float(c), 6) == 0.0
+            ]
+        else:
+            zero_weight_features = []
+    else:
+        # For k-NN, feature influence is not available
+        feature_influence = None
+        zero_weight_features = []
 
     # Pipeline for inference
-    pipeline = Pipeline([("scaler", scaler), ("model", clf)])
+    pipeline = Pipeline([("scaler", scaler), ("model", chosen_model)])
 
     # Store in cache
     model_id = str(uuid.uuid4())
@@ -244,13 +319,18 @@ def train_custom_model(
 
     MODELS_CACHE[model_id] = {
         "pipeline": pipeline,
+        "model_type": model_type_clean,
         "user_id": str(user_id) if user_id else None,
         "features": valid_feature_cols,
         "created_at": time.time(),
+        "X_train_scaled": X_train_scaled,
+        "y_train": y_train,
     }
 
     return {
         "model_id": model_id,
+        "model_type": model_type_clean,
+        "model_title": MODEL_SPECS[model_type_clean]["title"],
         "category": selected_category,
         "features": valid_feature_cols,
         "excluded_columns": excluded_columns,
@@ -259,6 +339,7 @@ def train_custom_model(
         "n_test": int(len(y_test)),
         "rows_dropped": int(rows_dropped),
         "class_counts": {"Safe": safe_count, "Unsafe": unsafe_count},
+        "feature_stats": feature_stats,
         "train_accuracy": train_acc,
         "test_accuracy": test_acc,
         "precision": prec,
@@ -266,6 +347,8 @@ def train_custom_model(
         "f1": f1,
         "confusion_matrix": cm,
         "feature_influence": feature_influence,
+        "zero_weight_features": zero_weight_features,
+        "comparison": comparison,
     }
 
 
@@ -301,6 +384,7 @@ def predict_custom_model(
         vector.append(val)
 
     pipeline = entry["pipeline"]
+    model_type = entry.get("model_type", "logistic")
     x_new = np.array([vector], dtype=float)
 
     pred_label = int(pipeline.predict(x_new)[0])
@@ -313,8 +397,25 @@ def predict_custom_model(
 
     verdict = "Unsafe" if pred_label == 1 else "Safe"
 
+    neighbors = None
+    if model_type == "knn":
+        scaler = pipeline.named_steps["scaler"]
+        knn_clf = pipeline.named_steps["model"]
+        x_scaled = scaler.transform(x_new)
+        distances, indices = knn_clf.kneighbors(x_scaled)
+        y_train = entry["y_train"]
+        neighbors = [
+            {
+                "label": "UNSAFE" if int(y_train[i]) == 1 else "SAFE",
+                "distance": round(float(dist), 3),
+            }
+            for dist, i in zip(distances[0], indices[0])
+        ]
+
     return {
         "verdict": verdict,
         "unsafe_probability": unsafe_prob,
         "features_used": required_features,
+        "model_type": model_type,
+        "neighbors": neighbors,
     }

@@ -124,12 +124,20 @@ exports.predictBatch = async (req, res) => {
   }
 };
 
-// POST /api/ml/train-custom   body: { rows, target, category, exclude }
+// POST /api/ml/train-custom   body: { rows, target, category, exclude, model_type }
 exports.trainCustom = async (req, res) => {
   try {
-    const { rows, target, category, exclude } = req.body || {};
+    const { rows, target, category, exclude, model_type } = req.body || {};
     if (!Array.isArray(rows) || rows.length === 0) {
       return res.status(400).json({ message: "'rows' must be a non-empty array of row objects" });
+    }
+
+    const allowedModels = ['logistic', 'ridge', 'lasso', 'knn'];
+    const selectedModel = model_type ? String(model_type).trim().toLowerCase() : 'logistic';
+    if (!allowedModels.includes(selectedModel)) {
+      return res.status(400).json({
+        message: `Invalid model_type '${model_type}'. Allowed values: ${allowedModels.join(', ')}`
+      });
     }
 
     const result = await callPython('POST', '/train-custom', {
@@ -138,6 +146,7 @@ exports.trainCustom = async (req, res) => {
         target: target || 'Safety_Label',
         category: category || null,
         exclude: Array.isArray(exclude) ? exclude : null,
+        model_type: selectedModel,
         user_id: req.userId || null
       }
     });
