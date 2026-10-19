@@ -2786,7 +2786,7 @@ async function executeKnnPrediction(triggerBtn) {
         return;
     }
 
-    var btn = triggerBtn || el('runKnBtnLab') || el('runKnBtn');
+    var btn = triggerBtn || el('runKnBtnLab');
     if (el('knn_out')) el('knn_out').innerText = 'Predicting...';
     setButtonLoading(btn, true, 'Predicting...');
     try {
@@ -2873,7 +2873,7 @@ async function executeKnnPrediction(triggerBtn) {
         var disc = el('mlSampleDisclaimer');
         if (disc) {
             if (data.trainedOnSamples < 20) {
-                disc.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <strong>Experimental result based on ' + data.trainedOnSamples + ' laboratory samples.</strong> More validated samples are required for reliable model performance. ML predictions are supplementary decision-support tools and do not replace official food safety standards or laboratory certification.';
+                disc.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <strong>Experimental:</strong> models are trained on a synthetic 800-sample dataset (80 samples per category, 80/20 train/test split). Results are screening estimates only. ML predictions are supplementary decision-support tools and do not replace official food safety standards or laboratory certification.';
                 disc.style.display = 'block';
             } else {
                 disc.style.display = 'none';
@@ -2887,8 +2887,6 @@ async function executeKnnPrediction(triggerBtn) {
         setButtonLoading(btn, false);
     }
 }
-
-if (el('runKnBtn')) el('runKnBtn').onclick = function() { executeKnnPrediction(el('runKnBtn')); };
 
 if (el('labDemo')) el('labDemo').addEventListener('click', function () { 
     if (el('lab_report_id')) el('lab_report_id').value = generateLabReportId();
@@ -3254,14 +3252,12 @@ if(el('adulterant_test')) {
         var consumerBtn = el('consumerModeBtn');
         var labBtn = el('labModeBtn');
         var labExtras = el('lab-mode-extras');
-        var knnBtn = el('runKnBtn');
         var modeDesc = el('modeDesc');
 
         if (mode === 'consumer') {
             if (consumerBtn) consumerBtn.classList.add('active');
             if (labBtn) labBtn.classList.remove('active');
             if (labExtras) labExtras.style.display = 'none';
-            if (knnBtn) knnBtn.style.display = 'none';
             if (modeDesc) modeDesc.textContent = 'Consumer Mode — Barcode scanning, nutrition label analysis & observable safety questionnaire. No lab instruments required.';
             var currentCat = el('p_cat') ? el('p_cat').value : 'Packaged Snack';
             renderDynamicQuestions(currentCat);
@@ -3269,7 +3265,6 @@ if(el('adulterant_test')) {
             if (labBtn) labBtn.classList.add('active');
             if (consumerBtn) consumerBtn.classList.remove('active');
             if (labExtras) labExtras.style.display = 'block';
-            if (knnBtn) knnBtn.style.display = '';
             if (modeDesc) modeDesc.textContent = 'Lab / Inspector Mode — Enter measured pH, moisture, and temperature values obtained with appropriate instruments.';
             var pSection = el('proxyQuestionnaireSection');
             if (pSection) pSection.style.display = 'none';
@@ -3281,7 +3276,7 @@ if(el('adulterant_test')) {
     if (el('consumerModeBtn')) el('consumerModeBtn').addEventListener('click', function() { switchMode('consumer'); });
     if (el('labModeBtn')) el('labModeBtn').addEventListener('click', function() { switchMode('lab'); });
 
-    // Initialize in consumer mode (runKnBtn already hidden via HTML inline style)
+    // Initialize in consumer mode
     switchMode('consumer');
 
     // ============================================================

@@ -6,7 +6,7 @@
   <title>FoodSafetyHub - Food Safety Screening & Information Platform</title>
   <meta name="description" content="Food safety screening and information platform with label analysis, laboratory parameter guidance, and statistical testing">
   <meta name="keywords" content="food safety screening, label check, FSSAI, lab testing, food safety platform, machine learning">
-  <meta name="author" content="Shivkumar Barpete,Parag Admache,Nilesh Dhakad">
+  <meta name="author" content="Shivkumar Barpete, Parag Admache, Nilesh Dhakad">
     <!-- CSS FILE -->
   <link rel="stylesheet" href="style.css">
   <!-- Font Awesome -->
@@ -161,7 +161,7 @@
           <i class="fas fa-user-graduate"></i>
           <h3>Project Details</h3>
         </div>
-        <p><strong>Developers:</strong> Shivkumar Barpete and group</p>
+        <p><strong>Developers:</strong> Shivkumar Barpete, Parag Admache, Nilesh Dhakad</p>
         <p><strong>Institution:</strong> Indian Institute of Information Technology, Bhopal</p>
         <p><strong>Course:</strong> Master of Computer Applications (MCA)</p>
         <p><strong>Contact:</strong> shivkirar78@gmail.com</p>
@@ -206,12 +206,20 @@
           <h4>JWT Auth</h4>
         </div>
         <div class="tech-item">
-          <i class="fas fa-brain"></i>
-          <h4>ml-knn</h4>
+          <i class="fab fa-python"></i>
+          <h4>Python</h4>
         </div>
         <div class="tech-item">
-          <i class="fas fa-project-diagram"></i>
-          <h4>TensorFlow.js</h4>
+          <i class="fas fa-bolt"></i>
+          <h4>FastAPI</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fas fa-brain"></i>
+          <h4>scikit-learn</h4>
+        </div>
+        <div class="tech-item">
+          <i class="fas fa-table"></i>
+          <h4>pandas</h4>
         </div>
         <div class="tech-item">
           <i class="fas fa-chart-line"></i>
@@ -470,7 +478,7 @@
           <div class="form-group">
             <label class="form-label">CSV Upload (Batch Analysis)</label>
             <p style="font-size:0.83rem; color:#0369a1; background:#f0f9ff; padding:8px 12px; border-radius:6px; border-left:3px solid #0284c7; margin:4px 0 10px 0;">
-              📌 <strong>Prediction using the trained model:</strong> Predictions come from a model trained on the synthetic dataset.
+              📌 <strong>Rule-based CSV screening:</strong> scores come from label rules (expiry, allergens, additives, nutrition limits). No ML model is trained here.
             </p>
             <input type="file" class="form-control" id="csvFile" accept=".csv">
             <!-- HTML mein ye div add karein csvFile input ke niche -->
@@ -532,7 +540,6 @@
             <button type="button" class="btn btn-primary" id="runBtn"><i class="fas fa-play"></i> Run Safety Checks</button>
             <button type="button" class="btn btn-secondary" id="demoBtn"><i class="fas fa-magic"></i> Load Demo</button>
             <button type="button" class="btn btn-outline" id="clearBtn"><i class="fas fa-eraser"></i> Clear Form</button>
-            <button type="button" class="btn btn-outline" id="runKnBtn" style="display:none;"><i class="fas fa-brain"></i> k-NN Prediction</button>
             <button type="button" class="btn btn-outline" id="processCsvBtn"><i class="fas fa-file-csv"></i> Rule-based CSV screening</button>
           </div>
           
@@ -576,10 +583,10 @@
             <strong><i class="fas fa-flask"></i> Lab / Inspector Mode</strong> — Enter values measured with appropriate instruments (pH meter, moisture analyzer, thermometer). ML predictions are supplementary decision-support tools and do not replace official food-safety standards or laboratory certification.
           </div>
           <div style="margin-bottom:12px; padding:10px 14px; background:#f0f9ff; border-left:4px solid #0284c7; border-radius:6px; font-size:0.85rem; color:#0369a1;">
-            <i class="fas fa-brain"></i> <strong>Experimental ML Estimate:</strong> ML predictions (k-NN, Regression) are experimental statistical estimates based on stored feature vectors (pH, Moisture, Temperature). They are not a substitute for laboratory testing or regulatory certification.
+            <i class="fas fa-brain"></i> <strong>Experimental ML Estimate:</strong> ML predictions (k-NN, Regression) are experimental statistical estimates based on a synthetic training dataset. They are not a substitute for laboratory testing or regulatory certification.
           </div>
           <div id="mlSampleDisclaimer" style="display:none; margin-bottom:12px; padding:10px 14px; background:#fef3c7; border-radius:8px; font-size:0.85rem; color:#92400e; border-left:3px solid #d97706;">
-            <i class="fas fa-exclamation-triangle"></i> <strong>Experimental:</strong> k-NN result is based on a small number of stored laboratory samples. Reliability improves as more measured reviews are saved.
+            <i class="fas fa-exclamation-triangle"></i> <strong>Experimental:</strong> models are trained on a synthetic 800-sample dataset (80 samples per category, 80/20 train/test split). Results are screening estimates only.
           </div>
           <!-- Measured Instrument Values (Lab Mode Only) -->
           <div class="row" style="margin: 15px 0;" id="labMeasurementsGroup">
@@ -748,7 +755,7 @@
             <div style="margin-top: 12px; padding: 14px 16px; background: #f0f9ff; border-left: 4px solid #0284c7; border-radius: 6px; font-size: 0.88rem;">
               <strong>Model-Based Risk Screening Estimate (Experimental k-NN):</strong> 
               <span id="knn_out" style="font-weight: 600; color: #0369a1;">—</span>
-              <br><small style="color: #0284c7; display: block; margin-top: 4px;">📌 Supplementary decision-support estimate based on training feature vectors. Does not constitute laboratory certification.</small>
+              <br><small style="color: #0284c7; display: block; margin-top: 4px;">📌 Supplementary decision-support estimate based on a synthetic training dataset. Does not constitute laboratory certification.</small>
             </div>
           </details>
 
@@ -1107,7 +1114,7 @@
               <h3>Experimental ML Estimates</h3>
             </div>
             <p style="font-size:0.9rem; color:#4b5563; line-height:1.6;">
-              Machine learning models (k-NN) generate preliminary estimations based on training feature vectors (pH, moisture, temperature). ML outputs are supplementary estimates and cannot replace official food testing.
+              Machine learning models (k-NN, Logistic/Ridge/Lasso/Linear Regression) are trained in a Python scikit-learn service on a synthetic dataset, with a separate test set for accuracy. Outputs are supplementary estimates and cannot replace official food testing.
             </p>
           </div>
         </div>
@@ -1257,7 +1264,7 @@
       </div>
       
       <div class="footer-bottom">
-        <p>&copy; 2025 FoodSafetyHub. Developed by Shivkumar Barpete and Parag Adhmache,Nilesh dhakad IIIT Bhopal.</p>
+        <p>&copy; 2026 FoodSafetyHub. Developed by Shivkumar Barpete, Parag Admache, Nilesh Dhakad &mdash; IIIT Bhopal.</p>
       </div>
     </div>
   </footer>

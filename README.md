@@ -182,9 +182,9 @@ Copy it to `backend/.env` and fill in real values — **never commit `.env`**.
 
 ---
 
-## Author
+## Authors
 
-**Shivkumar Barpete** and group  
+**Shivkumar Barpete**, **Parag Admache**, **Nilesh Dhakad**  
 Institution: Indian Institute of Information Technology, Bhopal  
 Course: Master of Computer Applications (MCA)  
 GitHub: [@shivkumarbarpete-byte](https://github.com/shivkumarbarpete-byte)  
