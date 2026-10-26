@@ -1,0 +1,2576 @@
+{
+  "linear": {
+    "All": {
+      "model": "Linear Regression",
+      "category": "All",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days"
+      ],
+      "n_total": 800,
+      "n_train": 640,
+      "n_test": 160,
+      "metrics": {
+        "train_rmse": 22.064,
+        "test_rmse": 21.727,
+        "test_mae": 17.807,
+        "test_r2": 0.515
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 18.3777,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 12.4698,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 12.4198,
+          "effect": "increases risk"
+        }
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual_risk": 31.7,
+        "predicted_risk": 36.8,
+        "level": "Moderate Risk"
+      }
+    },
+    "Dairy": {
+      "model": "Linear Regression",
+      "category": "Dairy",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "pH",
+        "Fat_Percent",
+        "Titratable_Acidity"
+      ],
+      "n_total": 80,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_rmse": 8.554,
+        "test_rmse": 11.723,
+        "test_mae": 10.009,
+        "test_r2": 0.8736
+      },
+      "feature_influence": [
+        {
+          "feature": "pH",
+          "weight": -12.9685,
+          "effect": "decreases risk"
+        },
+        {
+          "feature": "Titratable_Acidity",
+          "weight": 6.7955,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 3.2983,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 3.2682,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Fat_Percent",
+          "weight": 0.893,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": -0.558,
+          "effect": "decreases risk"
+        }
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual_risk": 90.0,
+        "predicted_risk": 73.4,
+        "level": "Higher Risk"
+      }
+    },
+    "Meat_Poultry": {
+      "model": "Linear Regression",
+      "category": "Meat_Poultry",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "pH",
+        "Color_Score"
+      ],
+      "n_total": 80,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_rmse": 7.766,
+        "test_rmse": 7.927,
+        "test_mae": 6.649,
+        "test_r2": 0.9161
+      },
+      "feature_influence": [
+        {
+          "feature": "pH",
+          "weight": 13.7909,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 8.2373,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Color_Score",
+          "weight": -3.917,
+          "effect": "decreases risk"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 3.2632,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.3937,
+          "effect": "increases risk"
+        }
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual_risk": 88.1,
+        "predicted_risk": 86.6,
+        "level": "Higher Risk"
+      }
+    },
+    "Seafood": {
+      "model": "Linear Regression",
+      "category": "Seafood",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "TVBN_Level"
+      ],
+      "n_total": 80,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_rmse": 8.814,
+        "test_rmse": 10.005,
+        "test_mae": 8.147,
+        "test_r2": 0.904
+      },
+      "feature_influence": [
+        {
+          "feature": "TVBN_Level",
+          "weight": 18.5521,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 9.7015,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 5.9158,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 1.6314,
+          "effect": "increases risk"
+        }
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual_risk": 89.7,
+        "predicted_risk": 92.6,
+        "level": "Higher Risk"
+      }
+    },
+    "Fresh_Produce": {
+      "model": "Linear Regression",
+      "category": "Fresh_Produce",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Ripeness_Index"
+      ],
+      "n_total": 80,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_rmse": 9.937,
+        "test_rmse": 10.804,
+        "test_mae": 9.373,
+        "test_r2": 0.8427
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 11.1643,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 10.9251,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Ripeness_Index",
+          "weight": 4.7271,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 1.9013,
+          "effect": "increases risk"
+        }
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual_risk": 73.3,
+        "predicted_risk": 82.4,
+        "level": "Higher Risk"
+      }
+    },
+    "Beverage": {
+      "model": "Linear Regression",
+      "category": "Beverage",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "pH",
+        "Sugar_Content_Percent"
+      ],
+      "n_total": 80,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_rmse": 7.112,
+        "test_rmse": 12.346,
+        "test_mae": 10.002,
+        "test_r2": 0.8477
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 20.4771,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "pH",
+          "weight": 4.1939,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 3.7456,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.9826,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Sugar_Content_Percent",
+          "weight": 0.1058,
+          "effect": "increases risk"
+        }
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual_risk": 84.5,
+        "predicted_risk": 74.1,
+        "level": "Higher Risk"
+      }
+    },
+    "Bakery": {
+      "model": "Linear Regression",
+      "category": "Bakery",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Mold_Risk_Index"
+      ],
+      "n_total": 80,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_rmse": 10.616,
+        "test_rmse": 9.376,
+        "test_mae": 7.567,
+        "test_r2": 0.8959
+      },
+      "feature_influence": [
+        {
+          "feature": "Moisture_percent",
+          "weight": 12.5788,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 8.9984,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 4.28,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Mold_Risk_Index",
+          "weight": 3.8463,
+          "effect": "increases risk"
+        }
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual_risk": 76.7,
+        "predicted_risk": 80.3,
+        "level": "Higher Risk"
+      }
+    },
+    "Frozen_Food": {
+      "model": "Linear Regression",
+      "category": "Frozen_Food",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Temp_Deviation_Neg18"
+      ],
+      "n_total": 80,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_rmse": 8.613,
+        "test_rmse": 8.342,
+        "test_mae": 6.961,
+        "test_r2": 0.936
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 22.6156,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Temp_Deviation_Neg18",
+          "weight": 11.0153,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": -0.4086,
+          "effect": "decreases risk"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.4025,
+          "effect": "increases risk"
+        }
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual_risk": 87.6,
+        "predicted_risk": 86.7,
+        "level": "Higher Risk"
+      }
+    },
+    "Baby_Food": {
+      "model": "Linear Regression",
+      "category": "Baby_Food",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "pH"
+      ],
+      "n_total": 80,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_rmse": 6.713,
+        "test_rmse": 7.545,
+        "test_mae": 5.644,
+        "test_r2": 0.9608
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 30.1745,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "pH",
+          "weight": -5.4549,
+          "effect": "decreases risk"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.6524,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 0.3715,
+          "effect": "increases risk"
+        }
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual_risk": 94.8,
+        "predicted_risk": 95.0,
+        "level": "Higher Risk"
+      }
+    },
+    "Packaged_Snack": {
+      "model": "Linear Regression",
+      "category": "Packaged_Snack",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Oil_Rancidity_Index"
+      ],
+      "n_total": 80,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_rmse": 9.345,
+        "test_rmse": 7.985,
+        "test_mae": 6.101,
+        "test_r2": 0.9186
+      },
+      "feature_influence": [
+        {
+          "feature": "Moisture_percent",
+          "weight": 11.4021,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Oil_Rancidity_Index",
+          "weight": 7.2376,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 6.6317,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 3.3936,
+          "effect": "increases risk"
+        }
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual_risk": 73.9,
+        "predicted_risk": 88.6,
+        "level": "Higher Risk"
+      }
+    },
+    "Street_Food": {
+      "model": "Linear Regression",
+      "category": "Street_Food",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Hygiene_Score"
+      ],
+      "n_total": 80,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_rmse": 7.973,
+        "test_rmse": 9.812,
+        "test_mae": 8.952,
+        "test_r2": 0.8824
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 23.0319,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Hygiene_Score",
+          "weight": -6.087,
+          "effect": "decreases risk"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 3.6488,
+          "effect": "increases risk"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": -0.3128,
+          "effect": "decreases risk"
+        }
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual_risk": 78.3,
+        "predicted_risk": 91.0,
+        "level": "Higher Risk"
+      }
+    }
+  },
+  "logistic": {
+    "All:logistic": {
+      "model": "Logistic Regression",
+      "category": "All",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days"
+      ],
+      "n_total": 800,
+      "n_safe": 480,
+      "n_unsafe": 320,
+      "n_train": 640,
+      "n_test": 160,
+      "metrics": {
+        "train_accuracy": 0.8984,
+        "test_accuracy": 0.9187,
+        "precision": 0.9636,
+        "recall": 0.8281,
+        "f1": 0.8908
+      },
+      "confusion_matrix": {
+        "tn": 94,
+        "fp": 2,
+        "fn": 11,
+        "tp": 53
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 5.4797,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 4.0312,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 3.2863,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Safe",
+        "predicted": "Safe",
+        "unsafe_probability": 0.1739
+      }
+    },
+    "All:ridge": {
+      "model": "Ridge Regression (L2)",
+      "category": "All",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days"
+      ],
+      "n_total": 800,
+      "n_safe": 480,
+      "n_unsafe": 320,
+      "n_train": 640,
+      "n_test": 160,
+      "metrics": {
+        "train_accuracy": 0.9062,
+        "test_accuracy": 0.9062,
+        "precision": 0.9804,
+        "recall": 0.7812,
+        "f1": 0.8696
+      },
+      "confusion_matrix": {
+        "tn": 95,
+        "fp": 1,
+        "fn": 14,
+        "tp": 50
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 3.9885,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 2.9163,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 2.3646,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Safe",
+        "predicted": "Safe",
+        "unsafe_probability": 0.2266
+      }
+    },
+    "All:lasso": {
+      "model": "Lasso Regression (L1)",
+      "category": "All",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days"
+      ],
+      "n_total": 800,
+      "n_safe": 480,
+      "n_unsafe": 320,
+      "n_train": 640,
+      "n_test": 160,
+      "metrics": {
+        "train_accuracy": 0.9047,
+        "test_accuracy": 0.9062,
+        "precision": 0.9623,
+        "recall": 0.7969,
+        "f1": 0.8718
+      },
+      "confusion_matrix": {
+        "tn": 94,
+        "fp": 2,
+        "fn": 13,
+        "tp": 51
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 4.8794,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 3.559,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 2.9042,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Safe",
+        "predicted": "Safe",
+        "unsafe_probability": 0.1957
+      }
+    },
+    "Dairy:logistic": {
+      "model": "Logistic Regression",
+      "category": "Dairy",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "pH",
+        "Fat_Percent",
+        "Titratable_Acidity"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "pH",
+          "weight": -2.962,
+          "effect": "higher value -> Safe signal"
+        },
+        {
+          "feature": "Titratable_Acidity",
+          "weight": 2.6142,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 2.5816,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 2.5297,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.0693,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Fat_Percent",
+          "weight": 0.0381,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9996
+      }
+    },
+    "Dairy:ridge": {
+      "model": "Ridge Regression (L2)",
+      "category": "Dairy",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "pH",
+        "Fat_Percent",
+        "Titratable_Acidity"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "pH",
+          "weight": -1.1435,
+          "effect": "higher value -> Safe signal"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 1.0592,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Titratable_Acidity",
+          "weight": 1.0406,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 1.0139,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.0253,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Fat_Percent",
+          "weight": -0.0195,
+          "effect": "higher value -> Safe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9397
+      }
+    },
+    "Dairy:lasso": {
+      "model": "Lasso Regression (L1)",
+      "category": "Dairy",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "pH",
+        "Fat_Percent",
+        "Titratable_Acidity"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "pH",
+          "weight": -1.9673,
+          "effect": "higher value -> Safe signal"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 0.9168,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 0.7611,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Titratable_Acidity",
+          "weight": 0.657,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.0,
+          "effect": "no effect (weight 0)"
+        },
+        {
+          "feature": "Fat_Percent",
+          "weight": 0.0,
+          "effect": "no effect (weight 0)"
+        }
+      ],
+      "zero_weight_features": [
+        "Moisture_percent",
+        "Fat_Percent"
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9525
+      }
+    },
+    "Meat_Poultry:logistic": {
+      "model": "Logistic Regression",
+      "category": "Meat_Poultry",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "pH",
+        "Color_Score"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "pH",
+          "weight": 3.0586,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 2.91,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Color_Score",
+          "weight": -2.6805,
+          "effect": "higher value -> Safe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 2.1493,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.0941,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 1.0
+      }
+    },
+    "Meat_Poultry:ridge": {
+      "model": "Ridge Regression (L2)",
+      "category": "Meat_Poultry",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "pH",
+        "Color_Score"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "pH",
+          "weight": 1.1336,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 1.1101,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Color_Score",
+          "weight": -1.0769,
+          "effect": "higher value -> Safe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 0.9169,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.0183,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9882
+      }
+    },
+    "Meat_Poultry:lasso": {
+      "model": "Lasso Regression (L1)",
+      "category": "Meat_Poultry",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "pH",
+        "Color_Score"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "pH",
+          "weight": 1.8002,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 1.3252,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Color_Score",
+          "weight": -0.9597,
+          "effect": "higher value -> Safe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 0.1793,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.0,
+          "effect": "no effect (weight 0)"
+        }
+      ],
+      "zero_weight_features": [
+        "Moisture_percent"
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9855
+      }
+    },
+    "Seafood:logistic": {
+      "model": "Logistic Regression",
+      "category": "Seafood",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "TVBN_Level"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 4.0677,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "TVBN_Level",
+          "weight": 4.0562,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 3.2094,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.0542,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 1.0
+      }
+    },
+    "Seafood:ridge": {
+      "model": "Ridge Regression (L2)",
+      "category": "Seafood",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "TVBN_Level"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "TVBN_Level",
+          "weight": 1.4006,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 1.3951,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 1.249,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.0654,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9921
+      }
+    },
+    "Seafood:lasso": {
+      "model": "Lasso Regression (L1)",
+      "category": "Seafood",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "TVBN_Level"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 1.8466,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "TVBN_Level",
+          "weight": 1.7024,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 0.8479,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.0,
+          "effect": "no effect (weight 0)"
+        }
+      ],
+      "zero_weight_features": [
+        "Moisture_percent"
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9937
+      }
+    },
+    "Fresh_Produce:logistic": {
+      "model": "Logistic Regression",
+      "category": "Fresh_Produce",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Ripeness_Index"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 4.0766,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Ripeness_Index",
+          "weight": 3.5259,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 3.211,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.1382,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 1.0
+      }
+    },
+    "Fresh_Produce:ridge": {
+      "model": "Ridge Regression (L2)",
+      "category": "Fresh_Produce",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Ripeness_Index"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 1.4495,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Ripeness_Index",
+          "weight": 1.3252,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 1.2305,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": -0.026,
+          "effect": "higher value -> Safe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9896
+      }
+    },
+    "Fresh_Produce:lasso": {
+      "model": "Lasso Regression (L1)",
+      "category": "Fresh_Produce",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Ripeness_Index"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 2.578,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Ripeness_Index",
+          "weight": 1.1288,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 0.5848,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.0,
+          "effect": "no effect (weight 0)"
+        }
+      ],
+      "zero_weight_features": [
+        "Moisture_percent"
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9881
+      }
+    },
+    "Beverage:logistic": {
+      "model": "Logistic Regression",
+      "category": "Beverage",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "pH",
+        "Sugar_Content_Percent"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 4.1584,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "pH",
+          "weight": 4.135,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 2.5202,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.2619,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Sugar_Content_Percent",
+          "weight": -0.1041,
+          "effect": "higher value -> Safe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 1.0
+      }
+    },
+    "Beverage:ridge": {
+      "model": "Ridge Regression (L2)",
+      "category": "Beverage",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "pH",
+        "Sugar_Content_Percent"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 1.4796,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "pH",
+          "weight": 1.4733,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 1.0379,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.0588,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Sugar_Content_Percent",
+          "weight": 0.006,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9778
+      }
+    },
+    "Beverage:lasso": {
+      "model": "Lasso Regression (L1)",
+      "category": "Beverage",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "pH",
+        "Sugar_Content_Percent"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "pH",
+          "weight": 2.1676,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 2.0543,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.0,
+          "effect": "no effect (weight 0)"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 0.0,
+          "effect": "no effect (weight 0)"
+        },
+        {
+          "feature": "Sugar_Content_Percent",
+          "weight": 0.0,
+          "effect": "no effect (weight 0)"
+        }
+      ],
+      "zero_weight_features": [
+        "Moisture_percent",
+        "Storage_Days",
+        "Sugar_Content_Percent"
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9786
+      }
+    },
+    "Bakery:logistic": {
+      "model": "Logistic Regression",
+      "category": "Bakery",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Mold_Risk_Index"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 3.1762,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 2.9577,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Mold_Risk_Index",
+          "weight": 2.9151,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 2.4097,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 1.0
+      }
+    },
+    "Bakery:ridge": {
+      "model": "Ridge Regression (L2)",
+      "category": "Bakery",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Mold_Risk_Index"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Moisture_percent",
+          "weight": 1.1216,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 1.1096,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Mold_Risk_Index",
+          "weight": 1.106,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 0.9495,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9777
+      }
+    },
+    "Bakery:lasso": {
+      "model": "Lasso Regression (L1)",
+      "category": "Bakery",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Mold_Risk_Index"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Moisture_percent",
+          "weight": 1.5074,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 1.4221,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Mold_Risk_Index",
+          "weight": 1.2371,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 0.1744,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9849
+      }
+    },
+    "Frozen_Food:logistic": {
+      "model": "Logistic Regression",
+      "category": "Frozen_Food",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Temp_Deviation_Neg18"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 4.0505,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Temp_Deviation_Neg18",
+          "weight": 3.9138,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 2.8841,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": -0.0832,
+          "effect": "higher value -> Safe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9999
+      }
+    },
+    "Frozen_Food:ridge": {
+      "model": "Ridge Regression (L2)",
+      "category": "Frozen_Food",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Temp_Deviation_Neg18"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 1.4421,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Temp_Deviation_Neg18",
+          "weight": 1.4013,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 1.1597,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": -0.154,
+          "effect": "higher value -> Safe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9535
+      }
+    },
+    "Frozen_Food:lasso": {
+      "model": "Lasso Regression (L1)",
+      "category": "Frozen_Food",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Temp_Deviation_Neg18"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 2.9487,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Temp_Deviation_Neg18",
+          "weight": 1.2891,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 0.0569,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.0,
+          "effect": "no effect (weight 0)"
+        }
+      ],
+      "zero_weight_features": [
+        "Moisture_percent"
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9886
+      }
+    },
+    "Baby_Food:logistic": {
+      "model": "Logistic Regression",
+      "category": "Baby_Food",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "pH"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 4.8552,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 3.5778,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "pH",
+          "weight": -2.652,
+          "effect": "higher value -> Safe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.3761,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 1.0
+      }
+    },
+    "Baby_Food:ridge": {
+      "model": "Ridge Regression (L2)",
+      "category": "Baby_Food",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "pH"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 1.6191,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 1.2899,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "pH",
+          "weight": -1.1329,
+          "effect": "higher value -> Safe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.0894,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9592
+      }
+    },
+    "Baby_Food:lasso": {
+      "model": "Lasso Regression (L1)",
+      "category": "Baby_Food",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "pH"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 4.1084,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 0.1037,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.0,
+          "effect": "no effect (weight 0)"
+        },
+        {
+          "feature": "pH",
+          "weight": 0.0,
+          "effect": "no effect (weight 0)"
+        }
+      ],
+      "zero_weight_features": [
+        "Moisture_percent",
+        "pH"
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9965
+      }
+    },
+    "Packaged_Snack:logistic": {
+      "model": "Logistic Regression",
+      "category": "Packaged_Snack",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Oil_Rancidity_Index"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Oil_Rancidity_Index",
+          "weight": 2.8584,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 2.8486,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 2.8122,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 2.7488,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 1.0
+      }
+    },
+    "Packaged_Snack:ridge": {
+      "model": "Ridge Regression (L2)",
+      "category": "Packaged_Snack",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Oil_Rancidity_Index"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Moisture_percent",
+          "weight": 1.0881,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Oil_Rancidity_Index",
+          "weight": 1.0862,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 1.0667,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 1.062,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.996
+      }
+    },
+    "Packaged_Snack:lasso": {
+      "model": "Lasso Regression (L1)",
+      "category": "Packaged_Snack",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Oil_Rancidity_Index"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Moisture_percent",
+          "weight": 1.2309,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Oil_Rancidity_Index",
+          "weight": 1.2156,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Temperature_C",
+          "weight": 0.9742,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 0.9679,
+          "effect": "higher value -> Unsafe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9963
+      }
+    },
+    "Street_Food:logistic": {
+      "model": "Logistic Regression",
+      "category": "Street_Food",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Hygiene_Score"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 4.4771,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Hygiene_Score",
+          "weight": -3.8175,
+          "effect": "higher value -> Safe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 2.4027,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": -0.3349,
+          "effect": "higher value -> Safe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 1.0
+      }
+    },
+    "Street_Food:ridge": {
+      "model": "Ridge Regression (L2)",
+      "category": "Street_Food",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Hygiene_Score"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 1.557,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Hygiene_Score",
+          "weight": -1.4208,
+          "effect": "higher value -> Safe signal"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 1.0083,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": -0.149,
+          "effect": "higher value -> Safe signal"
+        }
+      ],
+      "zero_weight_features": [],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9647
+      }
+    },
+    "Street_Food:lasso": {
+      "model": "Lasso Regression (L1)",
+      "category": "Street_Food",
+      "features": [
+        "Temperature_C",
+        "Moisture_percent",
+        "Storage_Days",
+        "Hygiene_Score"
+      ],
+      "n_total": 80,
+      "n_safe": 48,
+      "n_unsafe": 32,
+      "n_train": 64,
+      "n_test": 16,
+      "metrics": {
+        "train_accuracy": 1.0,
+        "test_accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "confusion_matrix": {
+        "tn": 10,
+        "fp": 0,
+        "fn": 0,
+        "tp": 6
+      },
+      "feature_influence": [
+        {
+          "feature": "Temperature_C",
+          "weight": 4.0516,
+          "effect": "higher value -> Unsafe signal"
+        },
+        {
+          "feature": "Hygiene_Score",
+          "weight": -0.107,
+          "effect": "higher value -> Safe signal"
+        },
+        {
+          "feature": "Moisture_percent",
+          "weight": 0.0,
+          "effect": "no effect (weight 0)"
+        },
+        {
+          "feature": "Storage_Days",
+          "weight": 0.0,
+          "effect": "no effect (weight 0)"
+        }
+      ],
+      "zero_weight_features": [
+        "Moisture_percent",
+        "Storage_Days"
+      ],
+      "sample_prediction": {
+        "note": "First TEST sample (model ne ise training mein nahi dekha)",
+        "actual": "Unsafe",
+        "predicted": "Unsafe",
+        "unsafe_probability": 0.9935
+      }
+    }
+  },
+  "knn_evaluations": {
+    "Dairy": {
+      "k": 5,
+      "n_train": 64,
+      "n_test": 16,
+      "train_accuracy": 1.0,
+      "test_accuracy": 1.0
+    },
+    "Meat_Poultry": {
+      "k": 5,
+      "n_train": 64,
+      "n_test": 16,
+      "train_accuracy": 1.0,
+      "test_accuracy": 1.0
+    },
+    "Seafood": {
+      "k": 5,
+      "n_train": 64,
+      "n_test": 16,
+      "train_accuracy": 1.0,
+      "test_accuracy": 1.0
+    },
+    "Fresh_Produce": {
+      "k": 5,
+      "n_train": 64,
+      "n_test": 16,
+      "train_accuracy": 1.0,
+      "test_accuracy": 1.0
+    },
+    "Beverage": {
+      "k": 5,
+      "n_train": 64,
+      "n_test": 16,
+      "train_accuracy": 1.0,
+      "test_accuracy": 1.0
+    },
+    "Bakery": {
+      "k": 5,
+      "n_train": 64,
+      "n_test": 16,
+      "train_accuracy": 1.0,
+      "test_accuracy": 1.0
+    },
+    "Frozen_Food": {
+      "k": 5,
+      "n_train": 64,
+      "n_test": 16,
+      "train_accuracy": 1.0,
+      "test_accuracy": 1.0
+    },
+    "Baby_Food": {
+      "k": 5,
+      "n_train": 64,
+      "n_test": 16,
+      "train_accuracy": 1.0,
+      "test_accuracy": 1.0
+    },
+    "Packaged_Snack": {
+      "k": 5,
+      "n_train": 64,
+      "n_test": 16,
+      "train_accuracy": 1.0,
+      "test_accuracy": 1.0
+    },
+    "Street_Food": {
+      "k": 5,
+      "n_train": 64,
+      "n_test": 16,
+      "train_accuracy": 1.0,
+      "test_accuracy": 1.0
+    },
+    "All": {
+      "k": 5,
+      "n_train": 640,
+      "n_test": 160,
+      "train_accuracy": 0.9984,
+      "test_accuracy": 1.0
+    }
+  }
+}

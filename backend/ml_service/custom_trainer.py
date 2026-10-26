@@ -1,11 +1,23 @@
 """
 custom_trainer.py
 -----------------
-Train and predict custom Logistic Regression models on user-uploaded CSV rows.
+Standalone local training script & inference loader for custom models.
+
+CLI Usage:
+    python custom_trainer.py --data path/to/dataset.csv --target Safety_Label --category Dairy --model logistic --out model_artifact.json
+
+Features:
+    1. Standalone CLI execution for training models locally and saving weights/artifacts to JSON or PKL.
+    2. Loads pre-trained model files for ultra-fast, zero-training inference in serverless environments.
+    3. Functions to load and predict without triggering any runtime training on request paths.
 """
 
+import argparse
 from collections import OrderedDict
+import json
+from pathlib import Path
 import re
+import sys
 import time
 from typing import Any
 import uuid
@@ -19,9 +31,12 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-# In-memory models cache (max 20 models, LRU / oldest evicted)
+# In-memory models cache for loaded models (LRU / oldest evicted)
 MODELS_CACHE: OrderedDict[str, dict[str, Any]] = OrderedDict()
-MAX_MODELS = 20
+MAX_MODELS = 50
+
+# Default directory for pre-trained custom models
+CUSTOM_MODELS_DIR = Path(__file__).resolve().parent / "artifacts" / "custom_models"
 
 ID_PATTERNS = {"id", "_id", "index", "serial", "row", "sr_no", "srno"}
 
@@ -35,7 +50,7 @@ def _is_id_column(col_name: str) -> bool:
     return False
 
 
-def train_custom_model(
+def train_custom_model_data(
     rows: list[dict[str, Any]],
     target: str = "Safety_Label",
     category: str | None = None,
@@ -43,6 +58,7 @@ def train_custom_model(
     user_id: str | None = None,
     model_type: str = "logistic",
 ) -> dict[str, Any]:
+    """Core offline/local training logic for custom datasets."""
     if not isinstance(rows, list) or len(rows) == 0:
         raise ValueError("Dataset must contain at least one row.")
 
@@ -59,7 +75,6 @@ def train_custom_model(
             break
 
     if cat_col is not None:
-        # Category column exists
         unique_cats = [
             str(x).strip()
             for x in df[cat_col].dropna().unique()
@@ -84,7 +99,6 @@ def train_custom_model(
                 f"Category '{category}' not found in CSV. Available categories: {', '.join(available_cats_sorted)}"
             )
 
-        # Filter rows for this category
         mask = df[cat_col].astype(str).str.strip().str.lower() == cat_choice
         df = df[mask].copy()
         selected_category = matched_cat_orig
@@ -102,7 +116,6 @@ def train_custom_model(
     if target_col is None:
         raise ValueError(f"Target column '{target}' not found in CSV.")
 
-    # Convert Label to 0/1
     def convert_label(val):
         if val is None or pd.isna(val):
             raise ValueError(f"Invalid label value {val!r} in column '{target}'. Allowed values are 0, 1, 'Safe', 'Unsafe'.")
@@ -113,27 +126,21 @@ def train_custom_model(
             return 1
         raise ValueError(f"Invalid label value {val!r} in column '{target}'. Allowed values are 0, 1, 'Safe', 'Unsafe'.")
 
-    labels = []
-    for val in df[target_col]:
-        labels.append(convert_label(val))
+    labels = [convert_label(val) for val in df[target_col]]
     df[target_col] = labels
 
     # 3. Feature Columns & Exclusions
     excluded_columns: list[dict[str, str]] = []
     excluded_names: set[str] = set()
 
-    # Exclude target
     excluded_columns.append({"column": target_col, "reason": "Target / label column"})
     excluded_names.add(target_col)
 
-    # Exclude Category
     if cat_col is not None and cat_col not in excluded_names:
         excluded_columns.append({"column": cat_col, "reason": "Category column"})
         excluded_names.add(cat_col)
 
-    # User excluded columns
     user_exclude_lower = {str(x).strip().lower() for x in (exclude or [])}
-
     candidate_cols = [c for c in df.columns if c not in excluded_names]
 
     for c in candidate_cols:
@@ -148,25 +155,21 @@ def train_custom_model(
             excluded_columns.append({"column": c, "reason": "Identifier column"})
             excluded_names.add(c)
 
-    # Check remaining candidates for numeric data & emptiness
     valid_feature_cols = []
     for c in df.columns:
         if c in excluded_names:
             continue
 
         series = df[c]
-        # Check if entirely empty
         if series.isna().all() or (series.astype(str).str.strip() == "").all():
             excluded_columns.append({"column": c, "reason": "All values missing for selected category"})
             excluded_names.add(c)
             continue
 
-        # Coerce to numeric
         numeric_series = pd.to_numeric(series, errors="coerce")
         nan_count = numeric_series.isna().sum()
         total_count = len(series)
 
-        # If all became NaN or majority (> 50%) non-numeric
         if nan_count == total_count or (nan_count / total_count) > 0.5:
             excluded_columns.append({"column": c, "reason": "Non-numeric data"})
             excluded_names.add(c)
@@ -175,13 +178,11 @@ def train_custom_model(
         df[c] = numeric_series
         valid_feature_cols.append(c)
 
-    # Drop rows that still have missing values in valid feature columns
     n_before_drop = len(df)
     if valid_feature_cols:
         df = df.dropna(subset=valid_feature_cols + [target_col])
     rows_dropped = n_before_drop - len(df)
 
-    # 4. Validations
     if len(valid_feature_cols) > 30:
         raise ValueError(f"Too many feature columns ({len(valid_feature_cols)}). Maximum allowed is 30.")
 
@@ -191,7 +192,6 @@ def train_custom_model(
     if len(df) < 30:
         raise ValueError(f"Dataset must contain at least 30 usable rows after filtering, found {len(df)}.")
 
-    # Class counts
     y = df[target_col].to_numpy(dtype=int)
     safe_count = int(np.sum(y == 0))
     unsafe_count = int(np.sum(y == 1))
@@ -207,7 +207,6 @@ def train_custom_model(
             f"Invalid model_type '{model_type}'. Allowed types are 'logistic', 'ridge', 'lasso', 'knn'."
         )
 
-    # Feature statistics across usable dataset
     feature_stats = [
         {
             "feature": col,
@@ -219,7 +218,6 @@ def train_custom_model(
         for col in valid_feature_cols
     ]
 
-    # 5. Train / Test Split & Scaler (fitted on train only)
     X = df[valid_feature_cols].to_numpy(dtype=float)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
@@ -250,7 +248,6 @@ def train_custom_model(
         },
     }
 
-    # Evaluate ALL 4 models on the same train/test split for the comparison table
     comparison = []
     models_fitted = {}
 
@@ -268,7 +265,6 @@ def train_custom_model(
             "f1": round(float(f1_score(y_test, m_test_preds, pos_label=1, zero_division=0)), 4),
         })
 
-    # Chosen model evaluation & metrics
     chosen_model = models_fitted[model_type_clean]
     train_preds = chosen_model.predict(X_train_scaled)
     test_preds = chosen_model.predict(X_test_scaled)
@@ -280,7 +276,6 @@ def train_custom_model(
     f1 = round(float(f1_score(y_test, test_preds, pos_label=1, zero_division=0)), 4)
     cm = confusion_matrix(y_test, test_preds, labels=[0, 1]).tolist()
 
-    # Feature influence and zero-weight features
     if model_type_clean in ("logistic", "ridge", "lasso"):
         coefs = chosen_model.coef_[0]
         feature_influence = [
@@ -298,36 +293,38 @@ def train_custom_model(
             for col, c in zip(valid_feature_cols, coefs)
         ]
         feature_influence.sort(key=lambda x: x["importance"], reverse=True)
-        if model_type_clean == "lasso":
-            zero_weight_features = [
-                col for col, c in zip(valid_feature_cols, coefs) if round(float(c), 6) == 0.0
-            ]
-        else:
-            zero_weight_features = []
+        zero_weight_features = (
+            [col for col, c in zip(valid_feature_cols, coefs) if round(float(c), 6) == 0.0]
+            if model_type_clean == "lasso" else []
+        )
     else:
-        # For k-NN, feature influence is not available
         feature_influence = None
         zero_weight_features = []
 
-    # Pipeline for inference
+    model_id = str(uuid.uuid4())
     pipeline = Pipeline([("scaler", scaler), ("model", chosen_model)])
 
-    # Store in cache
-    model_id = str(uuid.uuid4())
-    while len(MODELS_CACHE) >= MAX_MODELS:
-        MODELS_CACHE.popitem(last=False)
-
-    MODELS_CACHE[model_id] = {
-        "pipeline": pipeline,
+    # Serializable model parameters (for lightweight JSON persistence)
+    model_weights = {
+        "model_id": model_id,
         "model_type": model_type_clean,
-        "user_id": str(user_id) if user_id else None,
+        "model_title": MODEL_SPECS[model_type_clean]["title"],
+        "category": selected_category,
         "features": valid_feature_cols,
-        "created_at": time.time(),
-        "X_train_scaled": X_train_scaled,
-        "y_train": y_train,
+        "scaler_mean": scaler.mean_.tolist(),
+        "scaler_scale": scaler.scale_.tolist(),
+        "classes": [int(cl) for cl in chosen_model.classes_],
     }
 
-    return {
+    if model_type_clean in ("logistic", "ridge", "lasso"):
+        model_weights["intercept"] = float(chosen_model.intercept_[0])
+        model_weights["coefficients"] = [float(cf) for cf in chosen_model.coef_[0]]
+    else:
+        model_weights["k_neighbors"] = k_val
+        model_weights["X_train_scaled"] = X_train_scaled.tolist()
+        model_weights["y_train"] = [int(v) for v in y_train]
+
+    metadata = {
         "model_id": model_id,
         "model_type": model_type_clean,
         "model_title": MODEL_SPECS[model_type_clean]["title"],
@@ -349,7 +346,119 @@ def train_custom_model(
         "feature_influence": feature_influence,
         "zero_weight_features": zero_weight_features,
         "comparison": comparison,
+        "weights": model_weights,
     }
+
+    # Cache locally in memory for current process
+    register_model_in_cache(
+        model_id=model_id,
+        pipeline=pipeline,
+        model_type=model_type_clean,
+        user_id=user_id,
+        features=valid_feature_cols,
+        X_train_scaled=X_train_scaled,
+        y_train=y_train,
+    )
+
+    return metadata
+
+
+train_custom_model = train_custom_model_data
+
+
+def register_model_in_cache(
+    model_id: str,
+    pipeline: Pipeline,
+    model_type: str,
+    user_id: str | None,
+    features: list[str],
+    X_train_scaled: np.ndarray,
+    y_train: np.ndarray,
+):
+    """Stores pipeline in LRU cache."""
+    while len(MODELS_CACHE) >= MAX_MODELS:
+        MODELS_CACHE.popitem(last=False)
+
+    MODELS_CACHE[model_id] = {
+        "pipeline": pipeline,
+        "model_type": model_type,
+        "user_id": str(user_id) if user_id else None,
+        "features": features,
+        "created_at": time.time(),
+        "X_train_scaled": X_train_scaled,
+        "y_train": y_train,
+    }
+
+
+def save_model_artifact(metadata: dict[str, Any], filepath: Path | str) -> str:
+    """Saves trained model artifact (JSON) to disk."""
+    path = Path(filepath)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(metadata, f, indent=2)
+    return str(path)
+
+
+def load_model_from_file(filepath: Path | str) -> str:
+    """
+    Loads a pre-trained model artifact from a JSON file into memory for zero-training inference.
+    Returns model_id.
+    """
+    path = Path(filepath)
+    if not path.exists():
+        raise FileNotFoundError(f"Model file not found: {path}")
+
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    weights = data.get("weights", data)
+    model_id = weights["model_id"]
+    model_type = weights["model_type"]
+    features = weights["features"]
+
+    scaler = StandardScaler()
+    scaler.mean_ = np.array(weights["scaler_mean"], dtype=float)
+    scaler.scale_ = np.array(weights["scaler_scale"], dtype=float)
+    scaler.var_ = scaler.scale_ ** 2
+    scaler.n_features_in_ = len(features)
+
+    if model_type in ("logistic", "ridge", "lasso"):
+        model = LogisticRegression()
+        model.classes_ = np.array(weights["classes"], dtype=int)
+        model.intercept_ = np.array([weights["intercept"]], dtype=float)
+        model.coef_ = np.array([weights["coefficients"]], dtype=float)
+        X_train_scaled = np.empty((0, len(features)))
+        y_train = np.empty((0,), dtype=int)
+    else:
+        k_val = weights.get("k_neighbors", 5)
+        X_train_scaled = np.array(weights["X_train_scaled"], dtype=float)
+        y_train = np.array(weights["y_train"], dtype=int)
+        model = KNeighborsClassifier(n_neighbors=k_val)
+        model.fit(X_train_scaled, y_train)
+
+    pipeline = Pipeline([("scaler", scaler), ("model", model)])
+
+    register_model_in_cache(
+        model_id=model_id,
+        pipeline=pipeline,
+        model_type=model_type,
+        user_id=None,
+        features=features,
+        X_train_scaled=X_train_scaled,
+        y_train=y_train,
+    )
+    return model_id
+
+
+def load_all_pretrained_custom_models():
+    """Scans CUSTOM_MODELS_DIR and loads any pre-trained custom models on server boot."""
+    if not CUSTOM_MODELS_DIR.exists():
+        return
+    for file in CUSTOM_MODELS_DIR.glob("*.json"):
+        try:
+            load_model_from_file(file)
+        except Exception as e:
+            print(f"Warning: could not load custom model {file}: {e}")
 
 
 def predict_custom_model(
@@ -357,12 +466,17 @@ def predict_custom_model(
     user_id: str | None,
     features: dict[str, Any],
 ) -> dict[str, Any]:
+    """Inference-only function. Does zero runtime training."""
     if not model_id or model_id not in MODELS_CACHE:
-        raise KeyError("Model expired or not found, please train again")
+        # Check if saved on disk as pre-trained file
+        custom_file = CUSTOM_MODELS_DIR / f"{model_id}.json"
+        if custom_file.exists():
+            load_model_from_file(custom_file)
+        else:
+            raise KeyError("Model expired or not found, please train again or load pre-trained artifact")
 
     entry = MODELS_CACHE[model_id]
 
-    # Owner verification if user_id was stored and provided
     stored_owner = entry.get("user_id")
     if stored_owner and user_id and str(stored_owner) != str(user_id):
         raise KeyError("Model expired or not found, please train again")
@@ -419,3 +533,41 @@ def predict_custom_model(
         "model_type": model_type,
         "neighbors": neighbors,
     }
+
+
+def main_cli():
+    parser = argparse.ArgumentParser(description="Standalone Local ML Model Trainer for Food Safety Hub")
+    parser.add_argument("--data", required=True, help="Path to input CSV file")
+    parser.add_argument("--target", default="Safety_Label", help="Target column name (default: Safety_Label)")
+    parser.add_argument("--category", default=None, help="Category name (e.g. Dairy)")
+    parser.add_argument("--model", default="logistic", choices=["logistic", "ridge", "lasso", "knn"], help="Model type")
+    parser.add_argument("--out", default=None, help="Output path for model JSON artifact")
+
+    args = parser.parse_args()
+
+    data_path = Path(args.data)
+    if not data_path.exists():
+        print(f"Error: file not found: {data_path}", file=sys.stderr)
+        sys.exit(1)
+
+    df = pd.read_csv(data_path)
+    rows = df.to_dict(orient="records")
+
+    print(f"Training {args.model} model on {len(rows)} rows from {data_path}...")
+    result = train_custom_model_data(
+        rows=rows,
+        target=args.target,
+        category=args.category,
+        model_type=args.model,
+    )
+
+    out_file = args.out or (CUSTOM_MODELS_DIR / f"{result['model_id']}.json")
+    saved_path = save_model_artifact(result, out_file)
+    print("\n[OK] Training Complete!")
+    print(f"Model ID: {result['model_id']}")
+    print(f"Test Accuracy: {result['test_accuracy'] * 100:.2f}%")
+    print(f"Artifact saved to: {saved_path}")
+
+
+if __name__ == "__main__":
+    main_cli()

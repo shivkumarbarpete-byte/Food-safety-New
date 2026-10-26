@@ -138,7 +138,11 @@ python -m venv venv
 # Install dependencies (first time only, or after requirements.txt changes)
 pip install -r requirements.txt
 
-# Start the service
+# Train models offline & save pre-trained artifacts (first time or when dataset updates)
+python train_models.py
+# Expected output: Saved models binary artifact to artifacts/pretrained_models.pkl
+
+# Start the service (zero runtime training, fast inference only)
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 # Expected output:  Uvicorn running on http://0.0.0.0:8000
 ```

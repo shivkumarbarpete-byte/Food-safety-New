@@ -1,0 +1,249 @@
+{
+  "model_id": "f83a9a99-34b0-4d2f-87f0-06edd57d403e",
+  "model_type": "logistic",
+  "model_title": "Logistic Regression",
+  "category": "Dairy",
+  "features": [
+    "Temperature_C",
+    "Moisture_percent",
+    "Storage_Days",
+    "pH",
+    "Fat_Percent",
+    "Titratable_Acidity"
+  ],
+  "excluded_columns": [
+    {
+      "column": "Safety_Label",
+      "reason": "Target / label column"
+    },
+    {
+      "column": "Category",
+      "reason": "Category column"
+    },
+    {
+      "column": "Risk_Score",
+      "reason": "Target-correlated risk metric"
+    },
+    {
+      "column": "Color_Score",
+      "reason": "All values missing for selected category"
+    },
+    {
+      "column": "TVBN_Level",
+      "reason": "All values missing for selected category"
+    },
+    {
+      "column": "Ripeness_Index",
+      "reason": "All values missing for selected category"
+    },
+    {
+      "column": "Sugar_Content_Percent",
+      "reason": "All values missing for selected category"
+    },
+    {
+      "column": "Mold_Risk_Index",
+      "reason": "All values missing for selected category"
+    },
+    {
+      "column": "Temp_Deviation_Neg18",
+      "reason": "All values missing for selected category"
+    },
+    {
+      "column": "Oil_Rancidity_Index",
+      "reason": "All values missing for selected category"
+    },
+    {
+      "column": "Hygiene_Score",
+      "reason": "All values missing for selected category"
+    }
+  ],
+  "n_total": 80,
+  "n_train": 64,
+  "n_test": 16,
+  "rows_dropped": 0,
+  "class_counts": {
+    "Safe": 48,
+    "Unsafe": 32
+  },
+  "feature_stats": [
+    {
+      "feature": "Temperature_C",
+      "mean": 9.982,
+      "std": 6.11,
+      "min": 2.1,
+      "max": 21.5
+    },
+    {
+      "feature": "Moisture_percent",
+      "mean": 87.657,
+      "std": 4.169,
+      "min": 80.1,
+      "max": 94.9
+    },
+    {
+      "feature": "Storage_Days",
+      "mean": 9.525,
+      "std": 7.674,
+      "min": 1.0,
+      "max": 25.0
+    },
+    {
+      "feature": "pH",
+      "mean": 5.819,
+      "std": 1.004,
+      "min": 4.21,
+      "max": 6.79
+    },
+    {
+      "feature": "Fat_Percent",
+      "mean": 5.034,
+      "std": 1.205,
+      "min": 3.0,
+      "max": 6.9
+    },
+    {
+      "feature": "Titratable_Acidity",
+      "mean": 0.22,
+      "std": 0.1,
+      "min": 0.12,
+      "max": 0.45
+    }
+  ],
+  "train_accuracy": 1.0,
+  "test_accuracy": 1.0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "confusion_matrix": [
+    [
+      10,
+      0
+    ],
+    [
+      0,
+      6
+    ]
+  ],
+  "feature_influence": [
+    {
+      "feature": "pH",
+      "weight": -2.962,
+      "importance": 2.962,
+      "effect": "higher value -> Safe signal",
+      "direction": "Safe"
+    },
+    {
+      "feature": "Titratable_Acidity",
+      "weight": 2.6142,
+      "importance": 2.6142,
+      "effect": "higher value -> Unsafe signal",
+      "direction": "Unsafe"
+    },
+    {
+      "feature": "Temperature_C",
+      "weight": 2.5816,
+      "importance": 2.5816,
+      "effect": "higher value -> Unsafe signal",
+      "direction": "Unsafe"
+    },
+    {
+      "feature": "Storage_Days",
+      "weight": 2.5297,
+      "importance": 2.5297,
+      "effect": "higher value -> Unsafe signal",
+      "direction": "Unsafe"
+    },
+    {
+      "feature": "Moisture_percent",
+      "weight": 0.0693,
+      "importance": 0.0693,
+      "effect": "higher value -> Unsafe signal",
+      "direction": "Unsafe"
+    },
+    {
+      "feature": "Fat_Percent",
+      "weight": 0.0381,
+      "importance": 0.0381,
+      "effect": "higher value -> Unsafe signal",
+      "direction": "Unsafe"
+    }
+  ],
+  "zero_weight_features": [],
+  "comparison": [
+    {
+      "model_type": "logistic",
+      "model_name": "Logistic Regression",
+      "test_accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "model_type": "ridge",
+      "model_name": "Ridge Regression (L2)",
+      "test_accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "model_type": "lasso",
+      "model_name": "Lasso Regression (L1)",
+      "test_accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "model_type": "knn",
+      "model_name": "k-Nearest Neighbors (k=5)",
+      "test_accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    }
+  ],
+  "weights": {
+    "model_id": "f83a9a99-34b0-4d2f-87f0-06edd57d403e",
+    "model_type": "logistic",
+    "model_title": "Logistic Regression",
+    "category": "Dairy",
+    "features": [
+      "Temperature_C",
+      "Moisture_percent",
+      "Storage_Days",
+      "pH",
+      "Fat_Percent",
+      "Titratable_Acidity"
+    ],
+    "scaler_mean": [
+      10.100000000000001,
+      87.50625000000001,
+      9.65625,
+      5.795468750000002,
+      5.076562500000001,
+      0.22078125000000007
+    ],
+    "scaler_scale": [
+      6.298288457986026,
+      4.042117135549143,
+      7.665300772800765,
+      1.0088002306073476,
+      1.207495107068244,
+      0.1005345818533976
+    ],
+    "classes": [
+      0,
+      1
+    ],
+    "intercept": -1.3814043247496504,
+    "coefficients": [
+      2.581626458299183,
+      0.06928288550962457,
+      2.5296972999935345,
+      -2.9619826454175446,
+      0.03806206492517043,
+      2.614236758518314
+    ]
+  }
+}
