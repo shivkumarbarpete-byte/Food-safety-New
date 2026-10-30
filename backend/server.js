@@ -41,6 +41,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/ml', require('./routes/mlRoutes'));
 app.use('/api/safety', require('./routes/foodSafetyRoutes'));
+app.use('/api/v1', require('./routes/foodSafetyRoutes'));
 
 const PORT = process.env.PORT || 5000;
 

@@ -12,6 +12,11 @@ from __future__ import annotations
 import io
 import logging
 import re
+import os
+import json
+from google import genai
+from google.genai import types
+from dotenv import load_dotenv
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -20,7 +25,9 @@ import numpy as np
 from dateutil import parser as date_parser
 from dateutil.relativedelta import relativedelta
 from PIL import Image
+load_dotenv()
 
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 logger = logging.getLogger("FoodLabelAuditor")
 logger.setLevel(logging.INFO)
 
@@ -30,7 +37,29 @@ try:
 except ImportError:
     PYTESSERACT_AVAILABLE = False
     logger.warning("pytesseract is not installed. Fallback rule extraction will operate on raw input.")
-
+def audit_food_label(image_bytes: bytes, mime_type: str = "image/jpeg"):
+    prompt = """
+    Analyze this food product packaging/label. Extract information strictly as valid JSON:
+    {
+        "product_name": "string or null",
+        "manufacturing_date": "DD/MM/YYYY or null",
+        "expiry_date": "DD/MM/YYYY or null",
+        "ingredients": ["list of ingredients"],
+        "additives": ["detected E-numbers/INS additives"],
+        "allergens": ["detected allergens"],
+        "estimated_safety_score": 0 to 100
+    }
+    Return ONLY the raw JSON object.
+    """
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=[
+            prompt,
+            types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
+        ],
+    )
+    cleaned = response.text.replace("```json", "").replace("```", "").strip()
+    return json.loads(cleaned)
 
 # --- Regulatory Safety Reference Dictionaries (FSSAI / FDA / EFSA) ---
 

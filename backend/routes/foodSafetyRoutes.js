@@ -1,8 +1,16 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const { parseFoodLabel } = require('../services/geminiService');
 const protect = require('../middleware/authMiddleware');
 const Review = require('../models/Review');
 const { PYTHON_ML_URL, MLServiceError } = require('../ml/pythonClient');
+
+// Memory storage for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+});
 
 /**
  * Helper to forward multipart/form-data directly to Python ML Service
@@ -11,7 +19,6 @@ async function forwardMultipartToML(path, req, res, saveToDb = false, scanType =
   try {
     const mlTargetUrl = `${PYTHON_ML_URL}${path}`;
 
-    // Forward incoming request stream/headers to Python ML service
     const headers = {};
     if (req.headers['content-type']) {
       headers['content-type'] = req.headers['content-type'];
@@ -62,19 +69,63 @@ async function forwardMultipartToML(path, req, res, saveToDb = false, scanType =
   }
 }
 
-// 1. YOLOv8 Freshness & Spoilage Detection Endpoint
+/**
+ * 1. Gemini Vision API Endpoint: Smart Label Parsing & Safety Audit
+ * Handles multipart/form-data with field name 'labelImage'
+ */
+router.post('/audit-label', upload.single('labelImage'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'Please upload an image file (field: labelImage)' });
+    }
+
+    const result = await parseFoodLabel(req.file.buffer, req.file.mimetype);
+
+    // Optionally persist to MongoDB if user is authenticated
+    if (req.user && req.user._id) {
+      try {
+        const isSafe = result.safety_risk_level === 'Low' ? 1 : 0;
+        const score = result.safety_risk_level === 'Low' ? 90 : result.safety_risk_level === 'Moderate' ? 60 : 30;
+        await Review.create({
+          userId: req.user._id,
+          name: result.product_name || `Label Audit - ${new Date().toLocaleDateString()}`,
+          cat: 'Packaged Food',
+          verdict: result.safety_risk_level === 'Low' ? 'Safe' : 'Attention Required',
+          score: score,
+          safe: isSafe,
+          origin: 'Gemini Vision AI Audit',
+          notes: JSON.stringify({ additives: result.flagged_additives, allergens: result.allergens }),
+        });
+      } catch (dbErr) {
+        console.error('Failed to save Gemini audit to MongoDB:', dbErr.message);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (err) {
+    console.error('Label audit error:', err.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to parse label: ' + err.message,
+    });
+  }
+});
+
+/**
+ * 2. YOLOv8 Freshness & Spoilage Detection Endpoint
+ */
 router.post('/detect-freshness', async (req, res) => {
   return forwardMultipartToML('/detect-freshness', req, res, true, 'detection');
 });
 
-// 2. YOLOv8 Fast Canvas Frame Detection
+/**
+ * 3. YOLOv8 Fast Canvas Frame Detection
+ */
 router.post('/detect-frame', async (req, res) => {
   return forwardMultipartToML('/api/v1/detect/frame', req, res, false, 'frame');
-});
-
-// 3. Smart Food Label & Regulatory Safety Auditor Endpoint
-router.post('/audit-label', async (req, res) => {
-  return forwardMultipartToML('/api/v1/audit-label', req, res, true, 'audit');
 });
 
 module.exports = router;
