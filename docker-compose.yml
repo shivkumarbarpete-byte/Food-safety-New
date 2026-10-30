@@ -1,0 +1,90 @@
+version: "3.8"
+
+services:
+  # 1. MongoDB Database Container
+  database:
+    image: mongo:7.0
+    container_name: foodsafety-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: foodsafetyhub
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - foodsafety-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # 2. Python FastAPI ML & Vision Microservice
+  ml-service:
+    build:
+      context: ./backend/ml_service
+      dockerfile: Dockerfile
+    container_name: foodsafety-ml-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/ml_service/artifacts:/app/artifacts
+    networks:
+      - foodsafety-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+  # 3. Node.js Express Backend API
+  backend-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: foodsafety-backend-api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://database:27017/foodsafetyhub
+      - JWT_SECRET=foodsafety_jwt_2026_super_secure_key
+      - PYTHON_ML_URL=http://ml-service:8000
+    depends_on:
+      database:
+        condition: service_healthy
+      ml-service:
+        condition: service_healthy
+    networks:
+      - foodsafety-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # 4. Frontend Web UI (Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: foodsafety-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      backend-api:
+        condition: service_healthy
+    networks:
+      - foodsafety-net
+
+networks:
+  foodsafety-net:
+    driver: bridge
+
+volumes:
+  mongo_data:
+    driver: local

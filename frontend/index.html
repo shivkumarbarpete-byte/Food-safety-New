@@ -537,15 +537,91 @@
               <div id="customPredictContainer" style="display:none; margin-top:18px; padding-top:16px; border-top:1px dashed #cbd5e1;"></div>
             </div>
           </div>
-          <div class="form-group">
-  <label class="form-label">Upload Product Label / Photo (for OCR & Visual Check)</label>
-  <input type="file" class="form-control" id="labelImage" accept="image/*">
-  <div id="imagePreview" style="margin-top:10px; max-width:300px;"></div>
+          <!-- Smart Food Label & Regulatory Safety Auditor Dashboard -->
+          <div class="card mt-20" id="label-ocr-card" style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; background: #ffffff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 24px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+              <div>
+                <h3 style="margin:0; font-size:1.15rem; color:#0f172a; display:flex; align-items:center; gap:8px;">
+                  <i class="fas fa-file-invoice" style="color:#2563eb;"></i> Smart Food Label &amp; Regulatory Safety Auditor
+                </h3>
+                <small style="color:#64748b;">OCR-powered parsing for Expiry, Harmful Additives (INS/E-numbers), and Allergen compliance (FSSAI/FDA)</small>
+              </div>
+              <span id="labelAuditorStatusBadge" style="font-size:0.75rem; background:#f1f5f9; color:#475569; padding:4px 10px; border-radius:20px; font-weight:600;">Auditor Ready</span>
+            </div>
 
-  
-  <!-- IMAGE RESULT Box -->
-  <div id="imageResult"></div>
-</div>
+            <div class="row" style="display: flex; gap: 20px; flex-wrap: wrap;">
+              <!-- Left: Upload & Preview Card -->
+              <div style="flex: 1; min-width: 280px;">
+                <label class="form-label" style="font-weight:600;"><i class="fas fa-camera"></i> Upload Food Label / Nutrition Table Photo</label>
+                <div id="labelDropZone" style="border: 2px dashed #94a3b8; border-radius: 10px; padding: 20px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.2s ease;">
+                  <i class="fas fa-cloud-upload-alt" style="font-size: 2.2rem; color: #2563eb; margin-bottom: 8px;"></i>
+                  <div style="font-size: 0.95rem; font-weight: 600; color: #1e293b;">Click to upload or drag &amp; drop</div>
+                  <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">PNG, JPG, or WebP (max 10MB)</div>
+                  <input type="file" class="form-control" id="labelImage" accept="image/*" style="display: none;">
+                </div>
+                <div id="imagePreview" style="margin-top: 12px; display: none;">
+                  <img id="labelImgElement" src="" alt="Label Preview" style="max-width: 100%; max-height: 220px; border-radius: 8px; border: 1px solid #cbd5e1; object-fit: contain;">
+                </div>
+              </div>
+
+              <!-- Right: Dynamic Regulatory Scorecard -->
+              <div style="flex: 1.3; min-width: 320px;">
+                <!-- Audit Progress / Spinner -->
+                <div id="labelAuditLoading" style="display: none; padding: 20px; text-align: center; background: #f8fafc; border-radius: 8px;">
+                  <i class="fas fa-spinner fa-spin" style="font-size: 1.8rem; color: #2563eb; margin-bottom: 8px;"></i>
+                  <div style="font-weight: 600; color: #1e293b;">Auditing label text &amp; cross-referencing FSSAI/FDA database...</div>
+                </div>
+
+                <!-- Empty Placeholder -->
+                <div id="labelAuditPlaceholder" style="padding: 24px; text-align: center; color: #94a3b8; background: #f8fafc; border-radius: 8px; border: 1px dashed #e2e8f0;">
+                  <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 8px; opacity: 0.6;"></i>
+                  <div>Upload a packaged food label to inspect expiry, shelf life, and additive safety.</div>
+                </div>
+
+                <!-- Audit Results Container -->
+                <div id="labelAuditDashboard" style="display: none;">
+                  <!-- Safety Score Meter & Verdict Banner -->
+                  <div id="auditVerdictBanner" style="padding: 14px 18px; border-radius: 10px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                      <div id="auditVerdictText" style="font-size: 1.1rem; font-weight: 700;">Safe / Compliant</div>
+                      <div id="auditExpiryTag" style="font-size: 0.85rem; margin-top: 2px;">Valid: 120 days remaining</div>
+                    </div>
+                    <div style="text-align: right;">
+                      <div id="auditScoreValue" style="font-size: 1.5rem; font-weight: 800;">90/100</div>
+                      <small style="text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Safety Index</small>
+                    </div>
+                  </div>
+
+                  <!-- Date & Shelf Life Card -->
+                  <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; display: flex; justify-content: space-between; font-size: 0.85rem;">
+                    <div><i class="fas fa-calendar-alt" style="color: #64748b;"></i> <strong>MFG:</strong> <span id="auditMfgDate">--</span></div>
+                    <div><i class="fas fa-hourglass-half" style="color: #64748b;"></i> <strong>EXP / Best Before:</strong> <span id="auditExpDate">--</span></div>
+                    <div><i class="fas fa-clock" style="color: #64748b;"></i> <strong>Shelf Life:</strong> <span id="auditShelfLife">--</span></div>
+                  </div>
+
+                  <!-- Categorized Badges: Additives & Allergens -->
+                  <div style="margin-bottom: 12px;">
+                    <strong style="font-size: 0.85rem; color: #334155;"><i class="fas fa-flask"></i> Additives &amp; Preservatives Detected:</strong>
+                    <div id="auditAdditivesBadges" style="margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap;"></div>
+                  </div>
+
+                  <div style="margin-bottom: 12px;">
+                    <strong style="font-size: 0.85rem; color: #334155;"><i class="fas fa-exclamation-triangle"></i> Allergen Warnings:</strong>
+                    <div id="auditAllergensBadges" style="margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap;"></div>
+                  </div>
+
+                  <!-- Regulatory Flags & Notes -->
+                  <div id="auditFlagsContainer" style="background: #f8fafc; border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; border-left: 3px solid #2563eb;">
+                    <strong style="color: #1e293b;">Regulatory Audit Notes:</strong>
+                    <ul id="auditFlagsList" style="margin: 4px 0 0 16px; padding: 0; color: #475569;"></ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hidden compatibility box for existing legacy scripts -->
+            <div id="imageResult" style="display: none;"></div>
+          </div>
           
           <div class="btn-group">
             <button type="button" class="btn btn-primary" id="runBtn"><i class="fas fa-play"></i> Run Safety Checks</button>
@@ -599,25 +675,49 @@
           <div id="mlSampleDisclaimer" style="display:none; margin-bottom:12px; padding:10px 14px; background:#fef3c7; border-radius:8px; font-size:0.85rem; color:#92400e; border-left:3px solid #d97706;">
             <i class="fas fa-exclamation-triangle"></i> <strong>Experimental:</strong> models are trained on a synthetic 800-sample dataset (80 samples per category, 80/20 train/test split). Results are screening estimates only.
           </div>
-          <!-- Measured Instrument Values (Lab Mode Only) -->
-          <div class="row" style="margin: 15px 0;" id="labMeasurementsGroup">
-            <div class="col">
-              <div class="form-group">
-                <label class="form-label"><i class="fas fa-vial"></i> Measured pH</label>
-                <input type="number" step="0.01" min="0" max="14" class="form-control" id="p_ph" placeholder="e.g. 6.5">
+          <!-- Real-Time AI Computer Vision Scanner (Replacing Manual pH/Moisture/Temp) -->
+          <div id="labMeasurementsGroup" style="margin: 20px 0; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+              <div>
+                <h4 style="margin: 0; font-size: 1.05rem; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+                  <i class="fas fa-camera" style="color: #0284c7;"></i> Real-Time AI Freshness & Spoilage Scanner
+                </h4>
+                <small style="color: #64748b;">Automated visual quality assessment replacing manual chemical/sensor measurements</small>
+              </div>
+              <span id="cvVisionStatus" style="font-size: 0.75rem; background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 20px; font-weight: 600;">YOLOv8 Ready</span>
+            </div>
+
+            <!-- Scanner Viewport -->
+            <div style="position: relative; width: 100%; height: 320px; background: #0f172a; border-radius: 10px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+              <video id="visionWebcam" autoplay playsinline style="width: 100%; height: 100%; object-fit: contain;"></video>
+              <img id="visionResultPreview" alt="Annotated Output" style="position: absolute; top:0; left:0; width: 100%; height: 100%; object-fit: contain; display: none; z-index: 2;" />
+              <div id="visionPlaceholder" style="text-align: center; color: #94a3b8; pointer-events: none;">
+                <i class="fas fa-video-slash" style="font-size: 2.2rem; margin-bottom: 8px; display: block; opacity: 0.6;"></i>
+                <span>Camera feed inactive. Click "Start Camera" or upload a food image.</span>
               </div>
             </div>
-            <div class="col">
-              <div class="form-group">
-                <label class="form-label"><i class="fas fa-tint"></i> Measured Moisture (%)</label>
-                <input type="number" step="0.1" min="0" max="100" class="form-control" id="p_moisture" placeholder="e.g. 14.5">
-              </div>
+
+            <!-- Controls -->
+            <div style="display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
+              <button type="button" class="btn btn-outline" id="btnToggleVisionCam" style="flex: 1; min-width: 140px;">
+                <i class="fas fa-video"></i> Start Camera
+              </button>
+              <button type="button" class="btn btn-primary" id="btnAnalyzeVisionFrame" style="flex: 1; min-width: 140px;" disabled>
+                <i class="fas fa-crosshairs"></i> Scan Frame
+              </button>
+              <label class="btn btn-outline" style="flex: 1; min-width: 140px; margin-bottom: 0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer;">
+                <i class="fas fa-upload" style="margin-right: 6px;"></i> Upload Food Photo
+                <input type="file" id="visionFileInput" accept="image/*" style="display: none;">
+              </label>
             </div>
-            <div class="col">
-              <div class="form-group">
-                <label class="form-label"><i class="fas fa-thermometer-half"></i> Measured Temp (°C)</label>
-                <input type="number" step="0.1" min="-50" max="150" class="form-control" id="p_temp" placeholder="e.g. 4.0">
+
+            <!-- Verdict & Detections Display -->
+            <div id="visionVerdictCard" style="display: none; margin-top: 14px; padding: 12px 16px; border-radius: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-weight: 700; font-size: 1rem;" id="visionVerdictTitle">Safe to Consume</div>
+                <div style="font-size: 0.85rem; font-weight: 600;" id="visionSafetyScore">Safety Index: 95/100</div>
               </div>
+              <div id="visionItemsList" style="margin-top: 8px; font-size: 0.85rem;"></div>
             </div>
           </div>
           <!-- Category Filter for ML, EDA & Histograms -->
@@ -1284,6 +1384,8 @@
  
   <script src="categoryProxyConfig.js" defer></script>
   <script src="mlAnalysis.js" defer></script>
+  <script src="freshnessScanner.js" defer></script>
+  <script src="labelAuditorClient.js" defer></script>
   <script src="script.js" defer></script>
 </body>
 </html>

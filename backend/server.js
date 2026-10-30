@@ -26,15 +26,21 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
+// Health check endpoint for Docker / orchestration
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', service: 'food-safety-backend-api' });
+});
+
 // Test route (check karne ke liye server chal raha hai ya nahi)
 app.get('/', (req, res) => {
   res.send('FoodSafetyHub Backend API is running... 🚀');
 });
 
-// Routes (abhi khaali, aage add karenge)
+// Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/ml', require('./routes/mlRoutes'));
+app.use('/api/safety', require('./routes/foodSafetyRoutes'));
 
 const PORT = process.env.PORT || 5000;
 
